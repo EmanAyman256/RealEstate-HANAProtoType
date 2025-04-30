@@ -1,0 +1,7 @@
+ID,building_ID,name,status
+unit1,1a2b3c4d,Unit 101,available
+unit2,1a2b3c4d,Unit 102,reserved
+unit3,2b1c4d5e,Unit 201,available
+unit4,1a2b3c4d,Unit 101,available
+unit5,1a2b3c4d,Unit 102,reserved
+unit6,2b1c4d5e,Unit 201,available
