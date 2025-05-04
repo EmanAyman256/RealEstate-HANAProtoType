@@ -15,6 +15,20 @@
       "version": "1.17.4",
       "toolsId": "61a3f48e-154b-4737-b5cf-e15cb20012fd"
     },
+    "crossNavigation": {
+    "inbounds": {
+      "realestate-display": {
+        "semanticObject": "realestate",
+        "action": "display",
+        "title": "{{appTitle}}",
+        "subTitle": "{{appSubtitle}}",
+        "signature": {
+          "parameters": {},
+          "additionalParameters": "allowed"
+        }
+      }
+    }
+  },
     "dataSources": {
       "mainService": {
         "uri": "/odata/v4/real-estate/",
@@ -115,5 +129,9 @@
       "id": "App",
       "async": true
     }
-  }
+  },
+  "sap.cloud": {
+  "public": true,
+  "service": "realestate"
+}
 }

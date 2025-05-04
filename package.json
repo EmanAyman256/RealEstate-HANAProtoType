@@ -27,7 +27,10 @@
   },
   "cds": {
     "sql": {
-      "native_hana_associations": false
-    }
-  }
+      "native_hana_,associations": false
+    },
+
+    "requires": {
+      "auth": "mocked"
+}  }
 }

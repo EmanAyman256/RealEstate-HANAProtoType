@@ -10,7 +10,7 @@
     {
       "source": "^(.*)$",
       "target": "$1",
-      "localDir": "resources",
+      "service": "html5-apps-repo-rt",
       "authenticationType": "none"
     }
   ]
