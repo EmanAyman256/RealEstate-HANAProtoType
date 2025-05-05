@@ -29,8 +29,11 @@
     "sql": {
       "native_hana_,associations": false
     },
-
     "requires": {
-      "auth": "mocked"
-}  }
+      "auth": "mocked",
+      "destinations": true,
+      "html5-runtime": true,
+      "workzone": true
+    }
+  }
 }

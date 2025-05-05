@@ -16,25 +16,34 @@
       "toolsId": "61a3f48e-154b-4737-b5cf-e15cb20012fd"
     },
     "crossNavigation": {
-    "inbounds": {
-      "realestate-display": {
-        "semanticObject": "realestate",
-        "action": "display",
-        "title": "{{appTitle}}",
-        "subTitle": "{{appSubtitle}}",
-        "signature": {
-          "parameters": {},
-          "additionalParameters": "allowed"
+      "inbounds": {
+        "realestate-display": {
+          "semanticObject": "realestate",
+          "action": "display",
+          "title": "{{appTitle}}",
+          "subTitle": "{{appSubtitle}}",
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          }
+        },
+        "realestate-ui-display": {
+          "semanticObject": "realestate-ui",
+          "action": "display",
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          }
         }
       }
-    }
-  },
+    },
     "dataSources": {
       "mainService": {
-        "uri": "/odata/v4/real-estate/",
+        "uri": "odata/v4/real-estate/",
         "type": "OData",
         "settings": {
           "annotations": [],
+          "localUri": "localService/metadata.xml",
           "odataVersion": "4.0"
         }
       }
@@ -64,7 +73,7 @@
         "sap.m": {},
         "sap.ui.core": {},
         "sap.ui.layout": {},
-				"sap.ui.unified": {}
+        "sap.ui.unified": {}
       }
     },
     "contentDensities": {
@@ -131,7 +140,7 @@
     }
   },
   "sap.cloud": {
-  "public": true,
-  "service": "realestate"
-}
+    "public": true,
+    "service": "realestate"
+  }
 }

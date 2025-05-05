@@ -2,15 +2,17 @@
   "welcomeFile": "/index.html",
   "routes": [
     {
-      "source": "^/srv/(.*)$",
-      "destination": "srv-api",
-      "csrfProtection": false,
-      "authenticationType": "none"
+      "source": "^/?odata/(.*)$",
+      "target": "/odata/$1",
+      "destination": "Real-Estate-srv-api",
+      "authenticationType": "none",
+      "csrfProtection": false
     },
     {
       "source": "^(.*)$",
       "target": "$1",
-      "localDir": "resources",
+      "service": "html5-apps-repo-rt",
+
       "authenticationType": "none"
     }
   ]
