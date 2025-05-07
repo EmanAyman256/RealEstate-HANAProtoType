@@ -38,7 +38,7 @@
       }
     },
     "dataSources": {
-      "mainService": {
+      "RealEstateService": {
         "uri": "odata/v4/real-estate/",
         "type": "OData",
         "settings": {
@@ -88,7 +88,7 @@
         }
       },
       "": {
-        "dataSource": "mainService",
+        "dataSource": "RealEstateService",
         "preload": true,
         "settings": {
           "operationMode": "Server",
