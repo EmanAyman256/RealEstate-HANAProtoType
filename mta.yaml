@@ -9,7 +9,6 @@ modules:
     requires:
       - name: RealEstate-auth
       - name: RealEstate-db
-      # - name: RealEstate-destination-service
     provides:
       - name: srv-api
         properties:
@@ -82,22 +81,6 @@ modules:
         - npm run build:cf
     
       supported-platforms: []
-
-  # - name: Real-Estate-app-deployer
-  #   type: com.sap.application.content
-  #   path: gen/db
-  #   requires:
-  #     - name: RealEstate_html_repo_host
-  #       parameters:
-  #         content-target: true
-  #     - name: RealEstate_html_repo_host
-  #   build-parameters:
-  #     build-result: app/
-  #     requires:
-  #       - name: realestateui
-  #         artifacts:
-  #           - realestate-ui.zip
-  #         target-path: app/
 resources:
   - name: RealEstate-db
     type: com.sap.xs.hdi-container
@@ -146,11 +129,7 @@ resources:
       service: html5-apps-repo
       service-name: RealEstate-html5-app-host-service
       service-plan: app-host
-  # - name: Real-Estate-html5-runtime
-  #   type: org.cloudfoundry.managed-service
-# parameters:
-#       service: html5-apps-repo
-#       service-plan: app-runtime
+
 parameters:
   deploy_mode: html5-repo
   enable-parallel-deployments: true

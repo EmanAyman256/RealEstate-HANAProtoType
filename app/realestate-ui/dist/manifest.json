@@ -39,11 +39,11 @@
     },
     "dataSources": {
       "RealEstateService": {
-        "uri": "/odata/v4/real-estate/",
+        "uri": "odata/v4/real-estate/",
         "type": "OData",
         "settings": {
           "annotations": [],
-          "localUri": "gen/srv/srv/odata/v4/RealEstateService.xml",
+          "localUri": "localService/metadata.xml",
           "odataVersion": "4.0"
         }
       }
