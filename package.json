@@ -16,14 +16,16 @@
     "@cap-js/sqlite": "^1",
     "@sap/cds-dk": "^8",
     "mbt": "^1.2.29",
-    "rimraf": "^5.0.5"
+    "rimraf": "^5.0.5",
+    "cds-plugin-ui5": "^0.13.0"
   },
   "scripts": {
     "start": "cds-serve",
     "watch-realestate-ui": "cds watch --open realestate-ui/webapp/index.html?sap-ui-xx-viewCache=false",
-    "undeploy": "cf undeploy Real-Estate --delete-services --delete-service-keys --delete-service-brokers",
+    "undeploy": "cf undeploy RealEstate --delete-services --delete-service-keys --delete-service-brokers",
     "build": "rimraf resources mta_archives && mbt build --mtar archive",
-    "deploy": "cf deploy mta_archives/archive.mtar --retries 1"
+    "deploy": "cf deploy mta_archives/archive.mtar --retries 1",
+    "watch-dboperations": "cds watch --open dboperations/index.html?sap-ui-xx-viewCache=false --livereload false"
   },
   "cds": {
     "sql": {
@@ -33,10 +35,20 @@
       "auth": "mocked",
       "destinations": true,
       "html5-runtime": true,
-      "workzone": true
+      "workzone": true,
+      "db": {
+        "kind": "hana",
+        "vcap": {
+          "label": "hana",
+          "plan": "hdi-shared"
+        }
+      }
     },
     "hana": {
       "deploy-format": "hdbtable"
     }
-  }
+  },
+  "workspaces": [
+    "app/*"
+  ]
 }

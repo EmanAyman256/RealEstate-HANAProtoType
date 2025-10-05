@@ -1,0 +1,151 @@
+{
+  "_version": "1.76.0",
+  "sap.app": {
+    "id": "dboperations",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "0.0.1"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:basic",
+      "version": "1.19.0",
+      "toolsId": "6f7a97dd-e01a-4bb2-8f33-98fef9d57f2c"
+    },
+    "dataSources": {
+      "mainService": {
+        "uri": "/odata/v4/real-estate/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "odataVersion": "4.0"
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "flexEnabled": true,
+    "dependencies": {
+      "minUI5Version": "1.141.0",
+      "libs": {
+         "sap.m": {},
+        "sap.ui.core": {},
+        "sap.tnt": {},
+        "sap.f": {},
+        "sap.ui.integration": {},
+        "sap.ui.table": {},
+        "sap.fe.macros":{},
+        "sap.ui.layout": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "dboperations.i18n.i18n"
+        }
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
+      }
+    },
+    "resources": {
+      "css": [
+        {
+          "uri": "css/style.css"
+        }
+      ]
+    },
+    "routing": {
+      "config": {
+        "routerClass": "sap.m.routing.Router",
+        "controlAggregation": "pages",
+        "controlId": "app",
+        "transition": "slide",
+        "type": "View",
+        "viewType": "XML",
+        "path": "dboperations.view",
+        "async": true,
+        "viewPath": "dboperations.view"
+      },
+      "routes": [
+         {
+          "name": "Projects",
+          "pattern": "Projects",
+          "target": "Projects"
+        },
+         {
+          "name": "Buildings",
+          "pattern": "Buildings",
+          "target": "Buildings"
+        },
+          {
+          "name": "Units",
+          "pattern": "Units",
+          "target": "Units"
+        },
+        {
+          "name": "RouteDBOperations",
+          "pattern": ":?query:",
+          "target": [
+            "TargetDBOperations"
+          ]
+        }
+      ],
+      "targets": {
+         "Projects": {
+          "viewName": "Projects"
+        },
+         "Buildings": {
+          "viewName": "Buildings"
+        },
+        "Units": {
+          "viewName": "Units"
+        },
+        "TargetDBOperations": {
+          "id": "DBOperations",
+          "name": "DBOperations"
+        }
+      }
+    },
+    "rootView": {
+      "viewName": "dboperations.view.App",
+      "type": "XML",
+      "id": "App",
+      "async": true
+    }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "RealEstate-approuter"
+  }
+}
