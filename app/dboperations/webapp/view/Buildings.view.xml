@@ -15,5 +15,82 @@
     xmlns:macros="sap.fe.macros" >
     <Page id="_IDGenPage1"
         title="Buildings Page" >
+         <headerContent>
+            <Button id="btnAddBuildings" icon="sap-icon://add" tooltip="Add" text="New Building" press="onAddBuilding" />
+        </headerContent>
+         <Table id="BuildingsTable"  items="{path: '/Buildings'}">
+            <columns>
+                <Column id="_IDGenColumn">
+                    <Text id="_IDGenText23"  text="Building ID" />
+                </Column>
+               <Column id="_IDGenColumn13" >
+                    <Text id="_IDGenText24" text="Building Description" />
+                </Column>
+                <Column id="_IDGenColumn25"  >
+                    <Text id="_IDGenText46"  text="Building Old Code" />
+                </Column>
+                <Column id="_IDGenColumn26">
+                    <Text id="_IDGenText47"  text="Project ID" />
+                </Column>
+               <Column id="_IDGenColumn27" >
+                    <Text id="_IDGenText48"  text="Project Description" />
+                </Column>
+                <Column id="_IDGenColumn14" >
+                    <Text id="_IDGenText25" text="Company Code" />
+                </Column>
+                     <Column id="_IDGenColumn15" >
+                    <Text id="_IDGenText26"  text="Company Code Description" />
+                </Column>
+                
+                <Column id="_IDGenColumn16" >
+                    <Text id="_IDGenText27"  text="From" />
+                </Column>
+                     <Column id="_IDGenColumn17" >
+                    <Text id="_IDGenText28"  text="To" />
+                </Column>
+                <Column id="_IDGenColumn18" >
+                    <Text id="_IDGenText29"  text="Location" />
+                </Column>
+                <Column id="_IDGenColumn19" >
+                    <Text id="_IDGenText30" text="Business Area" />
+                </Column>
+                     <Column id="_IDGenColumn20" >
+                    <Text id="_IDGenText31" text="Profit Center" />
+                </Column>
+                <Column id="_IDGenColumn21" >
+                    <Text id="_IDGenText32" text="Functional Area" />
+                </Column>
+               
+                <Column id="_IDGenColumn23" >
+                    <Text id="_IDGenText34"  text="Actions" />
+                </Column>
+            </columns>
+            <items>
+                <ColumnListItem id="_IDGenColumnListItem1" >
+                    <cells>
+                        <Text id="_IDGenText35"  text="{buildingId}" />
+                        <Text id="_IDGenText36"  text="{buildingDescription}" />
+                        <Text id="_IDGenText37"  text="{buildingOldCode}" />
+                        <Text id="_IDGenText49"   text="{projectId}" />
+                        <Text id="_IDGenText50"   text="{projectDescription}" />
+                          <Text id="_IDGenText38"  text="{companyCodeId}" />
+                        <Text id="_IDGenText39"  text="{companyCodeDescription}" />
+                        <Text id="_IDGenText33"   text="{validFrom}" />
+
+                        <Text id="_IDGenText40"  text="{validTo}" />
+                          <Text id="_IDGenText41"  text="{location}" />
+                        <Text id="_IDGenText42"  text="{businessArea}" />
+                        <Text id="_IDGenText43"  text="{profitCenter}" />
+                          <Text id="_IDGenText44"  text="{functionalArea}" />
+                            <HBox id="_IDGenHBox1" >
+                            <Button id="_IDGenButton3"  icon="sap-icon://information" press="onDetails" />
+                            <Button id="_IDGenButton4" icon="sap-icon://delete" press="onDelete" />
+                            <Button id="_IDGenButton2" icon="sap-icon://edit" press="onEdit" />
+
+                        </HBox>
+                    </cells>
+                </ColumnListItem>
+            </items>
+        </Table>
     </Page>
 </mvc:View>

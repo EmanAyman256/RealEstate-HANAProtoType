@@ -18,6 +18,7 @@ module.exports = cds.service.impl(async function () {
       INSERT.into(Buildings).entries(req.data)
     );
   });
+
   // UPDATE
   this.on('UPDATE', Buildings, async (req) => {
     console.log('UPDATE Buildings called with data:', req.data);
@@ -25,18 +26,16 @@ module.exports = cds.service.impl(async function () {
     return await db.run(
       UPDATE(Buildings)
         .set(req.data)
-        .where({ ID: req.data.ID })
+        .where({ buildingId: req.data.buildingId })
     );
   });
-
   // DELETE
   this.on('DELETE', Buildings, async (req) => {
     console.log('DELETE Buildings called for ID:', req.data.ID);
     const db = cds.transaction(req);
     try {
-
       return await db.run(
-        DELETE.from(Buildings).where({ ID: req.data.ID })
+        DELETE.from(Buildings).where({ ID: req.data.buildingO })
       );
     }
     catch (error) {
@@ -69,37 +68,37 @@ module.exports = cds.service.impl(async function () {
   });
 
   // UPDATE
-this.on('UPDATE', Projects, async (req) => {
-  console.log("UPDATE Project called with:", req.data, "params:", req.params);
+  this.on('UPDATE', Projects, async (req) => {
+    console.log("UPDATE Project called with:", req.data, "params:", req.params);
 
-  const { projectId } = req.params[0];   // <-- get key from URL
-  const db = cds.transaction(req);
+    const { projectId } = req.params[0];   // <-- get key from URL
+    const db = cds.transaction(req);
 
-  try {
-    await db.run(
-      UPDATE(Projects)
-        .set(req.data)
-        .where({ projectId })
-    );
+    try {
+      await db.run(
+        UPDATE(Projects)
+          .set(req.data)
+          .where({ projectId })
+      );
 
-    // Return the updated record
-    const updated = await db.run(SELECT.one.from(Projects).where({ projectId }));
-    return updated;
-  } catch (error) {
-    console.error("Error updating Project:", error);
-    req.error(500, "Error updating Project: " + error.message);
-  }
-});
+      // Return the updated record
+      const updated = await db.run(SELECT.one.from(Projects).where({ projectId }));
+      return updated;
+    } catch (error) {
+      console.error("Error updating Project:", error);
+      req.error(500, "Error updating Project: " + error.message);
+    }
+  });
 
 
   // DELETE
- this.on('DELETE', Projects, async (req) => {
-  console.log('DELETE Project called for projectId:', req.data.projectId);
-  const db = cds.transaction(req);
-  return await db.run(
-    DELETE.from(Projects).where({ projectId: req.data.projectId })
-  );
-});
+  this.on('DELETE', Projects, async (req) => {
+    console.log('DELETE Project called for projectId:', req.data.projectId);
+    const db = cds.transaction(req);
+    return await db.run(
+      DELETE.from(Projects).where({ projectId: req.data.projectId })
+    );
+  });
 
 
   ///////////////////////////// UNIT //////////////////////////////////////

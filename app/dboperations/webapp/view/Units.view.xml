@@ -2,21 +2,79 @@
     controllerName="dboperations.controller.Units"
     xmlns="sap.m"
     xmlns:mvc="sap.ui.core.mvc"
-    xmlns:sap.m="sap.m"
-    xmlns:f="sap.f"
-    xmlns:w="sap.ui.integration.widgets"
-    xmlns:tnt="sap.tnt"
-    xmlns:form="sap.ui.layout.form"
-    xmlns:table="sap.ui.table"
-    xmlns:layout="sap.ui.layout"
     xmlns:core="sap.ui.core"
-    xmlns:m="sap.m"
-    xmlns:u="sap.ui.unified"
-    xmlns:macros="sap.fe.macros"
->
-    <Page
-        id="_IDGenPage"
-        title="Units Page "
-    >
+    displayBlock="true">
+
+    <Page id="UnitsPage" title="Units">
+        <headerContent>
+            <Button
+                id="btnAddUnit"
+                icon="sap-icon://add"
+                tooltip="Add Unit"
+                text="New Unit"
+                press="onNavigateToAddUnit" />
+        </headerContent>
+
+        <VBox id="unitsVBox" class="sapUiSizeCompact">
+            <Table
+                id="unitsTable"
+                items="{path: '/Units'}"
+                inset="false"
+                growing="true"
+                growingScrollToLoad="true"
+                alternateRowColors="true"
+                fixedLayout="false"
+                width="100%"
+                mode="SingleSelectMaster"
+                popinLayout="GridSmall">
+
+                <columns>
+                    <Column id="colUnitId" width="8rem"><Text id="txtColUnitId" text="Unit ID" /></Column>
+                    <Column id="colUnitDesc" width="15rem"><Text id="txtColUnitDesc" text="Unit Description" /></Column>
+                    <Column id="colCompanyCode" width="8rem"><Text id="txtColCompanyCode" text="Company Code" /></Column>
+                    <Column id="colCompanyDesc" width="15rem"><Text id="txtColCompanyDesc" text="Company Code Description" /></Column>
+                    <Column id="colBuildingId" width="8rem"><Text id="txtColBuildingId" text="Building ID" /></Column>
+                    <Column id="colZone" width="10rem"><Text id="txtColZone" text="Zone" /></Column>
+                    <Column id="colSalesPhase" width="10rem"><Text id="txtColSalesPhase" text="Sales Phase" /></Column>
+                    <Column id="colUnitType" width="10rem"><Text id="txtColUnitType" text="Unit Type" /></Column>
+                    <Column id="colUnitStatus" width="10rem"><Text id="txtColUnitStatus" text="Unit Status" /></Column>
+                    <Column id="colPrice" width="10rem"><Text id="txtColPrice" text="Original Price (ZU01)" /></Column>
+                    <Column id="colArea" width="10rem"><Text id="txtColArea" text="Built-Up Area (M2)" /></Column>
+                    <Column id="colProfitCenter" width="10rem"><Text id="txtColProfitCenter" text="Profit Center" /></Column>
+                    <Column id="colFunctionalArea" width="10rem"><Text id="txtColFunctionalArea" text="Functional Area" /></Column>
+                    <Column id="colSuppText" width="20rem"><Text id="txtColSuppText" text="Supplementary Text" /></Column>
+                    <Column id="colActions" width="15rem" hAlign="Center">
+                    <Text id="txtColActions" text="Actions" /></Column>
+                    
+                </columns>
+
+                <items>
+                    <ColumnListItem id="unitRowItem">
+                        <cells>
+                            <Text id="txtUnitId" text="{unitId}" />
+                            <Text id="txtUnitDesc" text="{unitDescription}" />
+                            <Text id="txtCompanyCode" text="{companyCodeId}" />
+                            <Text id="txtCompanyDesc" text="{companyCodeDescription}" />
+                            <Text id="txtBuildingId" text="{buildingId}" />
+                            <Text id="txtZone" text="{zone}" />
+                            <Text id="txtSalesPhase" text="{salesPhase}" />
+                            <Text id="txtUnitType" text="{unitTypeDescription}" />
+                            <Text id="txtUnitStatus" text="{unitStatusDescription}" />
+                            <Text id="txtPrice" text="{originalPriceZU01}" />
+                            <Text id="txtArea" text="{builtUpAreaM2}" />
+                            <Text id="txtProfitCenter" text="{profitCenter}" />
+                            <Text id="txtFunctionalArea" text="{functionalArea}" />
+                            <Text id="txtSuppText" text="{supplementaryText}" wrapping="true" maxLines="2" />
+                            <HBox id="unitRowActions">
+                                <Button id="btnEditUnit" icon="sap-icon://edit" press="onEditUnit" />
+                                <Button id="btnDetailsUnit" icon="sap-icon://information" press="onDetails" />
+                                <Button id="btnDeleteUnit" icon="sap-icon://delete" press="onDelete" />
+                            </HBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+
+            </Table>
+        </VBox>
     </Page>
-    </mvc:View>
+</mvc:View>
