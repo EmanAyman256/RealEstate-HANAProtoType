@@ -69,31 +69,38 @@ module.exports = cds.service.impl(async function () {
   });
 
   // UPDATE
-  this.on('UPDATE', Projects, async (req) => {
-    console.log('UPDATE Project called with data:', req.data);
-    const db = cds.transaction(req);
-    try {
-      return await db.run(
-        UPDATE(Projects)
-          .set(req.data)
-          .where({ ID: req.data.ID })   // cuid field
-      );
+this.on('UPDATE', Projects, async (req) => {
+  console.log("UPDATE Project called with:", req.data, "params:", req.params);
 
-    }
-    catch (error) {
-      console.error('Error Updating Buildings:', error);
-      req.error(500, 'Error Updating Buildings');
-    }
-  });
+  const { projectId } = req.params[0];   // <-- get key from URL
+  const db = cds.transaction(req);
+
+  try {
+    await db.run(
+      UPDATE(Projects)
+        .set(req.data)
+        .where({ projectId })
+    );
+
+    // Return the updated record
+    const updated = await db.run(SELECT.one.from(Projects).where({ projectId }));
+    return updated;
+  } catch (error) {
+    console.error("Error updating Project:", error);
+    req.error(500, "Error updating Project: " + error.message);
+  }
+});
+
 
   // DELETE
-  this.on('DELETE', Projects, async (req) => {
-    console.log('DELETE Project called for ID:', req.data.ID);
-    const db = cds.transaction(req);
-    return await db.run(
-      DELETE.from(Projects).where({ ID: req.data.ID })
-    );
-  });
+ this.on('DELETE', Projects, async (req) => {
+  console.log('DELETE Project called for projectId:', req.data.projectId);
+  const db = cds.transaction(req);
+  return await db.run(
+    DELETE.from(Projects).where({ projectId: req.data.projectId })
+  );
+});
+
 
   ///////////////////////////// UNIT //////////////////////////////////////
 

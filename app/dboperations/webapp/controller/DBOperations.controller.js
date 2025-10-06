@@ -4,10 +4,8 @@ sap.ui.define([
     "use strict";
 
     return Controller.extend("dboperations.controller.DBOperations", {
-        onInit() {
-            
-        },
-         onNavigateToProjects() {
+        onInit() { },
+        onNavigateToProjects() {
             this.getOwnerComponent().getRouter().navTo("Projects");
         },
         onNavigateToBuildings() {
