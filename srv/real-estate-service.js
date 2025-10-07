@@ -3,6 +3,8 @@ const cds = require('@sap/cds');
 module.exports = cds.service.impl(async function () {
 
   const { Projects, Units, Buildings } = this.entities;
+
+
   /*-----------------------Buildings---------------------------*/
   // READ
   this.on('READ', Buildings, async (req) => {
@@ -21,28 +23,51 @@ module.exports = cds.service.impl(async function () {
 
   // UPDATE
   this.on('UPDATE', Buildings, async (req) => {
-    console.log('UPDATE Buildings called with data:', req.data);
-    const db = cds.transaction(req);
-    return await db.run(
-      UPDATE(Buildings)
+    try {
+      const { buildingId } = req.data;
+
+      // Log the request
+      console.log(`Updating Building ID: ${buildingId}`);
+      console.log('Payload:', req.data);
+
+      // Optional: validate data
+      if (!req.data.buildingDescription) {
+        return req.reject(400, 'Building description is required.');
+      }
+
+      // Perform the actual update
+      const result = await UPDATE(Buildings)
         .set(req.data)
-        .where({ buildingId: req.data.buildingId })
-    );
+        .where({ buildingId });
+
+      if (result === 0) {
+        return req.reject(404, `Building with ID ${buildingId} not found.`);
+      }
+
+      // Return updated record
+      const updatedRecord = await SELECT.one.from(Buildings).where({ buildingId });
+      return updatedRecord;
+    } catch (error) {
+      console.error('Error in UPDATE handler:', error);
+      req.reject(500, error.message);
+    }
   });
-  // DELETE
+  //DELETE
   this.on('DELETE', Buildings, async (req) => {
-    console.log('DELETE Buildings called for ID:', req.data.ID);
+    console.log('DELETE Building called for buildingId:', req.data.buildingId);
     const db = cds.transaction(req);
     try {
       return await db.run(
-        DELETE.from(Buildings).where({ ID: req.data.buildingO })
+        DELETE.from(Buildings).where({ buildingId: req.data.buildingId })
       );
-    }
-    catch (error) {
-      console.error('Error deleting Buildings:', error);
-      req.error(500, 'Error deleting Buildings');
+    } catch (error) {
+      console.error('Error deleting Building :', error);
+      req.error(500, 'Error deleting Building: ' + error.message);
     }
   });
+
+
+  
   /*-----------------------Projects---------------------------*/
 
   // READ
@@ -101,7 +126,7 @@ module.exports = cds.service.impl(async function () {
   });
 
 
-  ///////////////////////////// UNIT //////////////////////////////////////
+  /*-----------------------Units---------------------------*/
 
   // READ
   this.on('READ', Units, async (req) => {
@@ -124,33 +149,39 @@ module.exports = cds.service.impl(async function () {
     }
   });
 
-  // UPDATE
+  // UPDATE 
   this.on('UPDATE', Units, async (req) => {
-    console.log('UPDATE Unit called with data:', req.data);
+    console.log('UPDATE Unit called with:', req.data, 'params:', req.params);
+
+    const { unitId } = req.params[0];
     const db = cds.transaction(req);
+
     try {
-      return await db.run(
+      await db.run(
         UPDATE(Units)
           .set(req.data)
-          .where({ ID: req.data.ID }) // cuid field
+          .where({ unitId })
       );
+
+      const updated = await db.run(SELECT.one.from(Units).where({ unitId }));
+      return updated;
     } catch (error) {
       console.error('Error updating Unit:', error);
-      req.error(500, 'Error updating Unit');
+      req.error(500, 'Error updating Unit: ' + error.message);
     }
   });
 
-  // DELETE
+  // DELETE  
   this.on('DELETE', Units, async (req) => {
-    console.log('DELETE Unit called for ID:', req.data.ID);
+    console.log('DELETE Unit called for unitId:', req.data.unitId);
     const db = cds.transaction(req);
     try {
       return await db.run(
-        DELETE.from(Units).where({ ID: req.data.ID })
+        DELETE.from(Units).where({ unitId: req.data.unitId })
       );
     } catch (error) {
       console.error('Error deleting Unit:', error);
-      req.error(500, 'Error deleting Unit');
+      req.error(500, 'Error deleting Unit: ' + error.message);
     }
   });
 

@@ -82,9 +82,9 @@
                         <Text id="_IDGenText42"  text="{businessArea}" />
                         <Text id="_IDGenText43"  text="{profitCenter}" />
                           <Text id="_IDGenText44"  text="{functionalArea}" />
-                            <HBox id="_IDGenHBox1" >
+                            <HBox id="_IDGenHBox1"   >
                             <Button id="_IDGenButton3"  icon="sap-icon://information" press="onDetails" />
-                            <Button id="_IDGenButton4" icon="sap-icon://delete" press="onDelete" />
+                            <Button id="_IDGenButton4" icon="sap-icon://delete" press="onDelete"  type="Reject"  />
                             <Button id="_IDGenButton2" icon="sap-icon://edit" press="onEdit" />
 
                         </HBox>

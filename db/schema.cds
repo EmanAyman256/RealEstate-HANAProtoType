@@ -1,5 +1,7 @@
 namespace real.estate;
-using {cuid, managed} from '@sap/cds/common';
+
+using {managed} from '@sap/cds/common';
+
 entity Buildings {
         companyCodeId          : String(4);
         companyCodeDescription : String(60);
@@ -20,7 +22,8 @@ entity Buildings {
         units                  : Association to many Units
                                      on units.building = $self;
 }
-entity Projects :  managed {
+
+entity Projects : managed {
         companyCodeId          : String(4);
         companyCodeDescription : String(60);
 
@@ -41,12 +44,7 @@ entity Projects :  managed {
                                      on buildings.project = $self;
 }
 
-entity Units : cuid, managed {
-
-    key unitId                   : String(8);
-        unitOldCode              : String(20);
-        unitDescription          : String(60);
-
+entity Units : managed {
         companyCodeId            : String(4);
         companyCodeDescription   : String(60);
 
@@ -57,6 +55,10 @@ entity Units : cuid, managed {
         building                 : Association to Buildings;
         buildingId               : String(8);
         buildingOldCode          : String(20);
+
+    key unitId                   : String(8);
+        unitOldCode              : String(20);
+        unitDescription          : String(60);
 
         unitTypeCode             : String(4);
         unitTypeDescription      : String(60);

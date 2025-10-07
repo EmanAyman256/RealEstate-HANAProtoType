@@ -43,6 +43,9 @@
                     <Column id="colProfitCenter" width="10rem"><Text id="txtColProfitCenter" text="Profit Center" /></Column>
                     <Column id="colFunctionalArea" width="10rem"><Text id="txtColFunctionalArea" text="Functional Area" /></Column>
                     <Column id="colSuppText" width="20rem"><Text id="txtColSuppText" text="Supplementary Text" /></Column>
+                    <Column id="colParkPrice" width="10rem"><Text id="txtParPrice" text="Parking Price (ZU03)" /></Column>
+                    <Column id="colMantPrice" width="10rem"><Text id="txtManPrice" text="Maintenance Price" /></Column>
+                    <Column id="colUntDelDate" width="10rem"><Text id="txtUnDelDate" text="Unit Delivery Date" /></Column>
                     <Column id="colActions" width="15rem" hAlign="Center">
                     <Text id="txtColActions" text="Actions" /></Column>
                     
@@ -65,6 +68,9 @@
                             <Text id="txtProfitCenter" text="{profitCenter}" />
                             <Text id="txtFunctionalArea" text="{functionalArea}" />
                             <Text id="txtSuppText" text="{supplementaryText}" wrapping="true" maxLines="2" />
+                            <Text id="txtParkPrice" text="{parkingPriceZU03}" />
+                            <Text id="txtMantPrice" text="{maintenancePrice}" />
+                            <Text id="txtUntDelDate" text="{unitDeliveryDate}" />
                             <HBox id="unitRowActions">
                                 <Button id="btnEditUnit" icon="sap-icon://edit" press="onEditUnit" />
                                 <Button id="btnDetailsUnit" icon="sap-icon://information" press="onDetails" />

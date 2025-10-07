@@ -6,10 +6,11 @@ sap.ui.define([
     "sap/m/Button",
     "sap/m/Label",
     "sap/m/VBox",
-    "sap/ui/model/json/JSONModel"],
-    (Controller, MessageBox, Dialog, Input, Button, Label, VBox, JSONModel) => {
-        "use strict";
+    "sap/m/MessageToast",
 
+    "sap/ui/model/json/JSONModel"],
+    (Controller, MessageBox, Dialog, Input, Button, Label, VBox,MessageToast, JSONModel) => {
+        "use strict";
         return Controller.extend("dboperations.controller.Buildings", {
             onInit() {
                 this.getOwnerComponent().getRouter()
@@ -262,7 +263,7 @@ sap.ui.define([
                                     oUpdated.validTo = new Date(oUpdated.validTo).toISOString().split("T")[0];
 
                                 // Send PATCH request
-                                fetch(`/odata/v4/real-estate/Buildings('${oUpdated.buildingId}')`, {
+                                fetch(`/odata/v4/real-estate/Buildings(${oUpdated.buildingId})`, {
                                     method: "PATCH",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify(oUpdated)
@@ -304,6 +305,25 @@ sap.ui.define([
                 // Open dialog
                 this._oEditDialog.open();
             },
-            
+            onDelete: function (oEvent) {
+                const oContext = oEvent.getSource().getBindingContext();
+                const sBuildingId = oContext.getProperty("buildingId");
+                MessageBox.confirm(`Delete Unit ${sBuildingId}?`, {
+                    actions: [MessageBox.Action.OK, MessageBox.Action.CANCEL],
+                    onClose: (sAction) => {
+                        if (sAction === MessageBox.Action.OK) {
+                            fetch(`/odata/v4/real-estate/Buildings('${encodeURIComponent(sBuildingId)}')`, { method: "DELETE" })
+                                .then(r => {
+                                    if (r.ok) {
+                                        MessageToast.show("Deleted successfully!");
+                                        this. _loadBuildings();
+                                    } else throw new Error("Delete failed");
+                                })
+                                .catch(err => MessageBox.error(err.message));
+                        }
+                    }
+                });
+            }
+
         });
     });
