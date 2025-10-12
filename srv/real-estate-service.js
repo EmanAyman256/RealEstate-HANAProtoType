@@ -2,7 +2,7 @@ const cds = require('@sap/cds');
 
 module.exports = cds.service.impl(async function () {
 
-  const { Projects, Units, Buildings } = this.entities;
+  const { Projects, Units, Buildings, PaymentPlans } = this.entities;
 
 
   /*-----------------------Buildings---------------------------*/
@@ -184,5 +184,60 @@ module.exports = cds.service.impl(async function () {
       req.error(500, 'Error deleting Unit: ' + error.message);
     }
   });
+
+  /*-----------------------Payment Plans---------------------------*/
+
+// READ
+this.on('READ', PaymentPlans, async (req) => {
+  console.log('READ PaymentPlans called');
+  const db = cds.transaction(req);
+  return await db.run(req.query);
+});
+
+// CREATE
+this.on('CREATE', PaymentPlans, async (req) => {
+  console.log('CREATE PaymentPlan called with data:', req.data);
+  const db = cds.transaction(req);
+  try {
+    return await db.run(
+      INSERT.into(PaymentPlans).entries(req.data)
+    );
+  } catch (error) {
+    console.error('Error creating PaymentPlan:', error);
+    req.error(500, 'Error creating PaymentPlan: ' + error.message);
+  }
+});
+
+// UPDATE
+this.on('UPDATE', PaymentPlans, async (req) => {
+  console.log("UPDATE PaymentPlan called with:", req.data, "params:", req.params);
+
+  const { paymentPlanId } = req.params[0]; // key field name
+  const db = cds.transaction(req);
+
+  try {
+    await db.run(
+      UPDATE(PaymentPlans)
+        .set(req.data)
+        .where({ paymentPlanId })
+    );
+
+    // Return the updated record
+    const updated = await db.run(SELECT.one.from(PaymentPlans).where({ paymentPlanId }));
+    return updated;
+  } catch (error) {
+    console.error("Error updating PaymentPlan:", error);
+    req.error(500, "Error updating PaymentPlan: " + error.message);
+  }
+});
+
+// DELETE
+this.on('DELETE', PaymentPlans, async (req) => {
+  console.log('DELETE PaymentPlan called for paymentPlanId:', req.data.paymentPlanId);
+  const db = cds.transaction(req);
+  return await db.run(
+    DELETE.from(PaymentPlans).where({ paymentPlanId: req.data.paymentPlanId })
+  );
+});
 
 });

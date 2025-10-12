@@ -14,5 +14,14 @@ sap.ui.define([
         onNavigateToUnits() {
             this.getOwnerComponent().getRouter().navTo("Units");
         },
+          onNavigateToPaymentPlans() {
+            this.getOwnerComponent().getRouter().navTo("PaymentPlans");
+        },
+           onNavigateToPaymentPlanSchedules() {
+            this.getOwnerComponent().getRouter().navTo("PaymentPlanSchedules");
+        },
+           onNavigateToPaymentPlanProjects() {
+            this.getOwnerComponent().getRouter().navTo("PaymentPlanProjects");
+        },
     });
 });

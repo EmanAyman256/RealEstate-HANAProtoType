@@ -19,6 +19,7 @@ sap.ui.define([
 
                 var oModel = new sap.ui.model.json.JSONModel({
                     Buildings: [],
+                    Projects:[]
                 });
                 this.getView().setModel(oModel, "view");
 
@@ -28,6 +29,15 @@ sap.ui.define([
                     .then(data => {
                         oModel.setData({ Buildings: data.value });
                         this.getView().byId("BuildingsTable").setModel(oModel);
+                    })
+                    .catch(err => {
+                        console.error("Error fetching Buildings", err);
+                    });
+                    fetch("/odata/v4/real-estate/Projects")
+                    .then(response => response.json())
+                    .then(data => {
+                        oModel.setData({ Projects: data.value });
+                        //this.getView().byId("BuildingsTable").setModel(oModel);
                     })
                     .catch(err => {
                         console.error("Error fetching Buildings", err);
@@ -79,12 +89,14 @@ sap.ui.define([
 
                                 new sap.m.Label({ text: "Building Old Code" }),
                                 new sap.m.Input({ value: "{/buildingOldCode}" }),
+                                
+                                // Will be selected dropdown ...
 
-                                new sap.m.Label({ text: "Project ID" }),
-                                new sap.m.Input({ value: "{/projectId}" }),
+                                // new sap.m.Label({ text: "Project ID" }),
+                                // new sap.m.Input({ value: "{/projectId}" }),
 
-                                new sap.m.Label({ text: "Project Description" }),
-                                new sap.m.Input({ value: "{/projectDescription}" }),
+                                // new sap.m.Label({ text: "Project Description" }),
+                                // new sap.m.Input({ value: "{/projectDescription}" }),
 
                                 new sap.m.Label({ text: "Company Code" }),
                                 new sap.m.Input({ value: "{/companyCodeId}" }),

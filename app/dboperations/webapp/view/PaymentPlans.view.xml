@@ -1,0 +1,48 @@
+<mvc:View
+    controllerName="dboperations.controller.PaymentPlans"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc">
+
+    <Page id="PaymentPlansPage" title="Payment Plans">
+        <headerContent>
+            <Button
+                id="btnAddPaymentPlan"
+                icon="sap-icon://add"
+                tooltip="Add"
+                text="New Payment Plan"
+                press="onNavigateToAddPaymentPlan" />
+        </headerContent>
+
+        <Table id="paymentPlansTable" items="{path: '/PaymentPlans'}">
+            <columns>
+                <Column><Text text="Payment Plan ID" /></Column>
+                <Column><Text text="Description" /></Column>
+                <Column><Text text="Company Code ID" /></Column>
+                <Column><Text text="Plan Years" /></Column>
+                <Column><Text text="Valid From" /></Column>
+                <Column><Text text="Valid To" /></Column>
+                <Column><Text text="Plan Status" /></Column>
+                <Column><Text text="Actions" /></Column>
+            </columns>
+
+            <items>
+                <ColumnListItem>
+                    <cells>
+                        <Text text="{paymentPlanId}" />
+                        <Text text="{description}" />
+                        <Text text="{companyCodeId}" />
+                        <Text text="{planYears}" />
+                        <Text text="{validFrom}" />
+                        <Text text="{validTo}" />
+                        <Text text="{planStatus}" />
+                        <HBox>
+                            <Button icon="sap-icon://information" press="onDetails" />
+                            <Button icon="sap-icon://edit" press="onEditPaymentPlan" />
+                            <Button icon="sap-icon://delete" type="Reject" press="onDelete" />
+                        </HBox>
+                    </cells>
+                </ColumnListItem>
+            </items>
+        </Table>
+    </Page>
+</mvc:View>

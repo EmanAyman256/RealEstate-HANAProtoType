@@ -113,6 +113,11 @@
           "pattern": "Units",
           "target": "Units"
         },
+          {
+          "name": "PaymentPlans",
+          "pattern": "PaymentPlans",
+          "target": "PaymentPlans"
+        },
         {
           "name": "RouteDBOperations",
           "pattern": ":?query:",
@@ -130,6 +135,9 @@
         },
         "Units": {
           "viewName": "Units"
+        },
+         "PaymentPlans": {
+          "viewName": "PaymentPlans"
         },
         "TargetDBOperations": {
           "id": "DBOperations",

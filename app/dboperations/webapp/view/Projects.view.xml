@@ -63,9 +63,9 @@
                           <Text id="_IDGenText21" text="{functionalArea}" />
                         <Text id="_IDGenText22" text="{supplementaryText}" />
                         <HBox id="_IDGenHBox">
-                            <Button icon="sap-icon://edit" press="onEditProject" />
                             <Button id="_IDGenButton" icon="sap-icon://information" press="onDetails" />
-                            <Button id="_IDGenButton1" icon="sap-icon://delete" press="onDelete" />
+                            <Button icon="sap-icon://edit" press="onEditProject" />
+                            <Button id="_IDGenButton1" icon="sap-icon://delete" press="onDelete" type="Reject" />
                         </HBox>
                     </cells>
                 </ColumnListItem>

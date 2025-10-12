@@ -70,6 +70,22 @@
                         />
                     </TileContent>
                 </GenericTile>
+                <GenericTile
+    id="_IDGenGenericTile4"
+    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+    header="Payment Plans"
+    press="onNavigateToPaymentPlans"
+>
+    <TileContent
+        id="_IDGenTileContent4"
+        footer="Payment Plans CRUD OPs"
+    >
+        <ImageContent
+            id="_IDGenImageContent4"
+            src="sap-icon://money-bills"
+        />
+    </TileContent>
+</GenericTile>
             </HBox>
         </content>
     </Page>
