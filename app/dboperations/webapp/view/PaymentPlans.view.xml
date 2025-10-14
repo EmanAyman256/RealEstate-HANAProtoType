@@ -1,48 +1,290 @@
 <mvc:View
     controllerName="dboperations.controller.PaymentPlans"
     xmlns="sap.m"
-    xmlns:mvc="sap.ui.core.mvc">
-
-    <Page id="PaymentPlansPage" title="Payment Plans">
+    xmlns:mvc="sap.ui.core.mvc"
+>
+    <Page
+        id="PaymentPlansPage"
+        title="Payment Plans"
+    >
         <headerContent>
             <Button
                 id="btnAddPaymentPlan"
                 icon="sap-icon://add"
                 tooltip="Add"
                 text="New Payment Plan"
-                press="onNavigateToAddPaymentPlan" />
+                press="onNavigateToAddPaymentPlan"
+            />
         </headerContent>
-
-        <Table id="paymentPlansTable" items="{path: '/PaymentPlans'}">
-            <columns>
-                <Column><Text text="Payment Plan ID" /></Column>
-                <Column><Text text="Description" /></Column>
-                <Column><Text text="Company Code ID" /></Column>
-                <Column><Text text="Plan Years" /></Column>
-                <Column><Text text="Valid From" /></Column>
-                <Column><Text text="Valid To" /></Column>
-                <Column><Text text="Plan Status" /></Column>
-                <Column><Text text="Actions" /></Column>
-            </columns>
-
+        <TabContainer
+            id="myTabContainer"
+            showAddNewButton="true"
+            class="sapUiResponsiveContentPadding sapUiResponsivePadding--header"
+            addNewButtonPress="addNewButtonPressHandler"
+            itemClose="itemCloseHandler"
+        >
             <items>
-                <ColumnListItem>
-                    <cells>
-                        <Text text="{paymentPlanId}" />
-                        <Text text="{description}" />
-                        <Text text="{companyCodeId}" />
-                        <Text text="{planYears}" />
-                        <Text text="{validFrom}" />
-                        <Text text="{validTo}" />
-                        <Text text="{planStatus}" />
-                        <HBox>
-                            <Button icon="sap-icon://information" press="onDetails" />
-                            <Button icon="sap-icon://edit" press="onEditPaymentPlan" />
-                            <Button icon="sap-icon://delete" type="Reject" press="onDelete" />
-                        </HBox>
-                    </cells>
-                </ColumnListItem>
+                <TabContainerItem
+                    id="_IDGenTabContainerItem1"
+                    name="General Data"
+                >
+                    <content>
+                        <Table
+                            id="paymentPlansTable"
+                            items="{ path: '/PaymentPlans' }"
+                        >
+                            <columns>
+                                <Column id="_IDGenColumn22">
+                                    <Text
+                                        id="_IDGenText10"
+                                        text="Payment Plan ID"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn24">
+                                    <Text
+                                        id="_IDGenText45"
+                                        text="Description"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn28">
+                                    <Text
+                                        id="_IDGenText51"
+                                        text="Company Code ID"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn29">
+                                    <Text
+                                        id="_IDGenText52"
+                                        text="Plan Years"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn30">
+                                    <Text
+                                        id="_IDGenText53"
+                                        text="Valid From"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn31">
+                                    <Text
+                                        id="_IDGenText54"
+                                        text="Valid To"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn32">
+                                    <Text
+                                        id="_IDGenText55"
+                                        text="Plan Status"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn33">
+                                    <Text
+                                        id="_IDGenText56"
+                                        text="Actions"
+                                    />
+                                </Column>
+                            </columns>
+
+                            <items>
+                                <ColumnListItem id="_IDGenColumnListItem2">
+                                    <cells>
+                                        <Text
+                                            id="_IDGenText57"
+                                            text="{paymentPlanId}"
+                                        />
+                                        <Text
+                                            id="_IDGenText58"
+                                            text="{description}"
+                                        />
+                                        <Text
+                                            id="_IDGenText59"
+                                            text="{companyCodeId}"
+                                        />
+                                        <Text
+                                            id="_IDGenText60"
+                                            text="{planYears}"
+                                        />
+                                        <Text
+                                            id="_IDGenText61"
+                                            text="{validFrom}"
+                                        />
+                                        <Text
+                                            id="_IDGenText62"
+                                            text="{validTo}"
+                                        />
+                                        <Text
+                                            id="_IDGenText63"
+                                            text="{planStatus}"
+                                        />
+                                        <HBox id="_IDGenHBox2">
+                                            <Button
+                                                id="_IDGenButton5"
+                                                icon="sap-icon://information"
+                                                press="onDetails"
+                                            />
+                                            <Button
+                                                id="_IDGenButton6"
+                                                icon="sap-icon://edit"
+                                                press="onEditPaymentPlan"
+                                            />
+                                            <Button
+                                                id="_IDGenButton7"
+                                                icon="sap-icon://delete"
+                                                type="Reject"
+                                                press="onDelete"
+                                            />
+                                        </HBox>
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </content>
+                </TabContainerItem>
+
+                <TabContainerItem
+                    id="_IDGenTabContainerItem"
+                    name="Plan Schedule"
+                >
+                    <content>
+                        <Table
+                            id="paymentPlanScheduleTable"
+                            items="{ path: '/PaymentPlanSchedules' }"
+                        >
+                            <columns>
+                                <Column id="_IDGenColumn12">
+                                    <Text
+                                        id="_IDGenText64"
+                                        text=" Plan Schedule ID"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn34">
+                                    <Text
+                                        id="_IDGenText65"
+                                        text="Condition Type"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn35">
+                                    <Text
+                                        id="_IDGenText66"
+                                        text="Percentage"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn36">
+                                    <Text
+                                        id="_IDGenText67"
+                                        text="Base Price"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn37">
+                                    <Text
+                                        id="_IDGenText68"
+                                        text="Calculation Method"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn38">
+                                    <Text
+                                        id="_IDGenText69"
+                                        text="Frequency"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn39">
+                                    <Text
+                                        id="_IDGenText70"
+                                        text="Due In Month"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn42">
+                                    <Text
+                                        id="_IDGenText79"
+                                        text="Number Of Installments"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn43">
+                                    <Text
+                                        id="_IDGenText80"
+                                        text="Number Of Years"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn40">
+                                    <Text
+                                        id="_IDGenText71"
+                                        text="Actions"
+                                    />
+                                </Column>
+                                <Column id="_IDGenColumn44">
+                                    <Button
+                                        id="btnAddPlanSchedule"
+                                        icon="sap-icon://add"
+                                        tooltip="Add"
+                                        text="New Plan Schedule"
+                                        press="onNavigateToAddPlanSchedule"
+                                    />
+                                </Column>
+                            </columns>
+
+                            <items>
+                                <ColumnListItem id="_IDGenColumnListItem3">
+                                    <cells>
+                                        <Text
+                                            id="_IDGenText72"
+                                            text="{ID}"
+                                        />
+                                        <Text
+                                            id="_IDGenText73"
+                                            text="{conditionType}"
+                                        />
+                                        <Text
+                                            id="_IDGenText74"
+                                            text="{percentage}"
+                                        />
+                                        <Text
+                                            id="_IDGenText75"
+                                            text="{basePrice}"
+                                        />
+                                        <Text
+                                            id="_IDGenText76"
+                                            text="{calculationMethod}"
+                                        />
+                                        <Text
+                                            id="_IDGenText77"
+                                            text="{frequency}"
+                                        />
+                                        <Text
+                                            id="_IDGenText78"
+                                            text="{dueInMonth}"
+                                        />
+                                        <Text
+                                            id="_IDGenText82"
+                                            text="{numberOfInstallments}"
+                                        />
+                                        <Text
+                                            id="_IDGenText83"
+                                            text="{numberOfYears}"
+                                        />
+                                        <HBox id="_IDGenHBox4">
+                                            <Button
+                                                id="_IDGenButton9"
+                                                icon="sap-icon://information"
+                                                press="onDetails"
+                                            />
+                                            <Button
+                                                id="_IDGenButton10"
+                                                icon="sap-icon://edit"
+                                                press="onEditPaymentPlan"
+                                            />
+                                            <Button
+                                                id="_IDGenButton11"
+                                                icon="sap-icon://delete"
+                                                type="Reject"
+                                                press="onDelete"
+                                            />
+                                        </HBox>
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </content>
+                </TabContainerItem>
             </items>
-        </Table>
+        </TabContainer>
     </Page>
 </mvc:View>

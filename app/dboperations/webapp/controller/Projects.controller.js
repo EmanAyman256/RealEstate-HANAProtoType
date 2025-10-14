@@ -173,79 +173,99 @@ sap.ui.define([
         },
 
 
-        onDetails: function (oEvent) {
-            var oBindingContext = oEvent.getSource().getBindingContext();
-            if (!oBindingContext) {
-                return;
-            }
+      onDetails: function (oEvent) {
+    var oBindingContext = oEvent.getSource().getBindingContext();
+    if (!oBindingContext) {
+        return;
+    }
 
-            var oData = oBindingContext.getObject();
-            var oDialogModel = new sap.ui.model.json.JSONModel({
-                ProjectId: oData.projectId,
-                Description: oData.projectDescription,
-                CompanyCode: oData.companyCodeId,
-                companyCodeDescription: oData.companyCodeDescription,
-                projectDescription: oData.projectDescription,
-                validFrom: oData.validFrom,
-                validTo: oData.validTo,
-                location: oData.location,
-                businessArea: oData.businessArea,
-                profitCenter: oData.profitCenter,
-                functionalArea: oData.functionalArea,
-                supplementaryText: oData.supplementaryText
-            });
+    var oData = oBindingContext.getObject();
+    var oDialogModel = new sap.ui.model.json.JSONModel({
+        ProjectId: oData.projectId,
+        Description: oData.projectDescription,
+        CompanyCode: oData.companyCodeId,
+        companyCodeDescription: oData.companyCodeDescription,
+        projectDescription: oData.projectDescription,
+        validFrom: oData.validFrom,
+        validTo: oData.validTo,
+        location: oData.location,
+        businessArea: oData.businessArea,
+        profitCenter: oData.profitCenter,
+        functionalArea: oData.functionalArea,
+        supplementaryText: oData.supplementaryText
+    });
 
-            if (!this._oDetailsDialog) {
-                this._oDetailsDialog = new sap.m.Dialog({
-                    title: "Project Details",
-                    content: new sap.ui.layout.form.SimpleForm({
-                        editable: false,
-                        content: [
-                            new sap.m.Label({ text: "Project ID:" }),
-                            new sap.m.Text({ text: "{/ProjectId}" }),
+    if (!this._oDetailsDialog) {
+        this._oDetailsDialog = new sap.m.Dialog({
+            title: "Project Details",
+            // ✅ Make it wide and remove scroll
+            contentWidth: "70%",  // or "800px"
+            contentHeight: "auto",
+            resizable: true,
+            draggable: true,
+            verticalScrolling: false,
+            horizontalScrolling: false,
+            content: new sap.ui.layout.form.SimpleForm({
+                layout: "ResponsiveGridLayout",
+                columnsL: 2,
+                columnsM: 2,
+                editable: false,
+                minWidth: 1024,
+                labelSpanL: 3,
+                labelSpanM: 3,
+                emptySpanL: 1,
+                emptySpanM: 1,
+                content: [
+                    new sap.m.Label({ text: "Project ID:" }),
+                    new sap.m.Text({ text: "{/ProjectId}" }),
 
-                            new sap.m.Label({ text: "Description:" }),
-                            new sap.m.Text({ text: "{/Description}" }),
+                    new sap.m.Label({ text: "Description:" }),
+                    new sap.m.Text({ text: "{/Description}" }),
 
-                            new sap.m.Label({ text: "Company Code:" }),
-                            new sap.m.Text({ text: "{/CompanyCode}" }),
+                    new sap.m.Label({ text: "Company Code:" }),
+                    new sap.m.Text({ text: "{/CompanyCode}" }),
 
-                            new sap.m.Label({ text: "From:" }),
-                            new sap.m.Text({ text: "{/validFrom}" }),
+                    new sap.m.Label({ text: "Company Description:" }),
+                    new sap.m.Text({ text: "{/companyCodeDescription}" }),
 
-                            new sap.m.Label({ text: "To:" }),
-                            new sap.m.Text({ text: "{/validTo}" }),
+                    new sap.m.Label({ text: "Valid From:" }),
+                    new sap.m.Text({ text: "{/validFrom}" }),
 
-                            new sap.m.Label({ text: "location:" }),
-                            new sap.m.Text({ text: "{/location}" }),
+                    new sap.m.Label({ text: "Valid To:" }),
+                    new sap.m.Text({ text: "{/validTo}" }),
 
-                            new sap.m.Label({ text: "Business Area:" }),
-                            new sap.m.Text({ text: "{/businessArea}" }),
+                    new sap.m.Label({ text: "Location:" }),
+                    new sap.m.Text({ text: "{/location}" }),
 
-                            new sap.m.Label({ text: "Profit Center:" }),
-                            new sap.m.Text({ text: "{/profitCenter}" }),
+                    new sap.m.Label({ text: "Business Area:" }),
+                    new sap.m.Text({ text: "{/businessArea}" }),
 
-                            new sap.m.Label({ text: "Functional Area:" }),
-                            new sap.m.Text({ text: "{/functionalArea}" }),
+                    new sap.m.Label({ text: "Profit Center:" }),
+                    new sap.m.Text({ text: "{/profitCenter}" }),
 
-                            new sap.m.Label({ text: "Supplementary Text:" }),
-                            new sap.m.Text({ text: "{/supplementaryText}" }),
-                        ]
-                    }),
-                    endButton: new sap.m.Button({
-                        text: "Ok",
-                        type: "Emphasized",
-                        press: function () {
-                            this._oDetailsDialog.close();
-                        }.bind(this)
-                    })
-                });
+                    new sap.m.Label({ text: "Functional Area:" }),
+                    new sap.m.Text({ text: "{/functionalArea}" }),
 
-                this.getView().addDependent(this._oDetailsDialog);
-            }
-            this._oDetailsDialog.setModel(oDialogModel);
-            this._oDetailsDialog.open();
-        },
+                    new sap.m.Label({ text: "Supplementary Text:" }),
+                    new sap.m.Text({ text: "{/supplementaryText}" }),
+                ]
+            }),
+            endButton: new sap.m.Button({
+                text: "OK",
+                type: "Emphasized",
+                press: function () {
+                    this._oDetailsDialog.close();
+                }.bind(this)
+            })
+        });
+
+        this.getView().addDependent(this._oDetailsDialog);
+    }
+
+    this._oDetailsDialog.setModel(oDialogModel);
+    this._oDetailsDialog.open();
+},
+
 
         onDelete: function (oEvent) {
             var oBindingContext = oEvent.getSource().getBindingContext();
@@ -455,7 +475,21 @@ sap.ui.define([
                             new sap.m.Text({ text: "{/companyCodeId}" }),
 
                             new sap.m.Label({ text: "Project ID" }),
-                            new sap.m.Text({ text: "{/projectId}" })
+                            new sap.m.Text({ text: "{/projectId}" }),
+
+                            new sap.m.Label({ text: "Business Area" }),
+                            new sap.m.Input({
+                                value: "{/businessArea}"
+                            }),
+
+                            new sap.m.Label({ text: "Profit Center" }),
+                            new sap.m.Input({
+                                value: "{/profitCenter}"
+                            }),
+                            new sap.m.Label({ text: "Functional Area" }),
+                            new sap.m.Input({
+                                value: "{/functionalArea}"
+                            })
                         ]
                     }),
                     beginButton: new sap.m.Button({

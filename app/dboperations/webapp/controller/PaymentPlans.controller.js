@@ -21,10 +21,12 @@ sap.ui.define([
                 .attachPatternMatched(this._onRouteMatched, this);
 
             this._loadPaymentPlans();
+            this._loadPlanSchedule();
         },
 
         _onRouteMatched: function () {
             this._loadPaymentPlans();
+            this._loadPlanSchedule()
         },
 
         _loadPaymentPlans: function () {
@@ -234,7 +236,93 @@ sap.ui.define([
                     }
                 }
             });
+        },
+        /*  ____ Plan Schedule Functions ____   */
+        _loadPlanSchedule: function () {
+            const oModel = new JSONModel();
+            fetch("/odata/v4/real-estate/PaymentPlanSchedules")
+                .then(response => response.json())
+                .then(data => {
+                    oModel.setData({ PaymentPlanSchedules: data.value });
+                    this.getView().byId("paymentPlanScheduleTable").setModel(oModel);
+                })
+                .catch(err => console.error("Error fetching PaymentPlans", err));
         }
+        ,
+        onNavigateToAddPlanSchedule: function () {
+            if (!this._oAddDialog) {
+                const oNewModel = new JSONModel({
+                    ID: "",
+                    conditionType: "",
+                    percentage: "",
+                    basePrice: "",
+                    calculationMethod: "",
+                    frequency: "",
+                    dueInMonth:null,
+                    numberOfInstallments: null,
+                    numberOfYears: null
 
+                });
+
+                this._oAddDialog = new Dialog({
+                    title: "Add New Payment Plan",
+                    content: new SimpleForm({
+                        editable: true,
+                        content: [
+                            new Label({ text: "Plan Schedule Id" }),
+                            new Input({ value: "{/ID}" }),
+                            new Label({ text: "Condition Type" }),
+                            new Input({ value: "{/conditionType}" }),
+                            new Label({ text: "Percentage" }),
+                            new Input({ value: "{/percentage}" }),
+                            new Label({ text: "Base Price" }),
+                            new Input({ value: "{/basePrice}" }),
+                            new Label({ text: "Calculation Method" }),
+                            new Input({ value: "{/calculationMethod}" }),
+                            new Label({ text: "Frequency" }),
+                            new Input({ value: "{/frequency}" }),
+                            new Label({ text: "Due In Month" }),
+                            new Input({ value: "{/dueInMonth}" }),
+                            new Label({ text: "Number Of Installments" }),
+                            new Input({ value: "{/numberOfInstallments}" }),
+                            new Label({ text: "Number Of Years" }),
+                            new Input({ value: "{/numberOfYears}" })
+                        ]
+                    }),
+                    beginButton: new Button({
+                        text: "Save",
+                        type: "Emphasized",
+                        press: function () {
+                            const oData = this._oAddDialog.getModel().getData();
+                            fetch("/odata/v4/real-estate/PaymentPlanSchedules", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(oData)
+                            })
+                                .then(response => {
+                                    if (!response.ok) throw new Error("Failed to create Plan Schedule");
+                                    return response.json();
+                                })
+                                .then(() => {
+                                    MessageToast.show(" PlanSched created successfully!");
+                                    this._loadPlanSchedule();
+                                    this._oAddDialog.close();
+                                })
+                                .catch(err => MessageBox.error("Error: " + err.message));
+                        }.bind(this)
+                    }),
+                    endButton: new Button({
+                        text: "Cancel",
+                        press: function () {
+                            this._oAddDialog.close();
+                        }.bind(this)
+                    })
+                });
+
+                this._oAddDialog.setModel(oNewModel);
+                this.getView().addDependent(this._oAddDialog);
+            }
+            this._oAddDialog.open();
+        },
     });
 });
