@@ -40,6 +40,9 @@ sap.ui.define([
 
                 this._oAddDialog = new sap.m.Dialog({
                     title: "Payment Plan",
+                     contentWidth: "100%",
+                    resizable: true,
+                    draggable: true,
                     content: new sap.m.VBox({ items: this._createAddEditForm() }),
                     beginButton: new sap.m.Button({
                         text: "Save",
@@ -272,46 +275,147 @@ sap.ui.define([
         },
 
         // Show plan details in a wide dialog
-        onShowPlanDetails: function(oEvent) {
-            const oData = oEvent.getSource().getBindingContext().getObject();
+      onShowPlanDetails: function (oEvent) {
+    const oBindingContext = oEvent.getSource().getBindingContext();
+    if (!oBindingContext) return;
 
-            if (!this._oDetailsDialog) {
-                this._oDetailsDialog = new sap.m.Dialog({
-                    title: `Details for Plan ${oData.paymentPlanId}`,
-                    stretch: true,
-                    contentWidth: "80%",
-                    content: new sap.m.VBox({ items: [] }),
-                    endButton: new sap.m.Button({
-                        text: "Close",
-                        press: function () { this._oDetailsDialog.close(); }.bind(this)
-                    })
-                });
-                this.getView().addDependent(this._oDetailsDialog);
-            }
+    const oData = oBindingContext.getObject();
 
-            const oVBox = this._oDetailsDialog.getContent()[0];
-            oVBox.removeAllItems();
+    // Prepare JSON model for dialog
+    const oDialogModel = new sap.ui.model.json.JSONModel({
+        paymentPlanId: oData.paymentPlanId,
+        description: oData.description,
+        companyCodeId: oData.companyCodeId,
+        planYears: oData.planYears,
+        validFrom: oData.validFrom,
+        validTo: oData.validTo,
+        planStatus: oData.planStatus,
+        schedules: oData.schedule || [],
+        projects: oData.assignedProjects || []
+    });
 
-            oVBox.addItem(new sap.m.Title({ text: "General Info", level: "H3" }));
-            oVBox.addItem(new sap.m.Label({ text: `Description: ${oData.description}` }));
-            oVBox.addItem(new sap.m.Label({ text: `Company Code: ${oData.companyCodeId}` }));
-            oVBox.addItem(new sap.m.Label({ text: `Years: ${oData.planYears}` }));
-            oVBox.addItem(new sap.m.Label({ text: `Valid From: ${oData.validFrom}` }));
-            oVBox.addItem(new sap.m.Label({ text: `Valid To: ${oData.validTo}` }));
-            oVBox.addItem(new sap.m.Label({ text: `Status: ${oData.planStatus}` }));
+    if (!this._oDetailsDialog) {
+        this._oDetailsDialog = new sap.m.Dialog({
+            title: "Payment Plan Details",
+            contentWidth: "100%",
+            resizable: true,
+            draggable: true,
+            content: [
+                new sap.m.IconTabBar({
+                    expandable: true,
+                    items: [
+                        // 🔹 Tab 1: General Info
+                        new sap.m.IconTabFilter({
+                            text: "General Info",
+                            icon: "sap-icon://business-card",
+                            content: [
+                                new sap.ui.layout.form.SimpleForm({
+                                    editable: false,
+                                    layout: "ResponsiveGridLayout",
+                                    labelSpanL: 3,
+                                    columnsL: 2,
+                                    content: [
+                                        new sap.m.Label({ text: "Payment Plan ID" }),
+                                        new sap.m.Text({ text: "{/paymentPlanId}" }),
 
-            oVBox.addItem(new sap.m.Title({ text: "Schedules", level: "H3" }));
-            (oData.schedule || []).forEach(s => {
-                oVBox.addItem(new sap.m.Label({ text: `${s.conditionType.code} - ${s.basePrice.code} - ${s.calculationMethod.code} - ${s.percentage}%` }));
-            });
+                                        new sap.m.Label({ text: "Description" }),
+                                        new sap.m.Text({ text: "{/description}" }),
 
-            oVBox.addItem(new sap.m.Title({ text: "Assigned Projects", level: "H3" }));
-            (oData.assignedProjects || []).forEach(p => {
-                oVBox.addItem(new sap.m.Label({ text: `${p.project.projectId}` }));
-            });
+                                        new sap.m.Label({ text: "Company Code ID" }),
+                                        new sap.m.Text({ text: "{/companyCodeId}" }),
 
-            this._oDetailsDialog.open();
-        },
+                                        new sap.m.Label({ text: "Plan Years" }),
+                                        new sap.m.Text({ text: "{/planYears}" }),
+
+                                        new sap.m.Label({ text: "Valid From" }),
+                                        new sap.m.Text({ text: "{/validFrom}" }),
+
+                                        new sap.m.Label({ text: "Valid To" }),
+                                        new sap.m.Text({ text: "{/validTo}" }),
+
+                                        new sap.m.Label({ text: "Plan Status" }),
+                                        new sap.m.Text({ text: "{/planStatus}" })
+                                    ]
+                                })
+                            ]
+                        }),
+
+                        // 🔹 Tab 2: Schedules
+                        new sap.m.IconTabFilter({
+                            text: "Schedules",
+                            icon: "sap-icon://calendar",
+                            content: [
+                                new sap.m.Table({
+                                    columns: [
+                                        new sap.m.Column({ header: new sap.m.Label({ text: "Condition Type" }) }),
+                                        new sap.m.Column({ header: new sap.m.Label({ text: "Base Price" }) }),
+                                        new sap.m.Column({ header: new sap.m.Label({ text: "Calculation Method" }) }),
+                                        new sap.m.Column({ header: new sap.m.Label({ text: "Frequency" }) }),
+                                        new sap.m.Column({ header: new sap.m.Label({ text: "%" }) }),
+                                        new sap.m.Column({ header: new sap.m.Label({ text: "Due (Months)" }) }),
+                                        new sap.m.Column({ header: new sap.m.Label({ text: "Installments" }) }),
+                                        new sap.m.Column({ header: new sap.m.Label({ text: "Years" }) })
+                                    ],
+                                    items: {
+                                        path: "/schedules",
+                                        template: new sap.m.ColumnListItem({
+                                            cells: [
+                                                new sap.m.Text({ text: "{conditionType/code}" }),
+                                                new sap.m.Text({ text: "{basePrice/code}" }),
+                                                new sap.m.Text({ text: "{calculationMethod/code}" }),
+                                                new sap.m.Text({ text: "{frequency/code}" }),
+                                                new sap.m.Text({ text: "{percentage}" }),
+                                                new sap.m.Text({ text: "{dueInMonth}" }),
+                                                new sap.m.Text({ text: "{numberOfInstallments}" }),
+                                                new sap.m.Text({ text: "{numberOfYears}" })
+                                            ]
+                                        })
+                                    }
+                                })
+                            ]
+                        }),
+
+                        // 🔹 Tab 3: Assigned Projects
+                        new sap.m.IconTabFilter({
+                            text: "Assigned Projects",
+                            icon: "sap-icon://project-definition",
+                            content: [
+                                new sap.m.Table({
+                                    columns: [
+                                        new sap.m.Column({ header: new sap.m.Label({ text: "Project ID" }) }),
+                                        new sap.m.Column({ header: new sap.m.Label({ text: "Project Description" }) })
+                                    ],
+                                    items: {
+                                        path: "/projects",
+                                        template: new sap.m.ColumnListItem({
+                                            cells: [
+                                                new sap.m.Text({ text: "{project/projectId}" }),
+                                                new sap.m.Text({ text: "{project/projectDescription}" })
+                                            ]
+                                        })
+                                    }
+                                })
+                            ]
+                        })
+                    ]
+                })
+            ],
+            endButton: new sap.m.Button({
+                text: "Close",
+                type: "Emphasized",
+                press: function () {
+                    this._oDetailsDialog.close();
+                }.bind(this)
+            })
+        });
+
+        this.getView().addDependent(this._oDetailsDialog);
+    }
+
+    this._oDetailsDialog.setModel(oDialogModel);
+    this._oDetailsDialog.open();
+},
+
 
         // Add/Delete schedule rows
         onAddScheduleRow: function () {
