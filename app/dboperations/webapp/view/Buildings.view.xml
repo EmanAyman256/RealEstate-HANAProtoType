@@ -1,96 +1,95 @@
 <mvc:View
     controllerName="dboperations.controller.Buildings"
     xmlns="sap.m"
-    xmlns:mvc="sap.ui.core.mvc"
-    xmlns:sap.m="sap.m"
-    xmlns:f="sap.f"
-    xmlns:w="sap.ui.integration.widgets"
-    xmlns:tnt="sap.tnt"
-    xmlns:form="sap.ui.layout.form"
-    xmlns:table="sap.ui.table"
-    xmlns:layout="sap.ui.layout"
-    xmlns:core="sap.ui.core"
-    xmlns:m="sap.m"
-    xmlns:u="sap.ui.unified"
-    xmlns:macros="sap.fe.macros" >
-    <Page id="_IDGenPage1"
-        title="Buildings Page" >
-         <headerContent>
-            <Button id="btnAddBuildings" icon="sap-icon://add" tooltip="Add" text="New Building" press="onAddBuilding" />
+    xmlns:mvc="sap.ui.core.mvc">
+
+    <Page id="BuildingsPage" title="Buildings">
+        <headerContent>
+            <Button
+                id="btnAddBuildings"
+                icon="sap-icon://add"
+                tooltip="Add"
+                text="New Building"
+                press="onAddBuilding" />
         </headerContent>
-         <Table id="BuildingsTable"  items="{path: '/Buildings'}">
-            <columns>
-                <Column id="_IDGenColumn">
-                    <Text id="_IDGenText23"  text="Building ID" />
-                </Column>
-               <Column id="_IDGenColumn13" >
-                    <Text id="_IDGenText24" text="Building Description" />
-                </Column>
-                <Column id="_IDGenColumn25"  >
-                    <Text id="_IDGenText46"  text="Building Old Code" />
-                </Column>
-                <Column id="_IDGenColumn26">
-                    <Text id="_IDGenText47"  text="Project ID" />
-                </Column>
-               <Column id="_IDGenColumn27" >
-                    <Text id="_IDGenText48"  text="Project Description" />
-                </Column>
-                <Column id="_IDGenColumn14" >
-                    <Text id="_IDGenText25" text="Company Code" />
-                </Column>
-                     <Column id="_IDGenColumn15" >
-                    <Text id="_IDGenText26"  text="Company Code Description" />
-                </Column>
-                
-                <Column id="_IDGenColumn16" >
-                    <Text id="_IDGenText27"  text="From" />
-                </Column>
-                     <Column id="_IDGenColumn17" >
-                    <Text id="_IDGenText28"  text="To" />
-                </Column>
-                <Column id="_IDGenColumn18" >
-                    <Text id="_IDGenText29"  text="Location" />
-                </Column>
-                <Column id="_IDGenColumn19" >
-                    <Text id="_IDGenText30" text="Business Area" />
-                </Column>
-                     <Column id="_IDGenColumn20" >
-                    <Text id="_IDGenText31" text="Profit Center" />
-                </Column>
-                <Column id="_IDGenColumn21" >
-                    <Text id="_IDGenText32" text="Functional Area" />
-                </Column>
-               
-                <Column id="_IDGenColumn23" >
-                    <Text id="_IDGenText34"  text="Actions" />
-                </Column>
-            </columns>
-            <items>
-                <ColumnListItem id="_IDGenColumnListItem1" >
-                    <cells>
-                        <Text id="_IDGenText35"  text="{buildingId}" />
-                        <Text id="_IDGenText36"  text="{buildingDescription}" />
-                        <Text id="_IDGenText37"  text="{buildingOldCode}" />
-                        <Text id="_IDGenText49"   text="{projectId}" />
-                        <Text id="_IDGenText50"   text="{projectDescription}" />
-                          <Text id="_IDGenText38"  text="{companyCodeId}" />
-                        <Text id="_IDGenText39"  text="{companyCodeDescription}" />
-                        <Text id="_IDGenText33"   text="{validFrom}" />
 
-                        <Text id="_IDGenText40"  text="{validTo}" />
-                          <Text id="_IDGenText41"  text="{location}" />
-                        <Text id="_IDGenText42"  text="{businessArea}" />
-                        <Text id="_IDGenText43"  text="{profitCenter}" />
-                          <Text id="_IDGenText44"  text="{functionalArea}" />
-                            <HBox id="_IDGenHBox1"   >
-                            <Button id="_IDGenButton3"  icon="sap-icon://information" press="onDetails" />
-                            <Button id="_IDGenButton4" icon="sap-icon://delete" press="onDelete"  type="Reject"  />
-                            <Button id="_IDGenButton2" icon="sap-icon://edit" press="onEdit" />
+        <content>
+            <Table
+                id="buildingsTable"
+                items="{ path: '/Buildings' }"
+                class="sapUiResponsiveContentPadding">
 
-                        </HBox>
-                    </cells>
-                </ColumnListItem>
-            </items>
-        </Table>
+                <columns>
+                    <!-- General Data -->
+                    <Column><Text text="Building ID" /></Column>
+                    <Column><Text text="Building Description" /></Column>
+                    <Column><Text text="Building Old Code" /></Column>
+                    <Column><Text text="Project ID" /></Column>
+                    <Column><Text text="Project Description" /></Column>
+                    <Column><Text text="Company Code ID" /></Column>
+                    <Column><Text text="Company Code Description" /></Column>
+                    <Column><Text text="Valid From" /></Column>
+                    <Column><Text text="Valid To" /></Column>
+                    <Column><Text text="Location" /></Column>
+
+                    <!-- Posting Parameters -->
+                    <Column><Text text="Business Area" /></Column>
+                    <Column><Text text="Profit Center" /></Column>
+                    <Column><Text text="Functional Area" /></Column>
+
+                    <!-- Supplementary Text (optional, uncomment if exists) -->
+                    <!-- <Column><Text text="Supplementary Text" /></Column> -->
+
+                    <Column><Text text="Actions" /></Column>
+                </columns>
+
+                <items>
+                    <ColumnListItem>
+                        <cells>
+                            <!-- General Data -->
+                            <Text text="{buildingId}" />
+                            <Text text="{buildingDescription}" />
+                            <Text text="{buildingOldCode}" />
+                            <Text text="{projectId}" />
+                            <Text text="{projectDescription}" />
+                            <Text text="{companyCodeId}" />
+                            <Text text="{companyCodeDescription}" />
+                            <Text text="{validFrom}" />
+                            <Text text="{validTo}" />
+                            <Text text="{location}" />
+
+                            <!-- Posting Parameters -->
+                            <Text text="{businessArea}" />
+                            <Text text="{profitCenter}" />
+                            <Text text="{functionalArea}" />
+
+                            <!-- Supplementary Text (optional) -->
+                            <!-- <Text text="{supplementaryText}" /> -->
+
+                            <!-- Action Buttons -->
+                            <HBox>
+                                <Button
+                                    icon="sap-icon://sys-add"
+                                    tooltip="Add Unit"
+                                    press="onAddUnit" />
+                                <Button
+                                    icon="sap-icon://information"
+                                    tooltip="Details"
+                                    press="onDetails" />
+                                <Button
+                                    icon="sap-icon://edit"
+                                    tooltip="Edit"
+                                    press="onEdit" />
+                                <Button
+                                    icon="sap-icon://delete"
+                                    type="Reject"
+                                    tooltip="Delete"
+                                    press="onDelete" />
+                            </HBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
     </Page>
 </mvc:View>

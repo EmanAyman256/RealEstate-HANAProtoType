@@ -43,9 +43,9 @@ entity Projects : managed {
         buildings              : Composition of many Buildings
                                      on buildings.project = $self;
 
-        paymentPlanProjects : Association to many PaymentPlanProjects
+        paymentPlanProjects    : Association to many PaymentPlanProjects
                                      on paymentPlanProjects.project = $self;
-                                     
+
 }
 
 entity Units : managed {
@@ -84,55 +84,89 @@ entity Units : managed {
 
         unitDeliveryDate         : Date;
 
-        originalPriceZU01        : Decimal(15, 2);
-        parkingPriceZU03         : Decimal(15, 2);
-        maintenancePrice         : Decimal(15, 2);
-
-        builtUpAreaM2            : Decimal(15, 2);
-        gardenAreaM2             : Decimal(15, 2);
-        numberOfRoomsPc          : Decimal(5, 2);
-
         profitCenter             : Integer;
         functionalArea           : Integer;
 
         supplementaryText        : String(255);
+
+        // Composition tables for Measurements and Prices
+        measurements             : Composition of many UnitMeasurements
+                                       on measurements.unit = $self;
+        prices                   : Composition of many UnitPrices
+                                       on prices.unit = $self;
+
+}
+
+entity UnitMeasurements : managed {
+    key ID              : UUID;
+        unit            : Association to Units;
+        builtUpAreaM2   : Decimal(15, 2);
+        gardenAreaM2    : Decimal(15, 2);
+        numberOfRoomsPc : Decimal(5, 2);
+}
+
+entity UnitPrices : managed {
+    key ID                : UUID;
+        unit              : Association to Units;
+        originalPriceZU01 : Decimal(15, 2);
+        parkingPriceZU03  : Decimal(15, 2);
+        maintenancePrice  : Decimal(15, 2);
 }
 
 entity PaymentPlans : managed {
-    key paymentPlanId    : String(20);
-        description      : String(60);
-        companyCodeId    : String(4);
-        planYears        : Integer;
-        validFrom        : Date;
-        validTo          : Date;
-        planStatus       : String(1);
+    key paymentPlanId  : String(20);
+    description        : String(60);
+    companyCodeId          : String(4);
+    planYears          : Integer;
+    validFrom          : Date;
+    validTo            : Date;
+    planStatus         : String(1);
 
-        paymentPlanSchedules        : Composition of many PaymentPlanSchedules
-                               on paymentPlanSchedules.paymentPlan = $self;
+    // Composition of schedule items
+    schedule : Composition of many PaymentPlanSchedules on schedule.paymentPlan = $self;
 
-        paymentPlanProjects : Composition of many PaymentPlanProjects
-                               on paymentPlanProjects.paymentPlan = $self;
+    // Assigned projects
+    assignedProjects : Composition of many PaymentPlanProjects on assignedProjects.paymentPlan = $self;
 }
 
 entity PaymentPlanSchedules : managed {
-    key ID                   : UUID;
-        paymentPlan          : Association to PaymentPlans;
+    key ID : UUID;
 
-        conditionType        : String(10);
-        percentage           : Decimal(5, 2);
-        basePrice            : String(10);
-        calculationMethod    : String(10);
-        frequency            : String(10);
-        dueInMonth           : Integer;
-        numberOfInstallments : Integer;
-        numberOfYears        : Integer;
+    paymentPlan        : Association to PaymentPlans;
+
+    conditionType      : Association to ConditionTypes;
+    basePrice          : Association to BasePrices;
+    calculationMethod  : Association to CalculationMethods;
+    frequency          : Association to Frequencies;
+
+    percentage         : Decimal(5,2);
+    dueInMonth         : Integer;
+    numberOfInstallments : Integer;
+    numberOfYears        : Integer;
 }
 
 entity PaymentPlanProjects : managed {
-    key ID                 : UUID;
-        paymentPlan        : Association to PaymentPlans;
+    key ID : UUID;
+    paymentPlan : Association to PaymentPlans;
+    project     : Association to Projects;
+}
 
-        project            : Association to Projects;
-        projectId          : String(8);
-        projectDescription : String(60);
+entity ConditionTypes {
+    key code : String(10);
+    description : String(60);
+}
+
+entity BasePrices {
+    key code : String(10);
+    description : String(60);
+}
+
+entity CalculationMethods {
+    key code : String(10);
+    description : String(60);
+}
+
+entity Frequencies {
+    key code : String(10);
+    description : String(60);
 }

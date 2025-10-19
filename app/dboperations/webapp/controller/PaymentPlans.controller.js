@@ -1,101 +1,180 @@
 sap.ui.define([
     "sap/ui/core/mvc/Controller",
-    "sap/m/MessageBox",
-    "sap/m/Dialog",
-    "sap/m/Input",
-    "sap/m/Button",
-    "sap/m/Label",
-    "sap/m/DatePicker",
-    "sap/m/StepInput",
     "sap/m/MessageToast",
-    "sap/ui/layout/form/SimpleForm",
+    "sap/m/MessageBox",
     "sap/ui/model/json/JSONModel"
-], function (Controller, MessageBox, Dialog, Input, Button, Label, DatePicker, StepInput, MessageToast, SimpleForm, JSONModel) {
+], function (Controller, MessageToast, MessageBox, JSONModel) {
     "use strict";
 
     return Controller.extend("dboperations.controller.PaymentPlans", {
 
         onInit: function () {
-            this.getOwnerComponent().getRouter()
-                .getRoute("PaymentPlans")
-                .attachPatternMatched(this._onRouteMatched, this);
-
-            this._loadPaymentPlans();
-            this._loadPlanSchedule();
+            this.oModel = this.getView().getModel();
+            this._loadPlans();
         },
 
-        _onRouteMatched: function () {
-            this._loadPaymentPlans();
-            this._loadPlanSchedule()
-        },
-
-        _loadPaymentPlans: function () {
-            const oModel = new JSONModel();
+        _loadPlans: function () {
             fetch("/odata/v4/real-estate/PaymentPlans")
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
-                    oModel.setData({ PaymentPlans: data.value });
-                    this.getView().byId("paymentPlansTable").setModel(oModel);
+                    this.getView().setModel(new JSONModel(data.value), "plans");
                 })
-                .catch(err => console.error("Error fetching PaymentPlans", err));
+                .catch(err => console.error(err));
         },
 
-        onNavigateToAddPaymentPlan: function () {
+        onAddPlan: function () {
             if (!this._oAddDialog) {
-                const oNewModel = new JSONModel({
+                const oNewPlanModel = new JSONModel({
                     paymentPlanId: "",
                     description: "",
                     companyCodeId: "",
-                    planYears: "",
+                    planYears: 0,
                     validFrom: "",
                     validTo: "",
-                    planStatus: ""
+                    planStatus: "",
+                    schedules: [],
+                    projects: []
                 });
 
-                this._oAddDialog = new Dialog({
-                    title: "Add New Payment Plan",
-                    content: new SimpleForm({
-                        editable: true,
-                        content: [
-                            new Label({ text: "Payment Plan ID" }),
-                            new Input({ value: "{/paymentPlanId}" }),
-                            new Label({ text: "Description" }),
-                            new Input({ value: "{/description}" }),
-                            new Label({ text: "Company Code ID" }),
-                            new Input({ value: "{/companyCodeId}" }),
-                            new Label({ text: "Plan Years" }),
-                            new StepInput({ value: "{/planYears}", min: 0, step: 1 }),
-                            new Label({ text: "Valid From" }),
-                            new DatePicker({ value: "{/validFrom}", valueFormat: "yyyy-MM-dd", displayFormat: "long" }),
-                            new Label({ text: "Valid To" }),
-                            new DatePicker({ value: "{/validTo}", valueFormat: "yyyy-MM-dd", displayFormat: "long" }),
-                            new Label({ text: "Plan Status" }),
-                            new Input({ value: "{/planStatus}" })
+                this._oAddDialog = new sap.m.Dialog({
+                    title: "Add Payment Plan",
+                    content: new sap.m.VBox({
+                        items: [
+                            new sap.m.Label({ text: "Company Code ID" }),
+                            new sap.m.Input({ value: "{/companyCodeId}" }),
+
+                            new sap.m.Label({ text: "Description" }),
+                            new sap.m.Input({ value: "{/description}" }),
+
+                            new sap.m.Label({ text: "Plan Years" }),
+                            new sap.m.Input({ value: "{/planYears}", type: "Number" }),
+
+                            new sap.m.Label({ text: "Valid From" }),
+                            new sap.m.DatePicker({ value: "{/validFrom}", valueFormat: "yyyy-MM-dd", displayFormat: "long" }),
+
+                            new sap.m.Label({ text: "Valid To" }),
+                            new sap.m.DatePicker({ value: "{/validTo}", valueFormat: "yyyy-MM-dd", displayFormat: "long" }),
+
+                            new sap.m.Label({ text: "Plan Status" }),
+                            new sap.m.Input({ value: "{/planStatus}" }),
+
+                            new sap.m.Title({ text: "Schedules" }),
+                            new sap.m.Toolbar({
+                                content: [
+                                    new sap.m.Button({ text: "Add Row", press: this.onAddScheduleRow.bind(this) }),
+                                    new sap.m.Button({ text: "Delete Row", press: this.onDeleteScheduleRow.bind(this) })
+                                ]
+                            }),
+                            new sap.m.Table({
+                                id: "scheduleTable",
+                                items: "{/schedules}",
+                                columns: [
+                                    new sap.m.Column({ header: new sap.m.Label({ text: "Condition Type" }) }),
+                                    new sap.m.Column({ header: new sap.m.Label({ text: "Base Price" }) }),
+                                    new sap.m.Column({ header: new sap.m.Label({ text: "Calc. Method" }) }),
+                                    new sap.m.Column({ header: new sap.m.Label({ text: "Frequency" }) }),
+                                    new sap.m.Column({ header: new sap.m.Label({ text: "%" }) }),
+                                    new sap.m.Column({ header: new sap.m.Label({ text: "Due (Months)" }) }),
+                                    new sap.m.Column({ header: new sap.m.Label({ text: "Installments" }) }),
+                                    new sap.m.Column({ header: new sap.m.Label({ text: "Years" }) })
+                                ],
+                                items: {
+                                    path: "/schedules",
+                                    template: new sap.m.ColumnListItem({
+                                        cells: [
+                                            new sap.m.Input({ value: "{conditionType}" }),
+                                            new sap.m.Input({ value: "{basePrice}" }),
+                                            new sap.m.Input({ value: "{calculationMethod}" }),
+                                            new sap.m.Input({ value: "{frequency}" }),
+                                            new sap.m.Input({ value: "{percentage}", type: "Number" }),
+                                            new sap.m.Input({ value: "{dueInMonth}", type: "Number" }),
+                                            new sap.m.Input({ value: "{numberOfInstallments}", type: "Number" }),
+                                            new sap.m.Input({ value: "{numberOfYears}", type: "Number" })
+                                        ]
+                                    })
+                                }
+                            }),
+
+                            new sap.m.Title({ text: "Assigned Projects" }),
+                            new sap.m.Toolbar({
+                                content: [
+                                    new sap.m.Button({ text: "Add Project", press: this.onAddProjectRow.bind(this) }),
+                                    new sap.m.Button({ text: "Delete", press: this.onDeleteProjectRow.bind(this) })
+                                ]
+                            }),
+                            new sap.m.Table({
+                                id: "projectsTable",
+                                items: "{/projects}",
+                                columns: [
+                                    new sap.m.Column({ header: new sap.m.Label({ text: "Project ID" }) }),
+                                    new sap.m.Column({ header: new sap.m.Label({ text: "Project Description" }) })
+                                ],
+                                items: {
+                                    path: "/projects",
+                                    template: new sap.m.ColumnListItem({
+                                        cells: [
+                                            new sap.m.Input({ value: "{projectId}" }),
+                                            new sap.m.Input({ value: "{projectDescription}" })
+                                        ]
+                                    })
+                                }
+                            })
                         ]
                     }),
-                    beginButton: new Button({
+                    beginButton: new sap.m.Button({
                         text: "Save",
                         type: "Emphasized",
                         press: function () {
                             const oData = this._oAddDialog.getModel().getData();
+
+                            // Transform schedules & projects to CAP composition format
+                            const aSchedules = oData.schedules.map(s => ({
+                                ID: this._generateUUID(),
+                                conditionType: { code: s.conditionType },
+                                basePrice: { code: s.basePrice },
+                                calculationMethod: { code: s.calculationMethod },
+                                frequency: { code: s.frequency },
+                                percentage: s.percentage,
+                                dueInMonth: s.dueInMonth,
+                                numberOfInstallments: s.numberOfInstallments,
+                                numberOfYears: s.numberOfYears
+                            }));
+
+                            const aProjects = oData.projects.map(p => ({
+                                ID: this._generateUUID(),
+                                project: { projectId: p.projectId }
+                            }));
+
+                            const payload = {
+                                paymentPlanId: Date.now().toString(),
+                                description: oData.description,
+                                companyCodeId: oData.companyCodeId,
+                                planYears: oData.planYears,
+                                validFrom: oData.validFrom,
+                                validTo: oData.validTo,
+                                planStatus: oData.planStatus,
+                                schedule: aSchedules,
+                                assignedProjects: aProjects
+                            };
+
                             fetch("/odata/v4/real-estate/PaymentPlans", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify(oData)
+                                body: JSON.stringify(payload)
                             })
-                                .then(response => {
-                                    if (!response.ok) throw new Error("Failed to create Payment Plan");
-                                    return response.json();
+                                .then(res => {
+                                    if (!res.ok) throw new Error("Failed to save payment plan");
+                                    return res.json();
                                 })
                                 .then(() => {
-                                    MessageToast.show("Payment Plan created successfully!");
-                                    this._loadPaymentPlans();
+                                    MessageToast.show("Payment plan created successfully!");
+                                    this._loadPlans();
                                     this._oAddDialog.close();
                                 })
-                                .catch(err => MessageBox.error("Error: " + err.message));
+                                .catch(err => MessageBox.error(err.message));
                         }.bind(this)
                     }),
-                    endButton: new Button({
+                    endButton: new sap.m.Button({
                         text: "Cancel",
                         press: function () {
                             this._oAddDialog.close();
@@ -103,226 +182,130 @@ sap.ui.define([
                     })
                 });
 
-                this._oAddDialog.setModel(oNewModel);
+                this._oAddDialog.setModel(oNewPlanModel);
                 this.getView().addDependent(this._oAddDialog);
             }
+
+            // Reset model data for new plan
+            this._oAddDialog.getModel().setData({
+                paymentPlanId: "",
+                description: "",
+                companyCodeId: "",
+                planYears: 0,
+                validFrom: "",
+                validTo: "",
+                planStatus: "",
+                schedules: [],
+                projects: []
+            });
+
             this._oAddDialog.open();
         },
 
-        onDetails: function (oEvent) {
-            const oData = oEvent.getSource().getBindingContext().getObject();
-            const oDialogModel = new JSONModel(oData);
-
-            if (!this._oDetailsDialog) {
-                this._oDetailsDialog = new Dialog({
-                    title: "Payment Plan Details",
-                    content: new SimpleForm({
-                        editable: false,
-                        content: [
-                            new Label({ text: "Payment Plan ID" }),
-                            new sap.m.Text({ text: "{/paymentPlanId}" }),
-                            new Label({ text: "Description" }),
-                            new sap.m.Text({ text: "{/description}" }),
-                            new Label({ text: "Company Code ID" }),
-                            new sap.m.Text({ text: "{/companyCodeId}" }),
-                            new Label({ text: "Plan Years" }),
-                            new sap.m.Text({ text: "{/planYears}" }),
-                            new Label({ text: "Valid From" }),
-                            new sap.m.Text({ text: "{/validFrom}" }),
-                            new Label({ text: "Valid To" }),
-                            new sap.m.Text({ text: "{/validTo}" }),
-                            new Label({ text: "Plan Status" }),
-                            new sap.m.Text({ text: "{/planStatus}" })
-                        ]
-                    }),
-                    endButton: new Button({
-                        text: "OK",
-                        press: function () {
-                            this._oDetailsDialog.close();
-                        }.bind(this)
-                    })
-                });
-                this.getView().addDependent(this._oDetailsDialog);
-            }
-
-            this._oDetailsDialog.setModel(oDialogModel);
-            this._oDetailsDialog.open();
-        },
-
-        onEditPaymentPlan: function (oEvent) {
-            const oData = oEvent.getSource().getBindingContext().getObject();
-            const oDialogModel = new JSONModel(Object.assign({}, oData));
-
-            if (!this._oEditDialog) {
-                this._oEditDialog = new Dialog({
-                    title: "Edit Payment Plan",
-                    content: new SimpleForm({
-                        editable: true,
-                        content: [
-                            new Label({ text: "Payment Plan ID" }),
-                            new Input({ value: "{/paymentPlanId}", editable: false }),
-                            new Label({ text: "Description" }),
-                            new Input({ value: "{/description}" }),
-                            new Label({ text: "Company Code ID" }),
-                            new Input({ value: "{/companyCodeId}" }),
-                            new Label({ text: "Plan Years" }),
-                            new StepInput({ value: "{/planYears}", min: 0, step: 1 }),
-                            new Label({ text: "Valid From" }),
-                            new DatePicker({ value: "{/validFrom}", valueFormat: "yyyy-MM-dd", displayFormat: "long" }),
-                            new Label({ text: "Valid To" }),
-                            new DatePicker({ value: "{/validTo}", valueFormat: "yyyy-MM-dd", displayFormat: "long" }),
-                            new Label({ text: "Plan Status" }),
-                            new Input({ value: "{/planStatus}" })
-                        ]
-                    }),
-                    beginButton: new Button({
-                        text: "Save",
-                        type: "Emphasized",
-                        press: function () {
-                            const oUpdated = this._oEditDialog.getModel().getData();
-                            fetch(`/odata/v4/real-estate/PaymentPlans(paymentPlanId='${oUpdated.paymentPlanId}')`, {
-                                method: "PATCH",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify(oUpdated)
-                            })
-                                .then(response => {
-                                    if (!response.ok) throw new Error("Update failed");
-                                    return response.json();
-                                })
-                                .then(() => {
-                                    MessageToast.show("Payment Plan updated successfully!");
-                                    this._loadPaymentPlans();
-                                    this._oEditDialog.close();
-                                })
-                                .catch(err => MessageBox.error("Error: " + err.message));
-                        }.bind(this)
-                    }),
-                    endButton: new Button({
-                        text: "Cancel",
-                        press: function () {
-                            this._oEditDialog.close();
-                        }.bind(this)
-                    })
-                });
-                this.getView().addDependent(this._oEditDialog);
-            }
-
-            this._oEditDialog.setModel(oDialogModel);
-            this._oEditDialog.open();
-        },
-
-        onDelete: function (oEvent) {
-            const oModel = this.getView().byId("paymentPlansTable").getModel();
-            const oData = oEvent.getSource().getBindingContext().getObject();
-
-            MessageBox.confirm(`Delete Payment Plan ${oData.paymentPlanId}?`, {
-                title: "Confirm Deletion",
-                onClose: (action) => {
-                    if (action === MessageBox.Action.OK) {
-                        fetch(`/odata/v4/real-estate/PaymentPlans(paymentPlanId='${oData.paymentPlanId}')`, {
-                            method: "DELETE"
-                        })
-                            .then(response => {
-                                if (!response.ok) throw new Error("Deletion failed");
-                                const aPlans = oModel.getProperty("/PaymentPlans");
-                                const iIndex = aPlans.findIndex(p => p.paymentPlanId === oData.paymentPlanId);
-                                if (iIndex > -1) {
-                                    aPlans.splice(iIndex, 1);
-                                    oModel.setProperty("/PaymentPlans", aPlans);
-                                }
-                                MessageToast.show("Payment Plan deleted successfully!");
-                            })
-                            .catch(err => MessageBox.error("Error: " + err.message));
-                    }
-                }
+        _generateUUID: function () {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
             });
         },
-        /*  ____ Plan Schedule Functions ____   */
-        _loadPlanSchedule: function () {
-            const oModel = new JSONModel();
-            fetch("/odata/v4/real-estate/PaymentPlanSchedules")
-                .then(response => response.json())
-                .then(data => {
-                    oModel.setData({ PaymentPlanSchedules: data.value });
-                    this.getView().byId("paymentPlanScheduleTable").setModel(oModel);
-                })
-                .catch(err => console.error("Error fetching PaymentPlans", err));
-        }
-        ,
-        onNavigateToAddPlanSchedule: function () {
-            if (!this._oAddDialog) {
-                const oNewModel = new JSONModel({
-                    ID: "",
-                    conditionType: "",
-                    percentage: "",
-                    basePrice: "",
-                    calculationMethod: "",
-                    frequency: "",
-                    dueInMonth:null,
-                    numberOfInstallments: null,
-                    numberOfYears: null
 
-                });
-
-                this._oAddDialog = new Dialog({
-                    title: "Add New Payment Plan",
-                    content: new SimpleForm({
-                        editable: true,
-                        content: [
-                            new Label({ text: "Plan Schedule Id" }),
-                            new Input({ value: "{/ID}" }),
-                            new Label({ text: "Condition Type" }),
-                            new Input({ value: "{/conditionType}" }),
-                            new Label({ text: "Percentage" }),
-                            new Input({ value: "{/percentage}" }),
-                            new Label({ text: "Base Price" }),
-                            new Input({ value: "{/basePrice}" }),
-                            new Label({ text: "Calculation Method" }),
-                            new Input({ value: "{/calculationMethod}" }),
-                            new Label({ text: "Frequency" }),
-                            new Input({ value: "{/frequency}" }),
-                            new Label({ text: "Due In Month" }),
-                            new Input({ value: "{/dueInMonth}" }),
-                            new Label({ text: "Number Of Installments" }),
-                            new Input({ value: "{/numberOfInstallments}" }),
-                            new Label({ text: "Number Of Years" }),
-                            new Input({ value: "{/numberOfYears}" })
-                        ]
-                    }),
-                    beginButton: new Button({
-                        text: "Save",
-                        type: "Emphasized",
-                        press: function () {
-                            const oData = this._oAddDialog.getModel().getData();
-                            fetch("/odata/v4/real-estate/PaymentPlanSchedules", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify(oData)
-                            })
-                                .then(response => {
-                                    if (!response.ok) throw new Error("Failed to create Plan Schedule");
-                                    return response.json();
-                                })
-                                .then(() => {
-                                    MessageToast.show(" PlanSched created successfully!");
-                                    this._loadPlanSchedule();
-                                    this._oAddDialog.close();
-                                })
-                                .catch(err => MessageBox.error("Error: " + err.message));
-                        }.bind(this)
-                    }),
-                    endButton: new Button({
-                        text: "Cancel",
-                        press: function () {
-                            this._oAddDialog.close();
-                        }.bind(this)
-                    })
-                });
-
-                this._oAddDialog.setModel(oNewModel);
-                this.getView().addDependent(this._oAddDialog);
-            }
-            this._oAddDialog.open();
+        onAddScheduleRow: function () {
+            const oModel = this._oAddDialog.getModel();
+            const aSchedules = oModel.getProperty("/schedules");
+            aSchedules.push({
+                conditionType: "",
+                basePrice: "",
+                calculationMethod: "",
+                frequency: "",
+                percentage: 0,
+                dueInMonth: 0,
+                numberOfInstallments: 0,
+                numberOfYears: 0
+            });
+            oModel.refresh();
         },
+
+        onDeleteScheduleRow: function () {
+            const oTable = sap.ui.getCore().byId(this._oAddDialog.getId() + "--scheduleTable");
+            const oSelected = oTable.getSelectedItem();
+            if (!oSelected) return MessageBox.warning("Select a schedule to delete");
+            const iIndex = oTable.indexOfItem(oSelected);
+            const oModel = this._oAddDialog.getModel();
+            const aSchedules = oModel.getProperty("/schedules");
+            aSchedules.splice(iIndex, 1);
+            oModel.refresh();
+        },
+
+        onAddProjectRow: function () {
+            const oModel = this._oAddDialog.getModel();
+            const aProjects = oModel.getProperty("/projects");
+            aProjects.push({ projectId: "", projectDescription: "" });
+            oModel.refresh();
+        },
+
+        onDeleteProjectRow: function () {
+            const oTable = sap.ui.getCore().byId(this._oAddDialog.getId() + "--projectsTable");
+            const oSelected = oTable.getSelectedItem();
+            if (!oSelected) return MessageBox.warning("Select a project to delete");
+            const iIndex = oTable.indexOfItem(oSelected);
+            const oModel = this._oAddDialog.getModel();
+            const aProjects = oModel.getProperty("/projects");
+            aProjects.splice(iIndex, 1);
+            oModel.refresh();
+        },
+        // Show details (you already have)
+onShowPlanDetails: function (oEvent) {
+    const oCtx = oEvent.getSource().getBindingContext();
+    const oData = oCtx.getObject();
+    MessageToast.show(`Details for plan ${oData.paymentPlanId}`);
+    // Optional: open a dialog and display full details
+},
+
+// Edit plan
+onEditPlan: function (oEvent) {
+    const oCtx = oEvent.getSource().getBindingContext();
+    const oData = oCtx.getObject();
+
+    // Open the same dialog used for Add, but prefill data
+    this.onAddPlan();  // reuse dialog creation
+    const oDialogModel = this._oAddDialog.getModel();
+    oDialogModel.setData({
+        paymentPlanId: oData.paymentPlanId,
+        description: oData.description,
+        companyCodeId: oData.companyCodeId,
+        planYears: oData.planYears,
+        validFrom: oData.validFrom,
+        validTo: oData.validTo,
+        planStatus: oData.planStatus,
+        schedules: oData.schedule || [],
+        projects: oData.assignedProjects || []
+    });
+
+    this._oAddDialog.open();
+},
+
+// Delete plan
+onDeletePlan: function (oEvent) {
+    const oCtx = oEvent.getSource().getBindingContext();
+    const oData = oCtx.getObject();
+
+    MessageBox.confirm(`Are you sure you want to delete plan ${oData.paymentPlanId}?`, {
+        title: "Delete Confirmation",
+        onClose: (sAction) => {
+            if (sAction === MessageBox.Action.OK) {
+                fetch(`/odata/v4/real-estate/PaymentPlans(${oData.paymentPlanId})`, {
+                    method: "DELETE"
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error("Failed to delete plan");
+                    MessageToast.show("Plan deleted successfully!");
+                    this._loadPlans(); // refresh table
+                })
+                .catch(err => MessageBox.error(err.message));
+            }
+        }
+    });
+}
+
     });
 });

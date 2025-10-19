@@ -1,290 +1,139 @@
 <mvc:View
     controllerName="dboperations.controller.PaymentPlans"
-    xmlns="sap.m"
     xmlns:mvc="sap.ui.core.mvc"
->
-    <Page
-        id="PaymentPlansPage"
-        title="Payment Plans"
-    >
-        <headerContent>
-            <Button
-                id="btnAddPaymentPlan"
-                icon="sap-icon://add"
-                tooltip="Add"
-                text="New Payment Plan"
-                press="onNavigateToAddPaymentPlan"
-            />
-        </headerContent>
-        <TabContainer
-            id="myTabContainer"
-            showAddNewButton="true"
-            class="sapUiResponsiveContentPadding sapUiResponsivePadding--header"
-            addNewButtonPress="addNewButtonPressHandler"
-            itemClose="itemCloseHandler"
-        >
-            <items>
-                <TabContainerItem
-                    id="_IDGenTabContainerItem1"
-                    name="General Data"
-                >
-                    <content>
-                        <Table
-                            id="paymentPlansTable"
-                            items="{ path: '/PaymentPlans' }"
-                        >
-                            <columns>
-                                <Column id="_IDGenColumn22">
-                                    <Text
-                                        id="_IDGenText10"
-                                        text="Payment Plan ID"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn24">
-                                    <Text
-                                        id="_IDGenText45"
-                                        text="Description"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn28">
-                                    <Text
-                                        id="_IDGenText51"
-                                        text="Company Code ID"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn29">
-                                    <Text
-                                        id="_IDGenText52"
-                                        text="Plan Years"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn30">
-                                    <Text
-                                        id="_IDGenText53"
-                                        text="Valid From"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn31">
-                                    <Text
-                                        id="_IDGenText54"
-                                        text="Valid To"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn32">
-                                    <Text
-                                        id="_IDGenText55"
-                                        text="Plan Status"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn33">
-                                    <Text
-                                        id="_IDGenText56"
-                                        text="Actions"
-                                    />
-                                </Column>
-                            </columns>
+    xmlns="sap.m"
+    displayBlock="true">
 
-                            <items>
-                                <ColumnListItem id="_IDGenColumnListItem2">
-                                    <cells>
-                                        <Text
-                                            id="_IDGenText57"
-                                            text="{paymentPlanId}"
-                                        />
-                                        <Text
-                                            id="_IDGenText58"
-                                            text="{description}"
-                                        />
-                                        <Text
-                                            id="_IDGenText59"
-                                            text="{companyCodeId}"
-                                        />
-                                        <Text
-                                            id="_IDGenText60"
-                                            text="{planYears}"
-                                        />
-                                        <Text
-                                            id="_IDGenText61"
-                                            text="{validFrom}"
-                                        />
-                                        <Text
-                                            id="_IDGenText62"
-                                            text="{validTo}"
-                                        />
-                                        <Text
-                                            id="_IDGenText63"
-                                            text="{planStatus}"
-                                        />
-                                        <HBox id="_IDGenHBox2">
-                                            <Button
-                                                id="_IDGenButton5"
-                                                icon="sap-icon://information"
-                                                press="onDetails"
-                                            />
-                                            <Button
-                                                id="_IDGenButton6"
-                                                icon="sap-icon://edit"
-                                                press="onEditPaymentPlan"
-                                            />
-                                            <Button
-                                                id="_IDGenButton7"
-                                                icon="sap-icon://delete"
-                                                type="Reject"
-                                                press="onDelete"
-                                            />
-                                        </HBox>
-                                    </cells>
-                                </ColumnListItem>
-                            </items>
-                        </Table>
-                    </content>
-                </TabContainerItem>
+    <Page title="Payment Plan Management">
+        <content>
+            <VBox>
+                <Toolbar>
+                    <Title text="Payment Plans" level="H2"/>
+                    <ToolbarSpacer/>
+                    <Button text="Add Plan" icon="sap-icon://add" press=".onAddPlan"/>
+                </Toolbar>
 
-                <TabContainerItem
-                    id="_IDGenTabContainerItem"
-                    name="Plan Schedule"
-                >
-                    <content>
-                        <Table
-                            id="paymentPlanScheduleTable"
-                            items="{ path: '/PaymentPlanSchedules' }"
-                        >
-                            <columns>
-                                <Column id="_IDGenColumn12">
-                                    <Text
-                                        id="_IDGenText64"
-                                        text=" Plan Schedule ID"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn34">
-                                    <Text
-                                        id="_IDGenText65"
-                                        text="Condition Type"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn35">
-                                    <Text
-                                        id="_IDGenText66"
-                                        text="Percentage"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn36">
-                                    <Text
-                                        id="_IDGenText67"
-                                        text="Base Price"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn37">
-                                    <Text
-                                        id="_IDGenText68"
-                                        text="Calculation Method"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn38">
-                                    <Text
-                                        id="_IDGenText69"
-                                        text="Frequency"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn39">
-                                    <Text
-                                        id="_IDGenText70"
-                                        text="Due In Month"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn42">
-                                    <Text
-                                        id="_IDGenText79"
-                                        text="Number Of Installments"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn43">
-                                    <Text
-                                        id="_IDGenText80"
-                                        text="Number Of Years"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn40">
-                                    <Text
-                                        id="_IDGenText71"
-                                        text="Actions"
-                                    />
-                                </Column>
-                                <Column id="_IDGenColumn44">
-                                    <Button
-                                        id="btnAddPlanSchedule"
-                                        icon="sap-icon://add"
-                                        tooltip="Add"
-                                        text="New Plan Schedule"
-                                        press="onNavigateToAddPlanSchedule"
-                                    />
-                                </Column>
-                            </columns>
+                <Table id="plansTable" items="{/PaymentPlans}" mode="SingleSelectMaster">
+                    <columns>
+                        <Column><Text text="Plan ID"/></Column>
+                        <Column><Text text="Description"/></Column>
+                        <Column><Text text="Company Code"/></Column>
+                        <Column><Text text="Years"/></Column>
+                        <Column><Text text="Valid From"/></Column>
+                        <Column><Text text="Valid To"/></Column>
+                        <Column><Text text="Status"/></Column>
+                        <Column><Text text="Actions"/></Column> <!-- Actions column -->
+                    </columns>
 
-                            <items>
-                                <ColumnListItem id="_IDGenColumnListItem3">
-                                    <cells>
-                                        <Text
-                                            id="_IDGenText72"
-                                            text="{ID}"
-                                        />
-                                        <Text
-                                            id="_IDGenText73"
-                                            text="{conditionType}"
-                                        />
-                                        <Text
-                                            id="_IDGenText74"
-                                            text="{percentage}"
-                                        />
-                                        <Text
-                                            id="_IDGenText75"
-                                            text="{basePrice}"
-                                        />
-                                        <Text
-                                            id="_IDGenText76"
-                                            text="{calculationMethod}"
-                                        />
-                                        <Text
-                                            id="_IDGenText77"
-                                            text="{frequency}"
-                                        />
-                                        <Text
-                                            id="_IDGenText78"
-                                            text="{dueInMonth}"
-                                        />
-                                        <Text
-                                            id="_IDGenText82"
-                                            text="{numberOfInstallments}"
-                                        />
-                                        <Text
-                                            id="_IDGenText83"
-                                            text="{numberOfYears}"
-                                        />
-                                        <HBox id="_IDGenHBox4">
-                                            <Button
-                                                id="_IDGenButton9"
-                                                icon="sap-icon://information"
-                                                press="onDetails"
-                                            />
-                                            <Button
-                                                id="_IDGenButton10"
-                                                icon="sap-icon://edit"
-                                                press="onEditPaymentPlan"
-                                            />
-                                            <Button
-                                                id="_IDGenButton11"
-                                                icon="sap-icon://delete"
-                                                type="Reject"
-                                                press="onDelete"
-                                            />
-                                        </HBox>
-                                    </cells>
-                                </ColumnListItem>
-                            </items>
-                        </Table>
-                    </content>
-                </TabContainerItem>
-            </items>
-        </TabContainer>
+                    <items>
+                        <ColumnListItem type="Active">
+                            <cells>
+                                <Text text="{paymentPlanId}"/>
+                                <Text text="{description}"/>
+                                <Text text="{companyCodeId}"/>
+                                <Text text="{planYears}"/>
+                                <Text text="{validFrom}"/>
+                                <Text text="{validTo}"/>
+                                <Text text="{planStatus}"/>
+                                <HBox>
+                                    <Button icon="sap-icon://information" tooltip="Details" press=".onShowPlanDetails"/>
+                                    <Button icon="sap-icon://edit" tooltip="Edit" press=".onEditPlan"/>
+                                    <Button icon="sap-icon://delete" type="Reject" tooltip="Delete" press=".onDeletePlan"/>
+                                </HBox>
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+            </VBox>
+        </content>
     </Page>
+
+    <!-- Dialog for creating or editing a plan -->
+    <Dialog id="planDialog" title="Add / Edit Payment Plan" stretchOnPhone="true">
+        <content>
+            <VBox class="sapUiSmallMargin">
+                <!-- GENERAL DATA -->
+                <Label text="Company Code ID"/>
+                <Input id="companyCodeId" placeholder="e.g. 0001"/>
+
+                <Label text="Description"/>
+                <Input id="description"/>
+
+                <Label text="Plan Years"/>
+                <Input id="planYears" type="Number"/>
+
+                <Label text="Valid From"/>
+                <DatePicker id="validFrom" displayFormat="yyyy-MM-dd" valueFormat="yyyy-MM-dd"/>
+
+                <Label text="Valid To"/>
+                <DatePicker id="validTo" displayFormat="yyyy-MM-dd" valueFormat="yyyy-MM-dd"/>
+
+                <Label text="Plan Status"/>
+                <Input id="planStatus" placeholder="A / I"/>
+
+                <!-- SCHEDULE TABLE -->
+                <Title text="Schedules" level="H3"/>
+                <Toolbar>
+                    <Button text="Add Row" icon="sap-icon://add" press=".onAddScheduleRow"/>
+                    <Button text="Delete Row" icon="sap-icon://delete" press=".onDeleteScheduleRow"/>
+                </Toolbar>
+
+                <Table id="scheduleTable" items="{path: 'local>/schedules'}" inset="false">
+                    <columns>
+                        <Column><Text text="Condition Type"/></Column>
+                        <Column><Text text="Base Price"/></Column>
+                        <Column><Text text="Calc. Method"/></Column>
+                        <Column><Text text="Frequency"/></Column>
+                        <Column><Text text="%"/></Column>
+                        <Column><Text text="Due (Months)"/></Column>
+                        <Column><Text text="Installments"/></Column>
+                        <Column><Text text="Years"/></Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem>
+                            <cells>
+                                <Input value="{local>conditionType}" width="100%"/>
+                                <Input value="{local>basePrice}" width="100%"/>
+                                <Input value="{local>calculationMethod}" width="100%"/>
+                                <Input value="{local>frequency}" width="100%"/>
+                                <Input value="{local>percentage}" type="Number"/>
+                                <Input value="{local>dueInMonth}" type="Number"/>
+                                <Input value="{local>numberOfInstallments}" type="Number"/>
+                                <Input value="{local>numberOfYears}" type="Number"/>
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+
+                <!-- ASSIGNED PROJECTS TABLE -->
+                <Title text="Assigned Projects" level="H3"/>
+                <Toolbar>
+                    <Button text="Add Project" icon="sap-icon://add" press=".onAddProjectRow"/>
+                    <Button text="Delete" icon="sap-icon://delete" press=".onDeleteProjectRow"/>
+                </Toolbar>
+                <Table id="projectsTable" items="{path: 'local>/projects'}">
+                    <columns>
+                        <Column><Text text="Project ID"/></Column>
+                        <Column><Text text="Project Description"/></Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem>
+                            <cells>
+                                <Input value="{local>projectId}"/>
+                                <Input value="{local>projectDescription}"/>
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+
+            </VBox>
+        </content>
+
+        <beginButton>
+            <Button text="Save" type="Emphasized" press=".onSavePlan"/>
+        </beginButton>
+        <endButton>
+            <Button text="Cancel" press=".onCancelPlan"/>
+        </endButton>
+    </Dialog>
 </mvc:View>
