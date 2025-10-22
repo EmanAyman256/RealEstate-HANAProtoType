@@ -1,9 +1,9 @@
 <mvc:View
-    controllerName="dboperations.controller.Reservations"
+    controllerName="dboperations.controller.EOI"
     xmlns="sap.m"
     xmlns:mvc="sap.ui.core.mvc"
 >
-<Page id="_IDGenPage"  title="Reservations">
+<Page id="_IDGenPage2" title="EOI">
         <content>
         </content>
         </Page>
