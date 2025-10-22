@@ -118,6 +118,16 @@
           "pattern": "PaymentPlans",
           "target": "PaymentPlans"
         },
+           {
+          "name": "EOI",
+          "pattern": "EOI",
+          "target": "EOI"
+        },
+           {
+          "name": "Reservations",
+          "pattern": "Reservations",
+          "target": "Reservations"
+        },
         {
           "name": "RouteDBOperations",
           "pattern": ":?query:",
@@ -138,6 +148,12 @@
         },
          "PaymentPlans": {
           "viewName": "PaymentPlans"
+        },
+             "EOI": {
+          "viewName": "EOI"
+        },
+          "Reservations": {
+          "viewName": "Reservations"
         },
         "TargetDBOperations": {
           "id": "DBOperations",

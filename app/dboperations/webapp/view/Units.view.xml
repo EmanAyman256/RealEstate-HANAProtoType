@@ -2,11 +2,9 @@
     controllerName="dboperations.controller.Units"
     xmlns="sap.m"
     xmlns:mvc="sap.ui.core.mvc"
+    displayBlock="true"
 >
-    <Page
-        id="unitsPage"
-        title="Units"
-    >
+    <Page id="unitsPage" title="Units">
         <headerContent>
             <Button
                 id="btnAddUnit"
@@ -14,278 +12,52 @@
                 text="New Unit"
                 press="onNavigateToAddUnit"
             />
-            <Button
-                id="btnExportUnits"
-                icon="sap-icon://excel-attachment"
-                text="Export to Excel"
-                press="onExportUnits"
-            />
         </headerContent>
 
-        <TabContainer
-            id="unitsTabContainer"
-            class="sapUiResponsiveContentPadding sapUiResponsivePadding--header"
-            selectionChange="onTabChange"
-        >
-            <items>
-                <!-- 🟩 General Data -->
-                <TabContainerItem name="General Data">
-                    <content>
-                        <Table
-                            id="unitsTable"
-                            items="{ path: '/Units' }"
-                            inset="false"
-                            mode="SingleSelect"
-                            selectionChange="onSelectUnit"
-                        >
-                            <columns>
-                                <Column>
-                                    <Text text="Company Code ID" />
-                                </Column>
-                                <Column>
-                                    <Text text="Company Code Description" />
-                                </Column>
-                                <Column>
-                                    <Text text="Project ID" />
-                                </Column>
-                                <Column>
-                                    <Text text="Project Description" />
-                                </Column>
-                                <Column>
-                                    <Text text="Building ID" />
-                                </Column>
-                                <Column>
-                                    <Text text="Building Old Code" />
-                                </Column>
-                                <Column>
-                                    <Text text="Unit ID" />
-                                </Column>
-                                <Column>
-                                    <Text text="Unit Old Code" />
-                                </Column>
-                                <Column>
-                                    <Text text="Unit Description" />
-                                </Column>
-                                <Column>
-                                    <Text text="Unit Type Code" />
-                                </Column>
-                                <Column>
-                                    <Text text="Usage Type Description" />
-                                </Column>
-                                <Column>
-                                    <Text text="Unit Status" />
-                                </Column>
-                                <Column>
-                                    <Text text="Floor" />
-                                </Column>
-                                <Column>
-                                    <Text text="Actions" />
-                                </Column>
-                            </columns>
-                            <items>
-                                <ColumnListItem>
-                                    <cells>
-                                        <Text text="{companyCodeId}" />
-                                        <Text text="{companyCodeDescription}" />
-                                        <Text text="{projectId}" />
-                                        <Text text="{projectDescription}" />
-                                        <Text text="{buildingId}" />
-                                        <Text text="{buildingOldCode}" />
-                                        <Text text="{unitId}" />
-                                        <Text text="{unitOldCode}" />
-                                        <Text text="{unitDescription}" />
-                                        <Text text="{unitTypeCode}" />
-                                        <Text text="{usageTypeDescription}" />
-                                        <Text text="{unitStatusCode}" />
-                                        <Text text="{floorCode}" />
-                                        <HBox>
-                                            <Button icon="sap-icon://information" press="onDetails" />
-                                            <Button icon="sap-icon://edit" press="onEditUnit" />
-                                            <Button icon="sap-icon://delete" type="Reject" press="onDelete" />
-                                        </HBox>
-                                    </cells>
-                                </ColumnListItem>
-                            </items>
-                        </Table>
-                    </content>
-                </TabContainerItem>
-
-                <!-- 🟨 Additional Data -->
-                <TabContainerItem name="Additional Data">
-                    <content>
-                        <VBox>
-                            <Table id="additionalDataTable" items="{ path: 'unit>/unitDetails' }" inset="false">
-                                <columns>
-                                    <Column>
-                                        <Text text="Zone" />
-                                    </Column>
-                                    <Column>
-                                        <Text text="Sales Phase" />
-                                    </Column>
-                                    <Column>
-                                        <Text text="Finishing Spec Code" />
-                                    </Column>
-                                    <Column>
-                                        <Text text="Finishing Spec Description" />
-                                    </Column>
-                                    <Column>
-                                        <Text text="Unit Delivery Date" />
-                                    </Column>
-                                    <Column>
-                                        <Text text="Actions" />
-                                    </Column>
-                                </columns>
-                                <items>
-                                    <ColumnListItem>
-                                        <cells>
-                                            <Text text="{unit>zone}" />
-                                            <Text text="{unit>salesPhase}" />
-                                            <Text text="{unit>finishingSpexCode}" />
-                                            <Text text="{unit>finishingSpexDescription}" />
-                                            <Text text="{unit>unitDeliveryDate}" />
-                                            <HBox>
-                                                <Button icon="sap-icon://edit" press="onEditAdditionalData" />
-                                                <!-- No delete for Additional Data as it's part of Unit -->
-                                            </HBox>
-                                        </cells>
-                                    </ColumnListItem>
-                                </items>
-                            </Table>
-                        </VBox>
-                    </content>
-                </TabContainerItem>
-
-                <!-- 🟦 Prices -->
-                <TabContainerItem name="Prices">
-                    <content>
-                        <VBox>
-                            <HBox justifyContent="End">
-                                <Button
-                                    id="btnAddPrice"
-                                    icon="sap-icon://add"
-                                    text="Add Price"
-                                    press="onAddPrice"
-                                />
+        <VBox class="sapUiSizeCompact sapUiSmallMargin">
+            <Table
+                id="unitsTable"
+                items="{ path: '/Units' }"
+                mode="SingleSelect"
+                selectionChange="onSelectUnit"
+            >
+                <columns>
+                    <Column><Text text="Company Code ID" /></Column>
+                    <Column><Text text="Company Code Description" /></Column>
+                    <Column><Text text="Project ID" /></Column>
+                    <Column><Text text="Project Description" /></Column>
+                    <Column><Text text="Building ID" /></Column>
+                    <Column><Text text="Unit ID" /></Column>
+                    <Column><Text text="Zone" /></Column>
+                    <Column><Text text="Sales Phase" /></Column>
+                    <Column><Text text="Delivery Date" /></Column>
+                    <Column><Text text="Profit Center" /></Column>
+                    <Column><Text text="Functional Area" /></Column>
+                    <Column><Text text="Actions" /></Column>
+                </columns>
+                <items>
+                    <ColumnListItem>
+                        <cells>
+                            <Text text="{companyCodeId}" />
+                            <Text text="{companyCodeDescription}" />
+                            <Text text="{projectId}" />
+                            <Text text="{projectDescription}" />
+                            <Text text="{buildingId}" />
+                            <Text text="{unitId}" />
+                            <Text text="{zone}" />
+                            <Text text="{salesPhase}" />
+                            <Text text="{unitDeliveryDate}" />
+                            <Text text="{profitCenter}" />
+                            <Text text="{functionalArea}" />
+                            <HBox>
+                                <Button icon="sap-icon://information" press="onDetails" />
+                                <Button icon="sap-icon://edit" press="onEditUnit" />
+                                <Button icon="sap-icon://delete" type="Reject" press="onDelete" />
                             </HBox>
-                            <Table
-                                id="unitPricesTable"
-                                items="{ path: 'prices>/Prices' }"
-                                inset="false"
-                            >
-                                <columns>
-                                    <Column>
-                                        <Text text="Original Price (ZU01)" />
-                                    </Column>
-                                    <Column>
-                                        <Text text="Parking Price (ZU03)" />
-                                    </Column>
-                                    <Column>
-                                        <Text text="Maintenance Price" />
-                                    </Column>
-                                    <Column>
-                                        <Text text="Actions" />
-                                    </Column>
-                                </columns>
-                                <items>
-                                    <ColumnListItem>
-                                        <cells>
-                                            <Text text="{prices>originalPriceZU01}" />
-                                            <Text text="{prices>parkingPriceZU03}" />
-                                            <Text text="{prices>maintenancePrice}" />
-                                            <HBox>
-                                                <Button icon="sap-icon://edit" press="onEditPrice" />
-                                                <Button icon="sap-icon://delete" type="Reject" press="onDeletePrice" />
-                                            </HBox>
-                                        </cells>
-                                    </ColumnListItem>
-                                </items>
-                            </Table>
-                        </VBox>
-                    </content>
-                </TabContainerItem>
-
-                <!-- 🟨 Measurements -->
-                <TabContainerItem name="Measurements">
-                    <content>
-                        <VBox>
-                            <HBox justifyContent="End">
-                                <Button
-                                    id="btnAddMeasurement"
-                                    icon="sap-icon://add"
-                                    text="Add Measurement"
-                                    press="onAddMeasurement"
-                                />
-                            </HBox>
-                            <Table
-                                id="unitMeasurementsTable"
-                                items="{ path: 'measurements>/Measurements' }"
-                                inset="false"
-                            >
-                                <columns>
-                                    <Column>
-                                        <Text text="Built-up Area (m²)" />
-                                    </Column>
-                                    <Column>
-                                        <Text text="Garden Area (m²)" />
-                                    </Column>
-                                    <Column>
-                                        <Text text="Number of Rooms" />
-                                    </Column>
-                                    <Column>
-                                        <Text text="Actions" />
-                                    </Column>
-                                </columns>
-                                <items>
-                                    <ColumnListItem>
-                                        <cells>
-                                            <Text text="{measurements>builtUpAreaM2}" />
-                                            <Text text="{measurements>gardenAreaM2}" />
-                                            <Text text="{measurements>numberOfRoomsPc}" />
-                                            <HBox>
-                                                <Button icon="sap-icon://edit" press="onEditMeasurement" />
-                                                <Button icon="sap-icon://delete" type="Reject" press="onDeleteMeasurement" />
-                                            </HBox>
-                                        </cells>
-                                    </ColumnListItem>
-                                </items>
-                            </Table>
-                        </VBox>
-                    </content>
-                </TabContainerItem>
-
-                <!-- 🟪 Posting Parameters -->
-                <TabContainerItem name="Posting Parameters">
-                    <content>
-                        <VBox>
-                            <Table id="postingParametersTable" items="{ path: 'unit>/unitDetails' }" inset="false">
-                                <columns>
-                                    <Column>
-                                        <Text text="Profit Center" />
-                                    </Column>
-                                    <Column>
-                                        <Text text="Functional Area" />
-                                    </Column>
-                                    <Column>
-                                        <Text text="Actions" />
-                                    </Column>
-                                </columns>
-                                <items>
-                                    <ColumnListItem>
-                                        <cells>
-                                            <Text text="{unit>profitCenter}" />
-                                            <Text text="{unit>functionalArea}" />
-                                            <HBox>
-                                                <Button icon="sap-icon://edit" press="onEditPostingParameters" />
-                                                <!-- No delete for Posting Parameters as it's part of Unit -->
-                                            </HBox>
-                                        </cells>
-                                    </ColumnListItem>
-                                </items>
-                            </Table>
-                        </VBox>
-                    </content>
-                </TabContainerItem>
-            </items>
-        </TabContainer>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </VBox>
     </Page>
 </mvc:View>

@@ -1,0 +1,7 @@
+<mvc:View
+    controllerName="dboperations.controller.Reservations"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+>
+
+</mvc:View>

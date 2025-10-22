@@ -23,5 +23,11 @@ sap.ui.define([
            onNavigateToPaymentPlanProjects() {
             this.getOwnerComponent().getRouter().navTo("PaymentPlanProjects");
         },
+           onNavigateToPaymentPlanProjects() {
+            this.getOwnerComponent().getRouter().navTo("Reservations");
+        },
+            onNavigateToPaymentPlanProjects() {
+            this.getOwnerComponent().getRouter().navTo("EOI");
+        },
     });
 });

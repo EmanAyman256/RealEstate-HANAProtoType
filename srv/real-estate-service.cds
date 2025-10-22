@@ -4,8 +4,8 @@ service RealEstateService {
     entity Buildings            as projection on my.Buildings;
     entity Units                as projection on my.Units;
     entity Projects             as projection on my.Projects;
-    entity UnitMeasurements     as projection on my.UnitMeasurements;
-    entity UnitPrices           as projection on my.UnitPrices;
+    entity Measurements         as projection on my.Measurements;
+    entity Conditions           as projection on my.Conditions;
     entity PaymentPlans         as projection on my.PaymentPlans;
     entity PaymentPlanSchedules as projection on my.PaymentPlanSchedules;
     entity PaymentPlanProjects  as projection on my.PaymentPlanProjects;

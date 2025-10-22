@@ -86,6 +86,39 @@
         />
     </TileContent>
 </GenericTile>
+<GenericTile
+    id="_IDGenGenericTile5"
+    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+    header="EOI"
+    press="onNavigateToEOI"
+>
+    <TileContent
+        id="_IDGenTileContent5"
+        footer="EOI CRUD OPs"
+    >
+        <ImageContent
+            id="_IDGenImageContent5"
+            src="sap-icon://favorite-list"
+        />
+    </TileContent>
+</GenericTile>
+      <GenericTile
+    id="_IDGenGenericTile6"
+    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+    header="Reservations"
+    press="onNavigateToReservations"
+>
+    <TileContent
+        id="_IDGenTileContent6"
+        footer="Reservations CRUD OPs"
+    >
+        <ImageContent
+            id="_IDGenImageContent6"
+            src="sap-icon://add-activity"
+        />
+    </TileContent>
+</GenericTile>
+      
             </HBox>
         </content>
     </Page>
