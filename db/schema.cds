@@ -174,9 +174,60 @@ entity Frequencies {
         description : String(60);
 }
 
-entity Eoi : managed {
+entity EOI : managed {
+    key eoiId                   : String(8);
+        eoiType                 : String(40);
+        status                  : String(30);
+        date                    : Date;
+        companyCode             : String(10);
+        projectId               : String(8);
+        launch                  : String(50);
+        projectPhase            : String(50);
+        salesOffice             : String(50);
+        unitType                : String(50);
+        totalEoiValue           : Decimal(15, 2);
+        amountInArabic          : String(255);
+        collectedAmount         : Decimal(15, 2);
+        remainingAmount         : Decimal(15, 2);
+        leadId                  : String(36);
+        nationality             : String(50);
+        passportId              : String(30);
+        nationalId              : String(30);
+        mobile1                 : String(20);
+        mobile2                 : String(20);
+        customerId              : String(36);
+        creationDate            : DateTime;
+        brokerId                : String(36);
+        pcId                    : String(36);
+        teamLeadId              : String(36);
+        managerId               : String(36);
+        validatedOn             : DateTime;
+        validatedBy             : String(60);
 
+        paymentDetails          : Composition of many PaymentDetails
+                                      on paymentDetails.eoi = $self;
 }
+
+entity PaymentDetails : managed {
+    key ID                      : UUID;
+        eoi                     : Association to EOI;
+        receiptType             : String(40);
+        receiptStatus           : String(30);
+        paymentMethod           : String(30);
+        amount                  : Decimal(15, 2);
+        houseBank               : String(40);
+        bankAccount             : String(40);
+        dueDate                 : Date;
+        transferNumber          : String(40);
+        checkNo                 : String(30);
+        customerBank            : String(60);
+        customerBankAccount     : String(40);
+        branch                  : String(40);
+        collectedAmount         : Decimal(15, 2);
+        arValidated             : Boolean default false;
+        rejectionReason         : String(255);
+}
+
 entity Reservations : managed {
     key reservationId      : String(20);
     companyCodeId          : String(4);

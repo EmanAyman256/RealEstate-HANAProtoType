@@ -3,7 +3,20 @@ const { ref } = cds.ql;  // <-- add this line
 
 module.exports = cds.service.impl(async function () {
 
-  const { Projects, Units, Buildings, PaymentPlans, PaymentPlanSchedules, PaymentPlanProjects, Measurements, Conditions } = this.entities;
+  const
+    {
+      Projects,
+      Units,
+      Buildings,
+      PaymentPlans,
+      PaymentPlanSchedules,
+      PaymentPlanProjects,
+      Measurements,
+      Conditions,
+      EOI,
+      PaymentDetails,
+      Reservations
+    } = this.entities;
 
 
   /*-----------------------Buildings---------------------------*/
@@ -486,6 +499,218 @@ module.exports = cds.service.impl(async function () {
     console.log('READ PaymentPlanProjects called');
     const db = cds.transaction(req);
     return await db.run(req.query);
+  });
+
+  /*----------------------- EOI ---------------------------*/
+
+  // READ
+  this.on('READ', EOI, async (req) => {
+    console.log('READ EOI called');
+    const db = cds.transaction(req);
+    return await db.run(req.query);
+  });
+
+  // CREATE
+  this.on('CREATE', EOI, async (req) => {
+    console.log('CREATE EOI called with data:', req.data);
+    const db = cds.transaction(req);
+
+    try {
+      // Insert main EOI
+      const result = await db.run(INSERT.into(EOI).entries(req.data));
+
+      // Fetch full record with associations for UI
+      const createdEOI = await db.run(
+        SELECT.one.from(EOI)
+          .where({ eoiId: req.data.eoiId })
+          .columns('*', { from: 'paymentDetails', expand: ['*'] })
+      );
+
+      console.log('Created EOI returned to UI:', createdEOI);
+      return createdEOI;
+    } catch (error) {
+      console.error('Error creating EOI:', error);
+      req.error(500, 'Error creating EOI: ' + error.message);
+    }
+  });
+
+  // UPDATE
+  this.on('UPDATE', EOI, async (req) => {
+    console.log('UPDATE EOI called with:', req.data, 'params:', req.params);
+
+    const { eoiId } = req.params[0];
+    const db = cds.transaction(req);
+
+    try {
+      await db.run(UPDATE(EOI).set(req.data).where({ eoiId }));
+      const updated = await db.run(SELECT.one.from(EOI).where({ eoiId }));
+      return updated;
+    } catch (error) {
+      console.error('Error updating EOI:', error);
+      req.error(500, 'Error updating EOI: ' + error.message);
+    }
+  });
+
+  // DELETE
+  this.on('DELETE', EOI, async (req) => {
+    console.log('DELETE EOI called for eoiId:', req.data.eoiId);
+    const db = cds.transaction(req);
+    try {
+      return await db.run(DELETE.from(EOI).where({ eoiId: req.data.eoiId }));
+    } catch (error) {
+      console.error('Error deleting EOI:', error);
+      req.error(500, 'Error deleting EOI: ' + error.message);
+    }
+  });
+
+
+  /*----------------------- PaymentDetails ---------------------------*/
+
+  // READ
+  this.on('READ', PaymentDetails, async (req) => {
+    console.log('READ PaymentDetails called');
+    const db = cds.transaction(req);
+    return await db.run(req.query);
+  });
+
+  // CREATE
+  this.on('CREATE', PaymentDetails, async (req) => {
+    console.log('CREATE PaymentDetails called with data:', req.data);
+    const db = cds.transaction(req);
+
+    try {
+      const data = req.data;
+      data.ID = cds.utils.uuid(); // ensure unique ID
+
+      // handle association to EOI (nested or flat)
+      if (req.data.eoi_eoiId) {
+        data.eoi_eoiId = req.data.eoi_eoiId;
+      } else if (req.data.eoi) {
+        data.eoi_eoiId = req.data.eoi.eoiId || req.data.eoi.ID;
+      }
+
+      return await db.run(INSERT.into(PaymentDetails).entries(data));
+    } catch (error) {
+      console.error('Error creating PaymentDetails:', error);
+      req.error(500, 'Error creating PaymentDetails');
+    }
+  });
+
+  // UPDATE
+  this.on('UPDATE', PaymentDetails, async (req) => {
+    console.log('UPDATE PaymentDetails called with:', req.data, 'params:', req.params);
+
+    const { ID } = req.params[0];
+    const db = cds.transaction(req);
+
+    try {
+      await db.run(UPDATE(PaymentDetails).set(req.data).where({ ID }));
+      const updated = await db.run(SELECT.one.from(PaymentDetails).where({ ID }));
+      return updated;
+    } catch (error) {
+      console.error('Error updating PaymentDetails:', error);
+      req.error(500, 'Error updating PaymentDetails: ' + error.message);
+    }
+  });
+
+  // DELETE
+  this.on('DELETE', PaymentDetails, async (req) => {
+    console.log('DELETE PaymentDetails called for ID:', req.data.ID);
+    const db = cds.transaction(req);
+    try {
+      return await db.run(DELETE.from(PaymentDetails).where({ ID: req.data.ID }));
+    } catch (error) {
+      console.error('Error deleting PaymentDetails:', error);
+      req.error(500, 'Error deleting PaymentDetails: ' + error.message);
+    }
+  });
+  /*----------------------- Reservations ---------------------------*/
+
+  // READ
+  this.on('READ', Reservations, async (req) => {
+    console.log('READ Reservations called');
+    const db = cds.transaction(req);
+    return await db.run(req.query);
+  });
+
+  // CREATE (header + compositions)
+  this.on('CREATE', Reservations, async (req) => {
+    console.log('CREATE Reservation called:', req.data);
+    const db = cds.transaction(req);
+
+    try {
+      // Insert main reservation
+      const reservationData = { ...req.data };
+      const { partners, conditions, payments } = reservationData;
+      delete reservationData.partners;
+      delete reservationData.conditions;
+      delete reservationData.payments;
+
+      await db.run(INSERT.into(Reservations).entries(reservationData));
+
+      // Insert compositions (if any)
+      if (partners?.length) {
+        for (const p of partners) {
+          p.reservation_reservationId = reservationData.reservationId;
+          await db.run(INSERT.into(ReservationPartners).entries(p));
+        }
+      }
+
+      if (conditions?.length) {
+        for (const c of conditions) {
+          c.reservation_reservationId = reservationData.reservationId;
+          await db.run(INSERT.into(ReservationConditions).entries(c));
+        }
+      }
+
+      if (payments?.length) {
+        for (const pay of payments) {
+          pay.reservation_reservationId = reservationData.reservationId;
+          await db.run(INSERT.into(ReservationPaymentDetails).entries(pay));
+        }
+      }
+
+      return reservationData;
+
+    } catch (error) {
+      console.error('Error creating Reservation:', error);
+      req.error(500, 'Error creating Reservation: ' + error.message);
+    }
+  });
+
+  // UPDATE
+  this.on('UPDATE', Reservations, async (req) => {
+    console.log("UPDATE Reservation called:", req.data);
+    const { reservationId } = req.params[0];
+    const db = cds.transaction(req);
+
+    try {
+      await db.run(UPDATE(Reservations).set(req.data).where({ reservationId }));
+      return await db.run(SELECT.one.from(Reservations).where({ reservationId }));
+    } catch (error) {
+      console.error("Error updating Reservation:", error);
+      req.error(500, "Error updating Reservation: " + error.message);
+    }
+  });
+
+  // DELETE
+  this.on('DELETE', Reservations, async (req) => {
+    console.log('DELETE Reservation called for:', req.data.reservationId);
+    const db = cds.transaction(req);
+
+    try {
+      const { reservationId } = req.data;
+
+      await db.run(DELETE.from(ReservationPartners).where({ reservation_reservationId: reservationId }));
+      await db.run(DELETE.from(ReservationConditions).where({ reservation_reservationId: reservationId }));
+      await db.run(DELETE.from(ReservationPaymentDetails).where({ reservation_reservationId: reservationId }));
+
+      return await db.run(DELETE.from(Reservations).where({ reservationId }));
+
+    } catch (error) {
+      console.error('Error deleting Reservation:', error);
+      req.error(500, 'Error deleting Reservation: ' + error.message);
+    }
   });
 
 });

@@ -12,5 +12,8 @@ service RealEstateService {
     entity ConditionTypes       as projection on my.ConditionTypes;
     entity Frequencies          as projection on my.Frequencies;
     entity CalculationMethods   as projection on my.CalculationMethods;
+    entity EOI                  as projection on my.EOI;
+    entity PaymentDetails       as projection on my.PaymentDetails;
+    entity Reservations         as projection on my.Reservations;
 
 }

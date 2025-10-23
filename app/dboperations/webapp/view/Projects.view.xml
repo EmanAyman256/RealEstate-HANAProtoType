@@ -21,7 +21,6 @@
             <Table
                 id="projectsTable"
                 items="{ path: '/Projects' }"
-                class="sapUiResponsiveContentPadding"
             >
                 <columns>
                     <Column><Text text="Project ID" /></Column>

@@ -3,9 +3,100 @@
     xmlns="sap.m"
     xmlns:mvc="sap.ui.core.mvc"
 >
-<Page id="_IDGenPage"  title="Reservations">
-        <content>
-        </content>
-        </Page>
+    <Page id="ReservationsPage" title="Reservations">
+        <headerContent>
+            <Button
+                icon="sap-icon://add"
+                text="New Reservation"
+                press="onAddReservation"
+            />
+        </headerContent>
 
+        <content>
+            <ScrollContainer
+                width="100%"
+                height="100%"
+                horizontal="true"
+                vertical="false"
+            >
+                <Table
+                    id="reservationsTable"
+                    items="{ path: '/Reservations' }"
+                    growing="true"
+                    growingScrollToLoad="true"
+                    sticky="ColumnHeaders"
+                    width="180rem"
+                    class="sapUiSizeCompact"
+                >
+                    <columns>
+                        <Column width="10rem"><Text text="Reservation ID" wrapping="true"/></Column>
+                        <Column width="8rem"><Text text="Company Code" wrapping="true"/></Column>
+                        <Column width="10rem"><Text text="Old Reservation ID" wrapping="true"/></Column>
+                        <Column width="8rem"><Text text="EOI ID" wrapping="true"/></Column>
+                        <Column width="15rem"><Text text="Description" wrapping="true"/></Column>
+                        <Column width="8rem"><Text text="Sales Type" wrapping="true"/></Column>
+                        <Column width="10rem"><Text text="Customer Type" wrapping="true"/></Column>
+                        <Column width="8rem"><Text text="Status" wrapping="true"/></Column>
+                        <Column width="8rem"><Text text="Currency" wrapping="true"/></Column>
+                        <Column width="10rem"><Text text="Valid From" wrapping="true"/></Column>
+                        <Column width="10rem"><Text text="Project ID" wrapping="true"/></Column>
+                        <Column width="10rem"><Text text="Building ID" wrapping="true"/></Column>
+                        <Column width="10rem"><Text text="Unit ID" wrapping="true"/></Column>
+                        <Column width="12rem"><Text text="Payment Plan ID" wrapping="true"/></Column>
+                        <Column width="8rem"><Text text="BUA" wrapping="true"/></Column>
+                        <Column width="8rem"><Text text="Phase" wrapping="true"/></Column>
+                        <Column width="10rem"><Text text="Price Plan Years" wrapping="true"/></Column>
+                        <Column width="10rem"><Text text="Plan Years" wrapping="true"/></Column>
+                        <Column width="10rem"><Text text="Unit Price" wrapping="true"/></Column>
+                        <Column width="10rem"><Text text="Plan Currency" wrapping="true"/></Column>
+                        <Column width="10rem"><Text text="Request Type" wrapping="true"/></Column>
+                        <Column width="10rem"><Text text="Reason" wrapping="true"/></Column>
+                        <Column width="12rem"><Text text="Cancellation Date" wrapping="true"/></Column>
+                        <Column width="12rem"><Text text="Cancellation Status" wrapping="true"/></Column>
+                        <Column width="12rem"><Text text="Rejection Reason" wrapping="true"/></Column>
+                        <Column width="12rem"><Text text="Cancellation Fees" wrapping="true"/></Column>
+                        <Column width="10rem"><Text text="Actions" wrapping="true"/></Column>
+                    </columns>
+
+                    <items>
+                        <ColumnListItem>
+                            <cells>
+                                <Text text="{reservationId}" />
+                                <Text text="{companyCodeId}" />
+                                <Text text="{oldReservationId}" />
+                                <Text text="{eoiId}" />
+                                <Text text="{description}" />
+                                <Text text="{salesType}" />
+                                <Text text="{customerType}" />
+                                <Text text="{status}" />
+                                <Text text="{currency}" />
+                                <Text text="{validFrom}" />
+                                <Text text="{project_projectId}" />
+                                <Text text="{building_buildingId}" />
+                                <Text text="{unit_unitId}" />
+                                <Text text="{paymentPlan_paymentPlanId}" />
+                                <Text text="{bua}" />
+                                <Text text="{phase}" />
+                                <Text text="{pricePlanYears}" />
+                                <Text text="{planYears}" />
+                                <Text text="{unitPrice}" />
+                                <Text text="{planCurrency}" />
+                                <Text text="{requestType}" />
+                                <Text text="{reason}" />
+                                <Text text="{cancellationDate}" />
+                                <Text text="{cancellationStatus}" />
+                                <Text text="{rejectionReason}" />
+                                <Text text="{cancellationFees}" />
+                                <HBox>
+                                    <Button icon="sap-icon://information" tooltip="Details" press="onDetails" />
+                                    <Button icon="sap-icon://edit" tooltip="Edit" press="onEditReservation" />
+                                    <Button icon="sap-icon://delete" type="Reject" tooltip="Delete" press="onDelete" />
+                                </HBox>
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+            </ScrollContainer>
+        </content>
+    </Page>
 </mvc:View>
