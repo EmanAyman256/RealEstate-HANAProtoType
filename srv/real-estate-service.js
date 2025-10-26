@@ -336,83 +336,71 @@ module.exports = cds.service.impl(async function () {
   /*-----------------------Payment Plans---------------------------*/
 
   // READ (with compositions expanded)
-  this.on('READ', PaymentPlans, async (req) => {
-    console.log('READ PaymentPlans called');
-    const db = cds.transaction(req);
+ this.on('READ', PaymentPlans, async (req, next) => {
+  console.log('READ PaymentPlans called with expand:', req.query.$expand);
 
-    try {
-      // Expand to include schedule and assignedProjects
-      const query = SELECT.from(PaymentPlans)
-        .columns(
-          '*',
-          {
-            schedule: SELECT.from(PaymentPlanSchedules).columns(
-              'ID',
-              { conditionType: { code: 'conditionType_code', description: 'conditionType_description' } },
-              { basePrice: { code: 'basePrice_code', description: 'basePrice_description' } },
-              { calculationMethod: { code: 'calculationMethod_code', description: 'calculationMethod_description' } },
-              { frequency: { code: 'frequency_code', description: 'frequency_description' } },
-              'percentage',
-              'dueInMonth',
-              'numberOfInstallments',
-              'numberOfYears'
-            ).where({ paymentPlan_paymentPlanId: { '=': ref('paymentPlanId') } }),
-            assignedProjects: SELECT.from(PaymentPlanProjects).columns(
-              'ID',
-              { project: ['projectId', 'projectDescription'] }
-            ).where({ paymentPlan_paymentPlanId: { '=': ref('paymentPlanId') } })
-          }
-        );
+  try {
+    // Just let CAP handle expansions automatically
+    const result = await next(); 
 
-      return await db.run(query);
-    } catch (error) {
-      console.error('Error reading PaymentPlans:', error);
-      req.error(500, 'Error reading PaymentPlans: ' + error.message);
+    // Optional: if you want to log
+    if (Array.isArray(result)) {
+      console.log(`Returned ${result.length} payment plans`);
     }
-  });
 
-  // CREATE
+    return result;
+  } catch (error) {
+    console.error('Error reading PaymentPlans:', error);
+    req.error(500, 'Error reading PaymentPlans: ' + error.message);
+  }
+});
+
+
   this.on('CREATE', PaymentPlans, async (req) => {
-    console.log('CREATE PaymentPlan called with data:', req.data);
-    const db = cds.transaction(req);
-    try {
-      const { schedule, assignedProjects, ...planData } = req.data;
+  console.log('CREATE PaymentPlan called with data:', req.data);
+  const db = cds.transaction(req);
 
-      // Insert main payment plan
-      const result = await db.run(INSERT.into(PaymentPlans).entries(planData));
+  try {
+    const { schedule, assignedProjects, ...planData } = req.data;
 
-      const paymentPlanId = planData.paymentPlanId;
+    // Insert main payment plan
+    const result = await db.run(INSERT.into(PaymentPlans).entries(planData));
+    const paymentPlanId = planData.paymentPlanId;
 
-      // Insert schedule items if present
-      if (Array.isArray(schedule) && schedule.length > 0) {
-        for (const item of schedule) {
-          await db.run(
-            INSERT.into(PaymentPlanSchedules).entries({
-              ...item,
-              paymentPlan_paymentPlanId: paymentPlanId
-            })
-          );
-        }
+    // Insert schedule items
+    if (Array.isArray(schedule)) {
+      for (const s of schedule) {
+        await db.run(
+          INSERT.into(PaymentPlanSchedules).entries({
+            ...s,
+            paymentPlan_paymentPlanId: paymentPlanId // or paymentPlan_ID
+          })
+        );
       }
-
-      // Insert assigned projects if present
-      if (Array.isArray(assignedProjects) && assignedProjects.length > 0) {
-        for (const proj of assignedProjects) {
-          await db.run(
-            INSERT.into(PaymentPlanProjects).entries({
-              ...proj,
-              paymentPlan_paymentPlanId: paymentPlanId
-            })
-          );
-        }
-      }
-
-      return result;
-    } catch (error) {
-      console.error('Error creating PaymentPlan:', error);
-      req.error(500, 'Error creating PaymentPlan: ' + error.message);
     }
-  });
+
+    // Insert assigned projects
+    if (Array.isArray(assignedProjects)) {
+      for (const p of assignedProjects) {
+        await db.run(
+          INSERT.into(PaymentPlanProjects).entries({
+            ...p,
+            paymentPlan_paymentPlanId: paymentPlanId // or paymentPlan_ID
+          })
+        );
+      }
+    }
+
+    await db.commit();
+    return result;
+
+  } catch (error) {
+    console.error('Error creating PaymentPlan:', error);
+    await db.rollback();
+    req.error(500, 'Error creating PaymentPlan: ' + error.message);
+  }
+});
+
 
   // UPDATE
   this.on('UPDATE', PaymentPlans, async (req) => {
@@ -626,19 +614,70 @@ module.exports = cds.service.impl(async function () {
   });
   /*----------------------- Reservations ---------------------------*/
 
+  // 🔹 Helper: validate references
+  async function validateReferences(req, db) {
+    const data = req.data;
+    const errors = [];
+
+    // Check Project reference
+    if (data.project_projectId) {
+      const exists = await db.run(
+        SELECT.one.from(Projects).where({ projectId: data.project_projectId })
+      );
+      if (!exists) errors.push(`Project ID '${data.project_projectId}' does not exist.`);
+    }
+
+    // Check Building reference
+    if (data.building_buildingId) {
+      const exists = await db.run(
+        SELECT.one.from(Buildings).where({ buildingId: data.building_buildingId })
+      );
+      if (!exists) errors.push(`Building ID '${data.building_buildingId}' does not exist.`);
+    }
+
+    // Check Unit reference
+    if (data.unit_unitId) {
+      const exists = await db.run(
+        SELECT.one.from(Units).where({ unitId: data.unit_unitId })
+      );
+      if (!exists) errors.push(`Unit ID '${data.unit_unitId}' does not exist.`);
+    }
+
+    // Check Payment Plan reference
+    if (data.paymentPlan_paymentPlanId) {
+      const exists = await db.run(
+        SELECT.one.from(PaymentPlans).where({ paymentPlanId: data.paymentPlan_paymentPlanId })
+      );
+      if (!exists)
+        errors.push(`Payment Plan ID '${data.paymentPlan_paymentPlanId}' does not exist.`);
+    }
+
+    // Throw combined error if any references are invalid
+    if (errors.length > 0) {
+      req.error({
+        code: "REFERENCE_NOT_FOUND",
+        message: errors.join("\n"),
+        target: "Reservations"
+      });
+    }
+  }
+
   // READ
-  this.on('READ', Reservations, async (req) => {
-    console.log('READ Reservations called');
+  this.on("READ", Reservations, async (req) => {
+    console.log("READ Reservations called");
     const db = cds.transaction(req);
     return await db.run(req.query);
   });
 
   // CREATE (header + compositions)
-  this.on('CREATE', Reservations, async (req) => {
-    console.log('CREATE Reservation called:', req.data);
+  this.on("CREATE", Reservations, async (req) => {
+    console.log("CREATE Reservation called:", req.data);
     const db = cds.transaction(req);
 
     try {
+      // 🔸 Validate references before creating
+      await validateReferences(req, db);
+
       // Insert main reservation
       const reservationData = { ...req.data };
       const { partners, conditions, payments } = reservationData;
@@ -671,20 +710,22 @@ module.exports = cds.service.impl(async function () {
       }
 
       return reservationData;
-
     } catch (error) {
-      console.error('Error creating Reservation:', error);
-      req.error(500, 'Error creating Reservation: ' + error.message);
+      console.error("Error creating Reservation:", error);
+      req.error(500, "Error creating Reservation: " + error.message);
     }
   });
 
   // UPDATE
-  this.on('UPDATE', Reservations, async (req) => {
+  this.on("UPDATE", Reservations, async (req) => {
     console.log("UPDATE Reservation called:", req.data);
     const { reservationId } = req.params[0];
     const db = cds.transaction(req);
 
     try {
+      // 🔸 Validate references before updating
+      await validateReferences(req, db);
+
       await db.run(UPDATE(Reservations).set(req.data).where({ reservationId }));
       return await db.run(SELECT.one.from(Reservations).where({ reservationId }));
     } catch (error) {
@@ -694,22 +735,27 @@ module.exports = cds.service.impl(async function () {
   });
 
   // DELETE
-  this.on('DELETE', Reservations, async (req) => {
-    console.log('DELETE Reservation called for:', req.data.reservationId);
+  this.on("DELETE", Reservations, async (req) => {
+    console.log("DELETE Reservation called for:", req.data.reservationId);
     const db = cds.transaction(req);
 
     try {
       const { reservationId } = req.data;
 
-      await db.run(DELETE.from(ReservationPartners).where({ reservation_reservationId: reservationId }));
-      await db.run(DELETE.from(ReservationConditions).where({ reservation_reservationId: reservationId }));
-      await db.run(DELETE.from(ReservationPaymentDetails).where({ reservation_reservationId: reservationId }));
+      await db.run(
+        DELETE.from(ReservationPartners).where({ reservation_reservationId: reservationId })
+      );
+      await db.run(
+        DELETE.from(ReservationConditions).where({ reservation_reservationId: reservationId })
+      );
+      await db.run(
+        DELETE.from(ReservationPaymentDetails).where({ reservation_reservationId: reservationId })
+      );
 
       return await db.run(DELETE.from(Reservations).where({ reservationId }));
-
     } catch (error) {
-      console.error('Error deleting Reservation:', error);
-      req.error(500, 'Error deleting Reservation: ' + error.message);
+      console.error("Error deleting Reservation:", error);
+      req.error(500, "Error deleting Reservation: " + error.message);
     }
   });
 
