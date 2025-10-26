@@ -142,10 +142,6 @@ entity PaymentPlanSchedules : managed {
         calculationMethod    : String(10);
         frequency            : String(10);
 
-        // conditionType        : Association to ConditionTypes;
-        // basePrice            : Association to BasePrices;
-        // calculationMethod    : Association to CalculationMethods;
-        // frequency            : Association to Frequencies;
 
         percentage           : Decimal(5, 2);
         dueInMonth           : Integer;
@@ -159,25 +155,6 @@ entity PaymentPlanProjects : managed {
         project     : Association to Projects;
 }
 
-// entity ConditionTypes {
-//     key code        : String(10);
-//         description : String(60);
-// }
-
-// entity BasePrices {
-//     key code        : String(10);
-//         description : String(60);
-// }
-
-// entity CalculationMethods {
-//     key code        : String(10);
-//         description : String(60);
-// }
-
-// entity Frequencies {
-//     key code        : String(10);
-//         description : String(60);
-// }
 
 entity EOI : managed {
     key eoiId           : String(8);
