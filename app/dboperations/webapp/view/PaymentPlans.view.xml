@@ -16,45 +16,61 @@
         </headerContent>
 
         <content>
-            <Table id="plansTable" items="{plans>/}" mode="SingleSelectMaster">
-                <columns>
-                    <Column><Text text="Plan ID"/></Column>
-                    <Column><Text text="Description"/></Column>
-                    <Column><Text text="Company Code"/></Column>
-                    <Column><Text text="Years"/></Column>
-                    <Column><Text text="Valid From"/></Column>
-                    <Column><Text text="Valid To"/></Column>
-                    <Column><Text text="Status"/></Column>
-                    <Column><Text text="Actions"/></Column>
-                </columns>
+            <!-- 🔹 ScrollContainer for horizontal scroll -->
+            <ScrollContainer
+                horizontal="true"
+                vertical="false"
+                width="100%"
+                height="100%"
+                focusable="true"
+                class="noPaddingScroll">
 
-                <items>
-                    <ColumnListItem>
-                        <cells>
-                            <Text text="{plans>paymentPlanId}"/>
-                            <Text text="{plans>description}"/>
-                            <Text text="{plans>companyCodeId}"/>
-                            <Text text="{plans>planYears}"/>
-                            <Text text="{plans>validFrom}"/>
-                            <Text text="{plans>validTo}"/>
-                            <Text text="{plans>planStatus}"/>
-                            <HBox>
-                                <Button icon="sap-icon://information" tooltip="Details" press="onShowPlanDetails"/>
-                                <Button icon="sap-icon://edit" tooltip="Edit" press="onEditPlan"/>
-                                <Button icon="sap-icon://delete" type="Reject" tooltip="Delete" press="onDeletePlan"/>
-                            </HBox>
-                        </cells>
-                    </ColumnListItem>
-                </items>
-            </Table>
+                <Table
+                    id="plansTable"
+                    items="{plans>/}"
+                    mode="SingleSelectMaster"
+                    width="120%"
+                    inset="false"
+                    class="noPaddingTable">
+
+                    <columns>
+                        <Column><Text text="Plan ID"/></Column>
+                        <Column><Text text="Description"/></Column>
+                        <Column><Text text="Company Code"/></Column>
+                        <Column><Text text="Years"/></Column>
+                        <Column><Text text="Valid From"/></Column>
+                        <Column><Text text="Valid To"/></Column>
+                        <Column><Text text="Status"/></Column>
+                        <Column><Text text="Actions"/></Column>
+                    </columns>
+
+                    <items>
+                        <ColumnListItem>
+                            <cells>
+                                <Text text="{plans>paymentPlanId}"/>
+                                <Text text="{plans>description}"/>
+                                <Text text="{plans>companyCodeId}"/>
+                                <Text text="{plans>planYears}"/>
+                                <Text text="{plans>validFrom}"/>
+                                <Text text="{plans>validTo}"/>
+                                <Text text="{plans>planStatus}"/>
+                                <HBox>
+                                    <Button icon="sap-icon://information" tooltip="Details" press="onShowPlanDetails"/>
+                                    <Button icon="sap-icon://edit" tooltip="Edit" press="onEditPlan"/>
+                                    <Button icon="sap-icon://delete" type="Reject" tooltip="Delete" press="onDeletePlan"/>
+                                </HBox>
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+            </ScrollContainer>
         </content>
     </Page>
 
-    <!-- Dialog for creating or editing a plan -->
+    <!-- ✅ Dialog left unchanged -->
     <Dialog id="planDialog" title="Add / Edit Payment Plan" stretchOnPhone="true">
         <content>
             <VBox class="sapUiSmallMargin">
-                <!-- GENERAL DATA -->
                 <Label text="Company Code ID"/>
                 <Input value="{local>/companyCodeId}" placeholder="e.g. 0001"/>
 
@@ -73,7 +89,6 @@
                 <Label text="Plan Status"/>
                 <Input value="{local>/planStatus}" placeholder="A / I"/>
 
-                <!-- SCHEDULE TABLE -->
                 <Title text="Schedules" level="H3"/>
                 <Toolbar>
                     <Button text="Add Row" icon="sap-icon://add" press="onAddScheduleRow"/>
@@ -108,7 +123,6 @@
                     </items>
                 </Table>
 
-                <!-- ASSIGNED PROJECTS TABLE -->
                 <Title text="Assigned Projects" level="H3"/>
                 <Toolbar>
                     <Button text="Add Project" icon="sap-icon://add" press="onAddProjectRow"/>

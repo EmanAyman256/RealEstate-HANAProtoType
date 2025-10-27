@@ -115,7 +115,7 @@ entity Conditions : managed {
 
 
 entity PaymentPlans : managed {
-    key paymentPlanId    : String(20);
+    key paymentPlanId    : UUID;
         description      : String(60);
         companyCodeId    : String(4);
         planYears        : Integer;
@@ -138,9 +138,9 @@ entity PaymentPlanSchedules : managed {
         paymentPlan          : Association to PaymentPlans;
 
         conditionType        : String(10);
-        basePrice            : String(10);
+        basePrice            : Integer;
         calculationMethod    : String(10);
-        frequency            : String(10);
+        frequency            : Integer;
 
 
         percentage           : Decimal(5, 2);
