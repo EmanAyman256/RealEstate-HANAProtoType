@@ -221,6 +221,7 @@ entity Reservations : managed {
         status             : String(1);
         customerType       : String(20);
         currency           : String(3);
+        afterSales       : String(20);
 
         /* --- Unit Details --- */
         project            : Association to Projects;
