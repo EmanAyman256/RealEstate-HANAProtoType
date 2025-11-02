@@ -1,5 +1,6 @@
 const cds = require('@sap/cds');
-const { ref } = cds.ql;  // <-- add this line
+const { ref } = cds.ql;
+const { v4: uuidv4 } = require('uuid');
 
 module.exports = cds.service.impl(async function () {
 
@@ -15,7 +16,11 @@ module.exports = cds.service.impl(async function () {
       Conditions,
       EOI,
       PaymentDetails,
-      Reservations
+      Reservations,
+      ReservationPartners,
+      ReservationConditions,
+      ReservationPayments,
+      ReservationPaymentDetails
     } = this.entities;
 
 
@@ -336,70 +341,70 @@ module.exports = cds.service.impl(async function () {
   /*-----------------------Payment Plans---------------------------*/
 
   // READ (with compositions expanded)
- this.on('READ', PaymentPlans, async (req, next) => {
-  console.log('READ PaymentPlans called with expand:', req.query.$expand);
+  this.on('READ', PaymentPlans, async (req, next) => {
+    console.log('READ PaymentPlans called with expand:', req.query.$expand);
 
-  try {
-    // Just let CAP handle expansions automatically
-    const result = await next(); 
+    try {
+      // Just let CAP handle expansions automatically
+      const result = await next();
 
-    // Optional: if you want to log
-    if (Array.isArray(result)) {
-      console.log(`Returned ${result.length} payment plans`);
+      // Optional: if you want to log
+      if (Array.isArray(result)) {
+        console.log(`Returned ${result.length} payment plans`);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error reading PaymentPlans:', error);
+      req.error(500, 'Error reading PaymentPlans: ' + error.message);
     }
-
-    return result;
-  } catch (error) {
-    console.error('Error reading PaymentPlans:', error);
-    req.error(500, 'Error reading PaymentPlans: ' + error.message);
-  }
-});
+  });
 
 
   this.on('CREATE', PaymentPlans, async (req) => {
-  console.log('CREATE PaymentPlan called with data:', req.data);
-  const db = cds.transaction(req);
+    console.log('CREATE PaymentPlan called with data:', req.data);
+    const db = cds.transaction(req);
 
-  try {
-    const { schedule, assignedProjects, ...planData } = req.data;
+    try {
+      const { schedule, assignedProjects, ...planData } = req.data;
 
-    // Insert main payment plan
-    const result = await db.run(INSERT.into(PaymentPlans).entries(planData));
-    const paymentPlanId = planData.paymentPlanId;
+      // Insert main payment plan
+      const result = await db.run(INSERT.into(PaymentPlans).entries(planData));
+      const paymentPlanId = planData.paymentPlanId;
 
-    // Insert schedule items
-    if (Array.isArray(schedule)) {
-      for (const s of schedule) {
-        await db.run(
-          INSERT.into(PaymentPlanSchedules).entries({
-            ...s,
-            paymentPlan_paymentPlanId: paymentPlanId // or paymentPlan_ID
-          })
-        );
+      // Insert schedule items
+      if (Array.isArray(schedule)) {
+        for (const s of schedule) {
+          await db.run(
+            INSERT.into(PaymentPlanSchedules).entries({
+              ...s,
+              paymentPlan_paymentPlanId: paymentPlanId // or paymentPlan_ID
+            })
+          );
+        }
       }
-    }
 
-    // Insert assigned projects
-    if (Array.isArray(assignedProjects)) {
-      for (const p of assignedProjects) {
-        await db.run(
-          INSERT.into(PaymentPlanProjects).entries({
-            ...p,
-            paymentPlan_paymentPlanId: paymentPlanId // or paymentPlan_ID
-          })
-        );
+      // Insert assigned projects
+      if (Array.isArray(assignedProjects)) {
+        for (const p of assignedProjects) {
+          await db.run(
+            INSERT.into(PaymentPlanProjects).entries({
+              ...p,
+              paymentPlan_paymentPlanId: paymentPlanId // or paymentPlan_ID
+            })
+          );
+        }
       }
+
+      await db.commit();
+      return result;
+
+    } catch (error) {
+      console.error('Error creating PaymentPlan:', error);
+      await db.rollback();
+      req.error(500, 'Error creating PaymentPlan: ' + error.message);
     }
-
-    await db.commit();
-    return result;
-
-  } catch (error) {
-    console.error('Error creating PaymentPlan:', error);
-    await db.rollback();
-    req.error(500, 'Error creating PaymentPlan: ' + error.message);
-  }
-});
+  });
 
 
   // UPDATE
@@ -504,14 +509,12 @@ module.exports = cds.service.impl(async function () {
     const db = cds.transaction(req);
 
     try {
-      // Insert main EOI
-      const result = await db.run(INSERT.into(EOI).entries(req.data));
+      await db.run(INSERT.into(EOI).entries(req.data));
 
-      // Fetch full record with associations for UI
       const createdEOI = await db.run(
         SELECT.one.from(EOI)
           .where({ eoiId: req.data.eoiId })
-          .columns('*', { from: 'paymentDetails', expand: ['*'] })
+          .columns('*', { ref: ['paymentDetails'], expand: ['*'] })
       );
 
       console.log('Created EOI returned to UI:', createdEOI);
@@ -525,13 +528,18 @@ module.exports = cds.service.impl(async function () {
   // UPDATE
   this.on('UPDATE', EOI, async (req) => {
     console.log('UPDATE EOI called with:', req.data, 'params:', req.params);
-
     const { eoiId } = req.params[0];
     const db = cds.transaction(req);
 
     try {
       await db.run(UPDATE(EOI).set(req.data).where({ eoiId }));
-      const updated = await db.run(SELECT.one.from(EOI).where({ eoiId }));
+
+      const updated = await db.run(
+        SELECT.one.from(EOI)
+          .where({ eoiId })
+          .columns('*', { ref: ['paymentDetails'], expand: ['*'] })
+      );
+
       return updated;
     } catch (error) {
       console.error('Error updating EOI:', error);
@@ -612,6 +620,7 @@ module.exports = cds.service.impl(async function () {
       req.error(500, 'Error deleting PaymentDetails: ' + error.message);
     }
   });
+
   /*----------------------- Reservations ---------------------------*/
 
   // 🔹 Helper: validate references
@@ -662,101 +671,204 @@ module.exports = cds.service.impl(async function () {
     }
   }
 
-  // READ
+/** ----------------------------------------------------------------
+   *  READ Reservations
+   * ---------------------------------------------------------------- */
   this.on("READ", Reservations, async (req) => {
     console.log("READ Reservations called");
     const db = cds.transaction(req);
     return await db.run(req.query);
   });
 
-  // CREATE (header + compositions)
+ // 🔹 Reference Validation Function
+  async function validateReferencesForReservations(req, db) {
+    const {
+      project_projectId,
+      building_buildingId,
+      unit_unitId,
+      paymentPlan_paymentPlanId
+    } = req.data;
+
+    const exists = async (entity, key, value) => {
+      if (!value) return true;
+      const result = await db.run(SELECT.one.from(entity).where({ [key]: value }));
+      return !!result;
+    };
+
+    if (project_projectId && !(await exists("Projects", "projectId", project_projectId))) {
+      req.error(400, `Project ID '${project_projectId}' not found`);
+    }
+    if (building_buildingId && !(await exists("Buildings", "buildingId", building_buildingId))) {
+      req.error(400, `Building ID '${building_buildingId}' not found`);
+    }
+    if (unit_unitId && !(await exists("Units", "unitId", unit_unitId))) {
+      req.error(400, `Unit ID '${unit_unitId}' not found`);
+    }
+    if (paymentPlan_paymentPlanId && !(await exists("PaymentPlans", "paymentPlanId", paymentPlan_paymentPlanId))) {
+      req.error(400, `Payment Plan ID '${paymentPlan_paymentPlanId}' not found`);
+    }
+
+    return true;
+  }
+
+  // 🔹 CREATE Reservation
   this.on("CREATE", Reservations, async (req) => {
-    console.log("CREATE Reservation called:", req.data);
     const db = cds.transaction(req);
+    const reservationData = { ...req.data };
+
+    // Auto-generate UUID if not provided
+    reservationData.reservationId = reservationData.reservationId || uuidv4();
+
+    // Extract child collections
+    const { partners, conditions, payments } = reservationData;
+    delete reservationData.partners;
+    delete reservationData.conditions;
+    delete reservationData.payments;
 
     try {
-      // 🔸 Validate references before creating
-      await validateReferences(req, db);
+      // ✅ Validate foreign key references before inserting
+      await validateReferencesForReservations(req, db);
+
+      console.log("🔹 Creating reservation:", reservationData);
 
       // Insert main reservation
-      const reservationData = { ...req.data };
-      const { partners, conditions, payments } = reservationData;
-      delete reservationData.partners;
-      delete reservationData.conditions;
-      delete reservationData.payments;
-
       await db.run(INSERT.into(Reservations).entries(reservationData));
 
-      // Insert compositions (if any)
+      // Insert partners
       if (partners?.length) {
-        for (const p of partners) {
-          p.reservation_reservationId = reservationData.reservationId;
-          await db.run(INSERT.into(ReservationPartners).entries(p));
-        }
+        await Promise.all(
+          partners.map((p) =>
+            db.run(
+              INSERT.into(ReservationPartners).entries({
+                ...p,
+                reservation_ID: reservationData.reservationId,
+              })
+            )
+          )
+        );
       }
 
+      // Insert conditions
       if (conditions?.length) {
-        for (const c of conditions) {
-          c.reservation_reservationId = reservationData.reservationId;
-          await db.run(INSERT.into(ReservationConditions).entries(c));
-        }
+        await Promise.all(
+          conditions.map((c) =>
+            db.run(
+              INSERT.into(ReservationConditions).entries({
+                ...c,
+                reservation_ID: reservationData.reservationId,
+              })
+            )
+          )
+        );
       }
 
+      // Insert payments
       if (payments?.length) {
-        for (const pay of payments) {
-          pay.reservation_reservationId = reservationData.reservationId;
-          await db.run(INSERT.into(ReservationPaymentDetails).entries(pay));
-        }
+        await Promise.all(
+          payments.map((pay) =>
+            db.run(
+              INSERT.into(ReservationPayments).entries({
+                ...pay,
+                reservation_ID: reservationData.reservationId,
+              })
+            )
+          )
+        );
       }
 
+      console.log("✅ Reservation created successfully:", reservationData.reservationId);
       return reservationData;
+
     } catch (error) {
-      console.error("Error creating Reservation:", error);
+      console.error("❌ Error creating Reservation:", error);
       req.error(500, "Error creating Reservation: " + error.message);
     }
   });
 
-  // UPDATE
+
+
+  /** ----------------------------------------------------------------
+   *  UPDATE Reservation
+   * ---------------------------------------------------------------- */
   this.on("UPDATE", Reservations, async (req) => {
     console.log("UPDATE Reservation called:", req.data);
     const { reservationId } = req.params[0];
     const db = cds.transaction(req);
 
     try {
-      // 🔸 Validate references before updating
-      await validateReferences(req, db);
+      await validateReferencesForReservations(req, db);
 
       await db.run(UPDATE(Reservations).set(req.data).where({ reservationId }));
-      return await db.run(SELECT.one.from(Reservations).where({ reservationId }));
+      const updated = await db.run(SELECT.one.from(Reservations).where({ reservationId }));
+      await db.commit();
+      console.log("✅ Reservation updated:", reservationId);
+      return updated;
+
     } catch (error) {
-      console.error("Error updating Reservation:", error);
+      await db.rollback();
+      console.error("❌ Error updating Reservation:", error);
       req.error(500, "Error updating Reservation: " + error.message);
     }
   });
 
-  // DELETE
+  /** ----------------------------------------------------------------
+   *  DELETE Reservation
+   * ---------------------------------------------------------------- */
   this.on("DELETE", Reservations, async (req) => {
     console.log("DELETE Reservation called for:", req.data.reservationId);
     const db = cds.transaction(req);
 
     try {
       const { reservationId } = req.data;
-
-      await db.run(
-        DELETE.from(ReservationPartners).where({ reservation_reservationId: reservationId })
-      );
-      await db.run(
-        DELETE.from(ReservationConditions).where({ reservation_reservationId: reservationId })
-      );
-      await db.run(
-        DELETE.from(ReservationPaymentDetails).where({ reservation_reservationId: reservationId })
-      );
-
-      return await db.run(DELETE.from(Reservations).where({ reservationId }));
+      await db.run(DELETE.from(Reservations).where({ reservationId }));
+      await db.commit();
+      console.log("🗑️ Reservation deleted:", reservationId);
+      return { message: `Reservation ${reservationId} deleted.` };
     } catch (error) {
-      console.error("Error deleting Reservation:", error);
+      await db.rollback();
+      console.error("❌ Error deleting Reservation:", error);
       req.error(500, "Error deleting Reservation: " + error.message);
     }
   });
 
+  /** ----------------------------------------------------------------
+   *  HELPER: Reference Validation
+   * ---------------------------------------------------------------- */
+  // async function validateReferencesForReservations(req, db) {
+  //   const {
+  //     project_projectId,
+  //     building_buildingId,
+  //     unit_unitId,
+  //     paymentPlan_paymentPlanId
+  //   } = req.data;
+
+  //   // Helper to check if reference exists
+  //   const exists = async (entity, key, value) => {
+  //     if (!value) return true; // Skip empty reference
+  //     const result = await db.run(SELECT.one.from(entity).where({ [key]: value }));
+  //     return !!result;
+  //   };
+
+  //   // 🔸 Validate Project
+  //   if (project_projectId && !(await exists("Projects", "projectId", project_projectId))) {
+  //     req.error(400, `Project ID '${project_projectId}' not found`);
+  //   }
+
+  //   // 🔸 Validate Building
+  //   if (building_buildingId && !(await exists("Buildings", "buildingId", building_buildingId))) {
+  //     req.error(400, `Building ID '${building_buildingId}' not found`);
+  //   }
+
+  //   // 🔸 Validate Unit
+  //   if (unit_unitId && !(await exists("Units", "unitId", unit_unitId))) {
+  //     req.error(400, `Unit ID '${unit_unitId}' not found`);
+  //   }
+
+  //   // 🔸 Validate Payment Plan
+  //   if (paymentPlan_paymentPlanId && !(await exists("PaymentPlans", "paymentPlanId", paymentPlan_paymentPlanId))) {
+  //     req.error(400, `Payment Plan ID '${paymentPlan_paymentPlanId}' not found`);
+  //   }
+
+  //   return true;
+  // }
 });

@@ -47,13 +47,13 @@
     "dependencies": {
       "minUI5Version": "1.141.0",
       "libs": {
-         "sap.m": {},
+        "sap.m": {},
         "sap.ui.core": {},
         "sap.tnt": {},
         "sap.f": {},
         "sap.ui.integration": {},
         "sap.ui.table": {},
-        "sap.fe.macros":{},
+        "sap.fe.macros": {},
         "sap.ui.layout": {}
       }
     },
@@ -98,32 +98,32 @@
         "viewPath": "dboperations.view"
       },
       "routes": [
-         {
+        {
           "name": "Projects",
           "pattern": "Projects",
           "target": "Projects"
         },
-         {
+        {
           "name": "Buildings",
           "pattern": "Buildings",
           "target": "Buildings"
         },
-          {
+        {
           "name": "Units",
           "pattern": "Units",
           "target": "Units"
         },
-          {
+        {
           "name": "PaymentPlans",
           "pattern": "PaymentPlans",
           "target": "PaymentPlans"
         },
-           {
+        {
           "name": "EOI",
           "pattern": "EOI",
           "target": "EOI"
         },
-           {
+        {
           "name": "Reservations",
           "pattern": "Reservations",
           "target": "Reservations"
@@ -137,22 +137,22 @@
         }
       ],
       "targets": {
-         "Projects": {
+        "Projects": {
           "viewName": "Projects"
         },
-         "Buildings": {
+        "Buildings": {
           "viewName": "Buildings"
         },
         "Units": {
           "viewName": "Units"
         },
-         "PaymentPlans": {
+        "PaymentPlans": {
           "viewName": "PaymentPlans"
         },
-             "EOI": {
+        "EOI": {
           "viewName": "EOI"
         },
-          "Reservations": {
+        "Reservations": {
           "viewName": "Reservations"
         },
         "TargetDBOperations": {

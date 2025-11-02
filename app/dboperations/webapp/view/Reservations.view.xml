@@ -81,8 +81,8 @@
         <VBox class="sapUiSmallMargin">
 
             <!-- General Data -->
-            <Label text="Reservation ID"/>
-            <Input value="{local>/reservationId}" placeholder="Auto-generated if empty"/>
+            <!-- <Label text="Reservation ID"/>
+            <Input value="{local>/reservationId}" placeholder="Auto-generated if empty"/> -->
 
             <Label text="Company Code ID"/>
             <Input value="{local>/companyCodeId}"/>

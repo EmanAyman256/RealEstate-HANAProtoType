@@ -6,7 +6,6 @@ sap.ui.define([
     "sap/m/Button",
     "sap/m/Label",
     "sap/m/Text",
-    "sap/m/TextArea",
     "sap/m/VBox",
     "sap/m/DatePicker",
     "sap/m/Table",
@@ -16,10 +15,11 @@ sap.ui.define([
     "sap/m/Title",
     "sap/m/IconTabBar",
     "sap/m/IconTabFilter",
-    "sap/ui/layout/form/SimpleForm"
+    "sap/ui/layout/form/SimpleForm",
+    "sap/m/HBox"
 ], function (
-    Controller, MessageBox, Dialog, Input, Button, Label, Text, TextArea, VBox,
-    DatePicker, Table, Column, ColumnListItem, JSONModel, Title, IconTabBar, IconTabFilter, SimpleForm
+    Controller, MessageBox, Dialog, Input, Button, Label, Text, VBox,
+    DatePicker, Table, Column, ColumnListItem, JSONModel, Title, IconTabBar, IconTabFilter, SimpleForm, HBox
 ) {
     "use strict";
 
@@ -27,8 +27,6 @@ sap.ui.define([
 
         onInit: function () {
             this._loadEOIs();
-            this.getView().setModel(new JSONModel({ eoiDetails: [] }), "eoi");
-            this._selectedEoiId = null;
         },
 
         _loadEOIs: function () {
@@ -37,7 +35,7 @@ sap.ui.define([
                 .then(res => res.json())
                 .then(data => {
                     oModel.setData({ EOI: data.value || [] });
-                    this.getView().setModel(oModel); // ✅ set on view
+                    this.getView().byId("eoiTable").setModel(oModel);
                 })
                 .catch(err => {
                     console.error("Error loading EOIs:", err);
@@ -45,19 +43,10 @@ sap.ui.define([
                 });
         },
 
-        onSelectEOI: function (oEvent) {
-            const oListItem = oEvent.getParameter("listItem");
-            if (!oListItem) return;
-            const oCtx = oListItem.getBindingContext();
-            const oEoi = oCtx.getObject();
-            this._selectedEoiId = oEoi.eoiId;
-            const oEoiModel = new JSONModel({ eoiDetails: [oEoi] });
-            this.getView().setModel(oEoiModel, "eoi");
-        },
-
+        /* --------------------------- ADD / EDIT --------------------------- */
         onNavigateToAddEOI: function () {
+            // New dialog every time → avoids stale bindings and wrong mode
             const oData = {
-                eoiId: "",
                 eoiType: "",
                 status: "",
                 date: "",
@@ -73,67 +62,49 @@ sap.ui.define([
                 validatedOn: "",
                 paymentDetails: []
             };
-            const oModel = new JSONModel(oData);
-
-            if (!this._oAddDialog) {
-                this._oAddDialog = new Dialog({
-                    title: "Add / Edit EOI",
-                    contentWidth: "100%",
-                    resizable: true,
-                    draggable: true,
-                    content: new VBox({ items: this._createAddEditForm() }),
-                    beginButton: new Button({
-                        text: "Save",
-                        type: "Emphasized",
-                        press: this.onSaveEOI.bind(this)
-                    }),
-                    endButton: new Button({
-                        text: "Cancel",
-                        press: function () { this._oAddDialog.close(); }.bind(this)
-                    })
-                });
-                this._oAddDialog.setModel(oModel);
-                this.getView().addDependent(this._oAddDialog);
-            }
-
-            this._oAddDialog.getModel().setData(oData);
-            this._oAddDialog.open();
+            this._openAddEditDialog(oData, false);
         },
 
         onEditEOI: function (oEvent) {
             const oCtx = oEvent.getSource().getBindingContext();
-            if (!oCtx) return MessageBox.warning("Unable to get EOI context.");
+            if (!oCtx) return MessageBox.warning("No EOI selected.");
             const oData = Object.assign({}, oCtx.getObject());
-            const oModel = new JSONModel(oData);
+            this._openAddEditDialog(oData, true);
+        },
 
-            if (!this._oAddDialog) {
-                this._oAddDialog = new Dialog({
-                    title: "Add / Edit EOI",
-                    contentWidth: "100%",
-                    resizable: true,
-                    draggable: true,
-                    content: new VBox({ items: this._createAddEditForm() }),
-                    beginButton: new Button({
-                        text: "Save",
-                        type: "Emphasized",
-                        press: this.onSaveEOI.bind(this)
-                    }),
-                    endButton: new Button({
-                        text: "Cancel",
-                        press: function () { this._oAddDialog.close(); }.bind(this)
-                    })
-                });
-                this._oAddDialog.setModel(oModel);
-                this.getView().addDependent(this._oAddDialog);
+        _openAddEditDialog: function (oData, isEdit) {
+            // Always destroy any previous dialog instance
+            if (this._oAddDialog) {
+                this._oAddDialog.destroy();
+                this._oAddDialog = null;
             }
 
-            this._oAddDialog.getModel().setData(oData);
+            const oModel = new JSONModel(oData);
+
+            this._oAddDialog = new Dialog({
+                title: isEdit ? "Edit EOI" : "Add EOI",
+                contentWidth: "100%",
+                resizable: true,
+                draggable: true,
+                content: new VBox({ items: this._createAddEditForm() }),
+                beginButton: new Button({
+                    text: "Save",
+                    type: "Emphasized",
+                    press: this.onSaveEOI.bind(this)
+                }),
+                endButton: new Button({
+                    text: "Cancel",
+                    press: () => this._oAddDialog.close()
+                })
+            });
+
+            this._oAddDialog.setModel(oModel);
+            this.getView().addDependent(this._oAddDialog);
             this._oAddDialog.open();
         },
 
         _createAddEditForm: function () {
             return [
-                new Label({ text: "EOI ID" }), new Input({ value: "{/eoiId}", editable: "{= ${/eoiId} === '' }" }),
                 new Label({ text: "EOI Type" }), new Input({ value: "{/eoiType}" }),
                 new Label({ text: "Status" }), new Input({ value: "{/status}" }),
                 new Label({ text: "Date" }), new DatePicker({ value: "{/date}", valueFormat: "yyyy-MM-dd" }),
@@ -180,45 +151,176 @@ sap.ui.define([
             ];
         },
 
+        /* --------------------------- SAVE --------------------------- */
         onSaveEOI: function () {
             const oData = this._oAddDialog.getModel().getData();
-            const payload = Object.assign({}, oData);
-            payload.eoiId = oData.eoiId || Date.now().toString().slice(-8);
+            const isEdit = !!oData.eoiId && oData.eoiId.trim() !== "";
 
-            const isEdit = !!oData.eoiId;
+            // if create, generate new id
+            const eoiId = isEdit ? oData.eoiId : Date.now().toString().slice(-8);
+
+            const payload = {
+                eoiId,
+                eoiType: oData.eoiType,
+                status: oData.status,
+                date: oData.date || null,
+                companyCode: oData.companyCode,
+                projectId: oData.projectId,
+                totalEoiValue: parseFloat(oData.totalEoiValue) || 0,
+                collectedAmount: parseFloat(oData.collectedAmount) || 0,
+                remainingAmount: parseFloat(oData.remainingAmount) || 0,
+                nationality: oData.nationality,
+                mobile1: oData.mobile1,
+                customerId: oData.customerId,
+                validatedBy: oData.validatedBy,
+                validatedOn: oData.validatedOn || null,
+                paymentDetails: oData.paymentDetails || []
+            };
+
             const method = isEdit ? "PATCH" : "POST";
             const url = isEdit
-                ? `/odata/v4/real-estate/EOI(eoiId='${encodeURIComponent(oData.eoiId)}')`
+                ? `/odata/v4/real-estate/EOI(eoiId='${encodeURIComponent(eoiId)}')`
                 : "/odata/v4/real-estate/EOI";
+
+            console.log("EOI Save →", method, url, payload);
 
             fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             })
-                .then(r => { if (!r.ok) throw new Error(isEdit ? "Update failed" : "Create failed"); })
+                .then(async (r) => {
+                    if (!r.ok) {
+                        const txt = await r.text().catch(() => "");
+                        throw new Error(txt || "Save failed");
+                    }
+                    return r.text().then(txt => txt ? JSON.parse(txt) : {});
+                })
                 .then(() => {
                     this._loadEOIs();
-                    this.getView().getModel()?.refresh(true);
                     MessageBox.success(isEdit ? "EOI updated successfully!" : "EOI created successfully!");
                     this._oAddDialog.close();
                 })
-                .catch(e => MessageBox.error(e.message));
+                .catch(err => {
+                    console.error("Save error:", err);
+                    MessageBox.error("Save failed: " + err.message);
+                });
+        },
+
+        onDetails: function (oEvent) {
+            const oCtx = oEvent.getSource().getBindingContext();
+            if (!oCtx) return MessageBox.warning("No EOI selected.");
+
+            const oData = oCtx.getObject();
+            const oModel = new JSONModel(oData);
+
+            if (this._oDetailsDialog) {
+                this._oDetailsDialog.destroy();
+                this._oDetailsDialog = null;
+            }
+
+            this._oDetailsDialog = new Dialog({
+                title: "EOI Details",
+                contentWidth: "900px",
+                resizable: true,
+                draggable: true,
+                content: [
+                    new IconTabBar({
+                        items: [
+                            new IconTabFilter({
+                                text: "General Data",
+                                icon: "sap-icon://home",
+                                content: new SimpleForm({
+                                    editable: false,
+                                    content: [
+                                        new Label({ text: "EOI ID" }), new Text({ text: "{/eoiId}" }),
+                                        new Label({ text: "EOI Type" }), new Text({ text: "{/eoiType}" }),
+                                        new Label({ text: "Status" }), new Text({ text: "{/status}" }),
+                                        new Label({ text: "Date" }), new Text({ text: "{/date}" }),
+                                        new Label({ text: "Company Code" }), new Text({ text: "{/companyCode}" }),
+                                        new Label({ text: "Project ID" }), new Text({ text: "{/projectId}" }),
+                                        new Label({ text: "Total Value" }), new Text({ text: "{/totalEoiValue}" }),
+                                        new Label({ text: "Collected Amount" }), new Text({ text: "{/collectedAmount}" }),
+                                        new Label({ text: "Remaining Amount" }), new Text({ text: "{/remainingAmount}" })
+                                    ]
+                                })
+                            }),
+                            new IconTabFilter({
+                                text: "Payment Details",
+                                icon: "sap-icon://money-bills",
+                                content: [
+                                    new Table({
+                                        columns: [
+                                            new Column({ header: new Label({ text: "Receipt Type" }) }),
+                                            new Column({ header: new Label({ text: "Status" }) }),
+                                            new Column({ header: new Label({ text: "Payment Method" }) }),
+                                            new Column({ header: new Label({ text: "Amount" }) }),
+                                            new Column({ header: new Label({ text: "Due Date" }) }),
+                                            new Column({ header: new Label({ text: "House Bank" }) }),
+                                            new Column({ header: new Label({ text: "Collected Amount" }) })
+                                        ],
+                                        items: {
+                                            path: "/paymentDetails",
+                                            template: new ColumnListItem({
+                                                cells: [
+                                                    new Text({ text: "{receiptType}" }),
+                                                    new Text({ text: "{receiptStatus}" }),
+                                                    new Text({ text: "{paymentMethod}" }),
+                                                    new Text({ text: "{amount}" }),
+                                                    new Text({ text: "{dueDate}" }),
+                                                    new Text({ text: "{houseBank}" }),
+                                                    new Text({ text: "{collectedAmount}" })
+                                                ]
+                                            })
+                                        }
+                                    })
+                                ]
+                            })
+                        ]
+                    })
+                ],
+                endButton: new Button({
+                    text: "Close",
+                    press: () => this._oDetailsDialog.close()
+                })
+            });
+
+            this._oDetailsDialog.setModel(oModel);
+            this.getView().addDependent(this._oDetailsDialog);
+            this._oDetailsDialog.open();
         },
 
 
+        /* --------------------------- PAYMENT ROWS --------------------------- */
         onAddPaymentRow: function () {
             const oModel = this._oAddDialog.getModel();
-            oModel.getProperty("/paymentDetails").push({
-                receiptType: "",
-                receiptStatus: "",
-                paymentMethod: "",
-                amount: 0,
-                dueDate: "",
-                houseBank: "",
-                collectedAmount: 0
+            const a = oModel.getProperty("/paymentDetails") || [];
+            a.push({
+                receiptType: "", receiptStatus: "", paymentMethod: "",
+                amount: 0, dueDate: "", houseBank: "", collectedAmount: 0
             });
+            oModel.setProperty("/paymentDetails", a);
             oModel.refresh();
+        },
+
+        /* --------------------------- DELETE --------------------------- */
+        onDelete: function (oEvent) {
+            const oCtx = oEvent.getSource().getBindingContext();
+            if (!oCtx) return;
+            const sEoiId = oCtx.getObject().eoiId;
+
+            MessageBox.confirm(`Delete EOI ${sEoiId}?`, {
+                onClose: (sAction) => {
+                    if (sAction !== MessageBox.Action.OK) return;
+                    fetch(`/odata/v4/real-estate/EOI(eoiId='${encodeURIComponent(sEoiId)}')`, {
+                        method: "DELETE"
+                    })
+                        .then(() => this._loadEOIs())
+                        .then(() => MessageBox.success("EOI deleted successfully!"))
+                        .catch(e => MessageBox.error(e.message));
+                }
+            });
         }
+
     });
 });

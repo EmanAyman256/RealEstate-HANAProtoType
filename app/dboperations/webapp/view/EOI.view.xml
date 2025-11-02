@@ -4,7 +4,10 @@
     xmlns:mvc="sap.ui.core.mvc"
     displayBlock="true"
 >
-    <Page id="eoiPage" title="EOI Management">
+    <Page
+        id="eoiPage"
+        title="EOI Management"
+    >
         <headerContent>
             <Button
                 id="btnAddEOI"
@@ -22,15 +25,33 @@
                 selectionChange="onSelectEOI"
             >
                 <columns>
-                    <Column><Text text="EOI ID" /></Column>
-                    <Column><Text text="EOI Type" /></Column>
-                    <Column><Text text="Status" /></Column>
-                    <Column><Text text="Date" /></Column>
-                    <Column><Text text="Project ID" /></Column>
-                    <Column><Text text="Total Value" /></Column>
-                    <Column><Text text="Collected Amount" /></Column>
-                    <Column><Text text="Remaining Amount" /></Column>
-                    <Column><Text text="Actions" /></Column>
+                    <Column>
+                        <Text text="EOI ID" />
+                    </Column>
+                    <Column>
+                        <Text text="EOI Type" />
+                    </Column>
+                    <Column>
+                        <Text text="Status" />
+                    </Column>
+                    <Column>
+                        <Text text="Date" />
+                    </Column>
+                    <Column>
+                        <Text text="Project ID" />
+                    </Column>
+                    <Column>
+                        <Text text="Total Value" />
+                    </Column>
+                    <Column>
+                        <Text text="Collected Amount" />
+                    </Column>
+                    <Column>
+                        <Text text="Remaining Amount" />
+                    </Column>
+                    <Column>
+                        <Text text="Actions" />
+                    </Column>
                 </columns>
                 <items>
                     <ColumnListItem>
@@ -44,9 +65,19 @@
                             <Text text="{collectedAmount}" />
                             <Text text="{remainingAmount}" />
                             <HBox>
-                                <Button icon="sap-icon://information" press="onDetails" />
-                                <Button icon="sap-icon://edit" press="onEditEOI" />
-                                <Button icon="sap-icon://delete" type="Reject" press="onDelete" />
+                                <Button
+                                    icon="sap-icon://information"
+                                    press="onDetails"
+                                />
+                                <Button
+                                    icon="sap-icon://edit"
+                                    press="onEditEOI"
+                                />
+                                <Button
+                                    icon="sap-icon://delete"
+                                    type="Reject"
+                                    press="onDelete"
+                                />
                             </HBox>
                         </cells>
                     </ColumnListItem>
