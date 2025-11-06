@@ -217,13 +217,13 @@ sap.ui.define([
                                             labelSpanL: 3,
                                             columnsL: 2,
                                             content: [
-                                                new sap.m.Label({ text: "Company Code ID (4 digits)" }),
+                                                new sap.m.Label({ text: "Company Code ID" }),
                                                 new sap.m.Text({ text: "{/CompanyCode}" }),
 
                                                 new sap.m.Label({ text: "Company Code Description" }),
                                                 new sap.m.Text({ text: "{/companyCodeDescription}" }),
 
-                                                new sap.m.Label({ text: "Project ID (8 digits)" }),
+                                                new sap.m.Label({ text: "Project ID" }),
                                                 new sap.m.Text({ text: "{/ProjectId}" }),
 
                                                 new sap.m.Label({ text: "Project Description" }),

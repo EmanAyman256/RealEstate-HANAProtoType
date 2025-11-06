@@ -40,7 +40,7 @@
                         <Column><Text text="Description"/></Column>
                         <Column><Text text="Sales Type"/></Column>
                         <Column><Text text="Valid From"/></Column>
-                        <Column><Text text="CustomerType"/></Column>
+                        <Column><Text text="Customer Type"/></Column>
                         <Column><Text text="Currency"/></Column>
                         <Column><Text text="After Sales"/></Column>
                         <Column><Text text="Status"/></Column>

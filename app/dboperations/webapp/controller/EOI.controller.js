@@ -290,6 +290,188 @@ sap.ui.define([
             this._oDetailsDialog.open();
         },
 
+        onAddReservationFromEOI: async function (oEvent) {
+            const oCtx = oEvent.getSource().getBindingContext();
+            if (!oCtx) {
+                sap.m.MessageToast.show("No EOI selected.");
+                return;
+            }
+
+            const oEOI = oCtx.getObject();
+
+            // 🔹 Default data for the reservation
+            const oNewReservationModel = new sap.ui.model.json.JSONModel({
+                reservationId: "",
+                companyCodeId: oEOI.companyCode || "",
+                oldReservationId: "",
+                eoiId: oEOI.eoiId || "",
+                description: `Reservation for EOI ${oEOI.eoiId}`,
+                salesType: "",
+                validFrom: new Date().toISOString().split("T")[0],
+                customerType: "",
+                currency: "",
+                afterSales: "",
+                status: "Draft",
+
+                // 🔹 Reference fields
+                project_projectId: oEOI.projectId || "",
+                building_buildingId: "",
+                unit_unitId: "",
+                paymentPlan_paymentPlanId: "",
+
+                // 🔹 Financial and misc fields
+                bua: 0,
+                phase: "",
+                pricePlanYears: 0,
+                planYears: 0,
+                unitPrice: 0,
+                planCurrency: "",
+                requestType: "",
+                reason: "",
+                cancellationDate: "",
+                cancellationStatus: "",
+                rejectionReason: "",
+                cancellationFees: 0,
+
+                payments: [],
+                partners: [],
+                conditions: []
+            });
+
+            if (!this._oAddReservationDialog) {
+                this._oAddReservationDialog = new sap.m.Dialog({
+                    title: "Add Reservation from EOI",
+                    contentWidth: "700px",
+                    contentHeight: "80%",
+                    resizable: true,
+                    draggable: true,
+                    class: "sapUiSizeCompact",
+                    content: [
+                        new sap.m.ScrollContainer({
+                            height: "100%",
+                            vertical: true,
+                            focusable: true,
+                            content: [
+                                new sap.ui.layout.form.SimpleForm({
+                                    editable: true,
+                                    layout: "ResponsiveGridLayout",
+                                    labelSpanL: 4,
+                                    columnsL: 2,
+                                    content: [
+                                        new sap.m.Label({ text: "EOI ID" }),
+                                        new sap.m.Text({ text: "{/eoiId}" }),
+
+                                        new sap.m.Label({ text: "Company Code" }),
+                                        new sap.m.Text({ text: "{/companyCodeId}" }),
+
+                                        new sap.m.Label({ text: "Project ID" }),
+                                        new sap.m.Text({ text: "{/project_projectId}" }),
+
+                                        new sap.m.Label({ text: "Description" }),
+                                        new sap.m.Input({ value: "{/description}" }),
+
+                                        new sap.m.Label({ text: "Sales Type" }),
+                                        new sap.m.Input({ value: "{/salesType}" }),
+
+                                        new sap.m.Label({ text: "Valid From" }),
+                                        new sap.m.DatePicker({
+                                            value: "{/validFrom}",
+                                            displayFormat: "long",
+                                            valueFormat: "yyyy-MM-dd",
+                                            showClearIcon: true
+                                        }),
+
+                                        new sap.m.Label({ text: "Currency" }),
+                                        new sap.m.Input({ value: "{/currency}" }),
+
+                                        new sap.m.Label({ text: "Customer Type" }),
+                                        new sap.m.Input({ value: "{/customerType}" }),
+
+                                        new sap.m.Label({ text: "After Sales" }),
+                                        new sap.m.Input({ value: "{/afterSales}" }),
+
+                                        new sap.m.Label({ text: "Phase" }),
+                                        new sap.m.Input({ value: "{/phase}" }),
+
+                                        new sap.m.Label({ text: "Unit Price" }),
+                                        new sap.m.Input({ value: "{/unitPrice}" }),
+
+                                        new sap.m.Label({ text: "BUA" }),
+                                        new sap.m.Input({ value: "{/bua}" }),
+
+                                        new sap.m.Label({ text: "Plan Years" }),
+                                        new sap.m.Input({ value: "{/planYears}" }),
+
+                                        new sap.m.Label({ text: "Price Plan Years" }),
+                                        new sap.m.Input({ value: "{/pricePlanYears}" }),
+
+                                        new sap.m.Label({ text: "Plan Currency" }),
+                                        new sap.m.Input({ value: "{/planCurrency}" }),
+
+                                        new sap.m.Label({ text: "Request Type" }),
+                                        new sap.m.Input({ value: "{/requestType}" }),
+
+                                        new sap.m.Label({ text: "Reason" }),
+                                        new sap.m.Input({ value: "{/reason}" }),
+
+                                        new sap.m.Label({ text: "Cancellation Date" }),
+                                        new sap.m.DatePicker({
+                                            value: "{/cancellationDate}",
+                                            displayFormat: "long",
+                                            valueFormat: "yyyy-MM-dd",
+                                            showClearIcon: true
+                                        }),
+
+                                        new sap.m.Label({ text: "Cancellation Status" }),
+                                        new sap.m.Input({ value: "{/cancellationStatus}" }),
+
+                                        new sap.m.Label({ text: "Cancellation Fees" }),
+                                        new sap.m.Input({ value: "{/cancellationFees}" })
+                                    ]
+                                })
+                            ]
+                        })
+                    ],
+                    beginButton: new sap.m.Button({
+                        text: "Save",
+                        type: "Emphasized",
+                        press: async function () {
+                            const oData = this._oAddReservationDialog.getModel().getData();
+
+                            try {
+                                const res = await fetch("/odata/v4/real-estate/Reservations", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify(oData)
+                                });
+
+                                if (!res.ok) {
+                                    const err = await res.json();
+                                    throw new Error(err.error?.message || "Failed to create reservation");
+                                }
+
+                                sap.m.MessageToast.show("Reservation created successfully!");
+                                this._oAddReservationDialog.close();
+                            } catch (err) {
+                                console.error("❌ Error creating reservation from EOI:", err);
+                                sap.m.MessageBox.error("Error: " + err.message);
+                            }
+                        }.bind(this)
+                    }),
+                    endButton: new sap.m.Button({
+                        text: "Cancel",
+                        press: function () {
+                            this._oAddReservationDialog.close();
+                        }.bind(this)
+                    })
+                });
+
+                this.getView().addDependent(this._oAddReservationDialog);
+            }
+
+            this._oAddReservationDialog.setModel(oNewReservationModel);
+            this._oAddReservationDialog.open();
+        },
 
         /* --------------------------- PAYMENT ROWS --------------------------- */
         onAddPaymentRow: function () {

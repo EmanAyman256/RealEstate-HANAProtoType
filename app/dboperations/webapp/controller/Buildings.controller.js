@@ -87,7 +87,7 @@ sap.ui.define([
                     });
             },
             onAddBuilding: function () {
-                if (!this._oAddDialog) {
+                if (!this._oAddBuildingDialog) {
                     var oNewBuildingModel = new sap.ui.model.json.JSONModel({
                         buildingId: "",
                         buildingDescription: "",
@@ -104,7 +104,7 @@ sap.ui.define([
                         functionalArea: "",
                     });
 
-                    this._oAddDialog = new sap.m.Dialog({
+                    this._oAddBuildingDialog = new sap.m.Dialog({
                         title: "Add New Building",
                         content: new sap.ui.layout.form.SimpleForm({
                             editable: true,
@@ -155,7 +155,7 @@ sap.ui.define([
                             text: "Save",
                             type: "Emphasized",
                             press: function () {
-                                var oData = this._oAddDialog.getModel().getData();
+                                var oData = this._oAddBuildingDialog.getModel().getData();
                                 if (oData.validFrom) {
                                     oData.validFrom = new Date(oData.validFrom).toISOString().split("T")[0];
                                 }
@@ -188,7 +188,7 @@ sap.ui.define([
                                         oModel.setProperty("/Buildings", aBuildings);
 
                                         // Close dialog
-                                        this._oAddDialog.close();
+                                        this._oAddBuildingDialog.close();
                                     })
                                     .catch(err => {
                                         sap.m.MessageBox.error("Error: " + err.message);
@@ -198,15 +198,15 @@ sap.ui.define([
                         endButton: new sap.m.Button({
                             text: "Cancel",
                             press: function () {
-                                this._oAddDialog.close();
+                                this._oAddBuildingDialog.close();
                             }.bind(this)
                         })
                     });
 
-                    this._oAddDialog.setModel(oNewBuildingModel);
-                    this.getView().addDependent(this._oAddDialog);
+                    this._oAddBuildingDialog.setModel(oNewBuildingModel);
+                    this.getView().addDependent(this._oAddBuildingDialog);
                 }
-                this._oAddDialog.open();
+                this._oAddBuildingDialog.open();
             },
             onEdit: function (oEvent) {
                 var oButton = oEvent.getSource();
@@ -364,15 +364,25 @@ sap.ui.define([
                     }
                 });
             },
-            onNavigateToAddUnit: function () {
+            onNavigateToAddUnit: function (oEvent) {
+                const oContext = oEvent.getSource().getBindingContext(); // the selected building row
+                const oBuildingData = oContext.getObject();
+
+                const projectId = oBuildingData.projectId;
+                const buildingId = oBuildingData.buildingId;
+                const buildingDescription = oBuildingData.buildingDescription;
+                const projectDescription = oBuildingData.projectDescription;
+
+
                 const oData = {
                     unitId: "",
                     unitDescription: "",
                     companyCodeId: "",
                     companyCodeDescription: "",
-                    projectId: "",
-                    projectDescription: "",
-                    buildingId: "",
+                    projectId: projectId,
+                    projectDescription: projectDescription,
+                    buildingId: buildingId,
+                    buildingDescription: buildingDescription,
                     zone: "",
                     salesPhase: "",
                     unitDeliveryDate: "",
@@ -384,11 +394,11 @@ sap.ui.define([
 
                 if (!this._oAddDialog) {
                     this._oAddDialog = new Dialog({
-                        title: "Add / Edit Unit",
+                        title: "Add Unit for " + oData.buildingDescription,
                         contentWidth: "100%",
                         resizable: true,
                         draggable: true,
-                        content: new VBox({ items: this._createAddEditForm() }),
+                        content: new VBox({ items: this._createAddUnitForm() }),
                         beginButton: new Button({
                             text: "Save",
                             type: "Emphasized",
@@ -406,15 +416,16 @@ sap.ui.define([
                 this._oAddDialog.getModel().setData(oData);
                 this._oAddDialog.open();
             },
-            _createAddEditForm: function () {
+            _createAddUnitForm: function () {
                 return [
                     new Label({ text: "Unit ID" }), new Input({ value: "{/unitId}", editable: "{= ${/unitId} === '' }" }),
                     new Label({ text: "Unit Description" }), new Input({ value: "{/unitDescription}" }),
                     new Label({ text: "Company Code ID" }), new Input({ value: "{/companyCodeId}" }),
                     new Label({ text: "Company Code Description" }), new Input({ value: "{/companyCodeDescription}" }),
-                    new Label({ text: "Project ID" }), new Input({ value: "{/projectId}" }),
-                    new Label({ text: "Project Description" }), new Input({ value: "{/projectDescription}" }),
-                    new Label({ text: "Building ID" }), new Input({ value: "{/buildingId}" }),
+                    new Label({ text: "Project ID" }),
+                     new Input({ value: "{/projectId}" ,editable:false}),
+                    new Label({ text: "Project Description" }), new Input({ value: "{/projectDescription}" ,editable:false}),
+                    new Label({ text: "Building ID" }), new Input({ value: "{/buildingId}",editable:false }),
                     new Label({ text: "Zone" }), new Input({ value: "{/zone}" }),
                     new Label({ text: "Sales Phase" }), new Input({ value: "{/salesPhase}" }),
                     new Label({ text: "Delivery Date" }), new DatePicker({ value: "{/unitDeliveryDate}", valueFormat: "yyyy-MM-dd", displayFormat: "long" }),

@@ -74,6 +74,11 @@
                                     press="onEditEOI"
                                 />
                                 <Button
+                                    icon="sap-icon://sys-add"
+                                    tooltip="Add Reservation"
+                                    press="onAddReservationFromEOI"
+                                />
+                                <Button
                                     icon="sap-icon://delete"
                                     type="Reject"
                                     press="onDelete"
