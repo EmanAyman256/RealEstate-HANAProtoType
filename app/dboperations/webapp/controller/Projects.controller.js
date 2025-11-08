@@ -52,6 +52,7 @@ sap.ui.define([
         },
 
         onNavigateToAddProject: function () {
+            // If dialog is not yet created, create it once
             if (!this._oAddDialog) {
                 var oNewProjectModel = new sap.ui.model.json.JSONModel({
                     projectId: "",
@@ -71,74 +72,120 @@ sap.ui.define([
                     title: "Add New Project",
                     content: new sap.ui.layout.form.SimpleForm({
                         editable: true,
-                        resizable: true,
-
                         content: [
-                            new sap.m.Label({ text: "Project ID" }),
-                            new sap.m.Input({ value: "{/projectId}" }),
-
-                            new sap.m.Label({ text: "Description" }),
-                            new sap.m.Input({ value: "{/projectDescription}" }),
-
-                            new sap.m.Label({ text: "Company Code" }),
-                            new sap.m.Input({ value: "{/companyCodeId}" }),
-
-                            new sap.m.Label({ text: "Company Code Description" }),
-                            new sap.m.Input({ value: "{/companyCodeDescription}" }),
-
-                            new sap.m.Label({ text: "Valid From" }),
-                            new sap.m.DatePicker({
-                                value: "{/validFrom}",
-                                displayFormat: "long",       // user sees: Oct 7, 2025
-                                valueFormat: "yyyy-MM-dd",   // backend: 2025-10-07
-                                placeholder: "Select a date",// shows empty until chosen
-                                showClearIcon: true          // lets user clear the field
+                            new sap.m.Label({ text: "Project ID", required: true }),
+                            new sap.m.Input("projectIdInput", {
+                                value: "{/projectId}",
+                                tooltip: "Must be 8 characters or fewer" // 🧩 Tip added here
                             }),
-                            new sap.m.Label({ text: "Valid To" }),
-                            new sap.m.DatePicker({
+
+                            new sap.m.Label({ text: "Description", required: true }),
+                            new sap.m.Input("projectDescInput", {
+                                value: "{/projectDescription}",
+                                tooltip: "Up to 60 characters"
+                            }),
+
+                            new sap.m.Label({ text: "Company Code", required: true }),
+                            new sap.m.Input("companyCodeInput", {
+                                value: "{/companyCodeId}",
+                                tooltip: "Must be 4 characters"
+                            }),
+
+                            new sap.m.Label({ text: "Company Code Description", required: true }),
+                            new sap.m.Input("companyCodeDescInput", {
+                                value: "{/companyCodeDescription}",
+                                tooltip: "Up to 60 characters"
+                            }),
+
+                            new sap.m.Label({ text: "Valid From", required: true }),
+                            new sap.m.DatePicker("validFromInput", {
+                                value: "{/validFrom}",
+                                displayFormat: "long",
+                                valueFormat: "yyyy-MM-dd",
+                                placeholder: "Select a date"
+                            }),
+
+                            new sap.m.Label({ text: "Valid To", required: true }),
+                            new sap.m.DatePicker("validToInput", {
                                 value: "{/validTo}",
                                 displayFormat: "long",
                                 valueFormat: "yyyy-MM-dd",
-                                placeholder: "Select a date",
-                                showClearIcon: true
-                            }),
-                            new sap.m.Label({ text: "Location" }),
-                            new sap.m.Input({ value: "{/location}" }),
-
-                            new sap.m.Label({ text: "Business Area" }),
-                            new sap.m.Input({
-                                value: "{/businessArea}"
+                                placeholder: "Select a date"
                             }),
 
-                            new sap.m.Label({ text: "Profit Center" }),
-                            new sap.m.Input({
-                                value: "{/profitCenter}"
+                            new sap.m.Label({ text: "Location", required: true }),
+                            new sap.m.Input("locationInput", {
+                                value: "{/location}",
+                                tooltip: "Up to 40 characters"
                             }),
-                            new sap.m.Label({ text: "Functional Area" }),
-                            new sap.m.Input({
-                                value: "{/functionalArea}"
-                            }),
-                            new sap.m.Label({ text: "Supplementary Text" }),
-                            new sap.m.Input({ value: "{/supplementaryText}" })
+
+                            new sap.m.Label({ text: "Business Area", required: true }),
+                            new sap.m.Input("businessAreaInput", { value: "{/businessArea}" }),
+
+                            new sap.m.Label({ text: "Profit Center", required: true }),
+                            new sap.m.Input("profitCenterInput", { value: "{/profitCenter}" }),
+
+                            new sap.m.Label({ text: "Functional Area", required: true }),
+                            new sap.m.Input("functionalAreaInput", { value: "{/functionalArea}" }),
+
+                            new sap.m.Label({ text: "Supplementary Text", required: true }),
+                            new sap.m.Input("supplementaryTextInput", { value: "{/supplementaryText}" })
                         ]
                     }),
+
                     beginButton: new sap.m.Button({
                         text: "Save",
                         type: "Emphasized",
                         press: function () {
                             var oData = this._oAddDialog.getModel().getData();
-                            // if (oData.validFrom) {
-                            //     oData.validFrom = new Date(oData.validFrom).toISOString().split("T")[0];
-                            // }
-                            // if (oData.validTo) {
-                            //     oData.validTo = new Date(oData.validTo).toISOString().split("T")[0];
-                            // }
-                            if (oData.validFrom) {
-                                oData.validFrom = oData.validFrom; // already "YYYY-MM-DD"
+
+                            // 🧩 Required field validation
+                            var aRequiredFields = [
+                                { id: "projectIdInput", name: "Project ID" },
+                                { id: "projectDescInput", name: "Description" },
+                                { id: "companyCodeInput", name: "Company Code" },
+                                { id: "companyCodeDescInput", name: "Company Code Description" },
+                                { id: "validFromInput", name: "Valid From" },
+                                { id: "validToInput", name: "Valid To" },
+                                { id: "locationInput", name: "Location" },
+                                { id: "businessAreaInput", name: "Business Area" },
+                                { id: "profitCenterInput", name: "Profit Center" },
+                                { id: "functionalAreaInput", name: "Functional Area" },
+                                { id: "supplementaryTextInput", name: "Supplementary Text" },
+
+                            ];
+
+                            var bValid = true;
+                            aRequiredFields.forEach(function (field) {
+                                var oControl = sap.ui.getCore().byId(field.id);
+                                if (!oControl.getValue()) {
+                                    oControl.setValueState("Error");
+                                    oControl.setValueStateText(field.name + " is required");
+                                    bValid = false;
+                                } else {
+                                    oControl.setValueState("None");
+                                }
+                            });
+
+                            if (!bValid) {
+                                sap.m.MessageBox.warning("Please fill all required fields before saving.");
+                                return;
                             }
-                            if (oData.validTo) {
-                                oData.validTo = oData.validTo;
+
+                            // 🧠 Date validation
+                            var oValidFrom = sap.ui.getCore().byId("validFromInput").getDateValue();
+                            var oValidTo = sap.ui.getCore().byId("validToInput").getDateValue();
+
+                            if (oValidFrom && oValidTo && oValidTo < oValidFrom) {
+                                sap.ui.getCore().byId("validToInput").setValueState("Error");
+                                sap.ui.getCore().byId("validToInput").setValueStateText("'Valid To' must be later than 'Valid From'");
+                                sap.m.MessageBox.error("'Valid To' date must be later than 'Valid From' date.");
+                                return;
+                            } else {
+                                sap.ui.getCore().byId("validToInput").setValueState("None");
                             }
+
+                            // ✅ Proceed with POST request
                             fetch("/odata/v4/real-estate/Projects", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
@@ -153,6 +200,10 @@ sap.ui.define([
                                 .then(() => {
                                     sap.m.MessageToast.show("Project created!");
                                     this._loadProjects();
+
+                                    // 🧹 Reset form after save
+                                    this._resetAddDialogFields();
+
                                     this._oAddDialog.close();
                                 })
                                 .catch(err => {
@@ -160,9 +211,12 @@ sap.ui.define([
                                 });
                         }.bind(this)
                     }),
+
                     endButton: new sap.m.Button({
                         text: "Cancel",
                         press: function () {
+                            // 🧹 Clear data on cancel
+                            this._resetAddDialogFields();
                             this._oAddDialog.close();
                         }.bind(this)
                     })
@@ -171,8 +225,41 @@ sap.ui.define([
                 this._oAddDialog.setModel(oNewProjectModel);
                 this.getView().addDependent(this._oAddDialog);
             }
+
+            // 🧼 Reset data every time dialog opens
+            this._resetAddDialogFields();
+
             this._oAddDialog.open();
         },
+
+        // 🧹 Helper function to reset dialog data and value states
+        _resetAddDialogFields: function () {
+            var oModel = this._oAddDialog.getModel();
+            oModel.setData({
+                projectId: "",
+                projectDescription: "",
+                companyCodeId: "",
+                companyCodeDescription: "",
+                validFrom: "",
+                validTo: "",
+                location: "",
+                businessArea: "",
+                profitCenter: "",
+                functionalArea: "",
+                supplementaryText: ""
+            });
+
+            // Reset value states for validation
+            [
+                "projectIdInput", "projectDescInput", "companyCodeInput", "companyCodeDescInput",
+                "validFromInput", "validToInput", "locationInput"
+            ].forEach(function (id) {
+                var oControl = sap.ui.getCore().byId(id);
+                if (oControl) oControl.setValueState("None");
+            });
+        },
+
+
 
 
         onDetails: function (oEvent) {
@@ -357,7 +444,6 @@ sap.ui.define([
             if (!oBindingContext) return;
 
             var oData = oBindingContext.getObject();
-
             var oDialogModel = new sap.ui.model.json.JSONModel(Object.assign({}, oData));
 
             if (!this._oEditDialog) {
@@ -367,56 +453,101 @@ sap.ui.define([
                         editable: true,
                         content: [
                             new sap.m.Label({ text: "Project ID" }),
-                            new sap.m.Input({ value: "{/projectId}", editable: false }), // ID not editable
+                            new sap.m.Input({ value: "{/projectId}", editable: false }),
 
-                            new sap.m.Label({ text: "Description" }),
-                            new sap.m.Input({ value: "{/projectDescription}" }),
+                            new sap.m.Label({ text: "Description", required: true }),
+                            new sap.m.Input("editProjectDescInput", { value: "{/projectDescription}" }),
 
-                            new sap.m.Label({ text: "Company Code" }),
-                            new sap.m.Input({ value: "{/companyCodeId}" }),
+                            new sap.m.Label({ text: "Company Code", required: true }),
+                            new sap.m.Input("editCompanyCodeInput", { value: "{/companyCodeId}" }),
 
-                            new sap.m.Label({ text: "Company Code Description" }),
-                            new sap.m.Input({ value: "{/companyCodeDescription}" }),
+                            new sap.m.Label({ text: "Company Code Description", required: true }),
+                            new sap.m.Input("editCompanyCodeDescInput", { value: "{/companyCodeDescription}" }),
 
-                            new sap.m.Label({ text: "Valid From" }),
-                            new sap.m.DatePicker({
+                            new sap.m.Label({ text: "Valid From", required: true }),
+                            new sap.m.DatePicker("editValidFromInput", {
                                 value: "{/validFrom}",
-                                displayFormat: "long",       // user sees: Oct 7, 2025
-                                valueFormat: "yyyy-MM-dd",   // backend: 2025-10-07
-                                placeholder: "Select a date",// shows empty until chosen
-                                showClearIcon: true          // lets user clear the field
+                                displayFormat: "long",
+                                valueFormat: "yyyy-MM-dd",
+                                placeholder: "Select a date"
                             }),
-                            new sap.m.Label({ text: "Valid To" }),
-                            new sap.m.DatePicker({
+
+                            new sap.m.Label({ text: "Valid To", required: true }),
+                            new sap.m.DatePicker("editValidToInput", {
                                 value: "{/validTo}",
                                 displayFormat: "long",
                                 valueFormat: "yyyy-MM-dd",
-                                placeholder: "Select a date",
-                                showClearIcon: true
+                                placeholder: "Select a date"
                             }),
-                            new sap.m.Label({ text: "Location" }),
-                            new sap.m.Input({ value: "{/location}" }),
 
-                            new sap.m.Label({ text: "Business Area" }),
-                            new sap.m.Input({ value: "{/businessArea}" }),
+                            new sap.m.Label({ text: "Location", required: true }),
+                            new sap.m.Input("editLocationInput", { value: "{/location}" }),
 
-                            new sap.m.Label({ text: "Profit Center" }),
-                            new sap.m.Input({ value: "{/profitCenter}" }),
+                            new sap.m.Label({ text: "Business Area", required: true }),
+                            new sap.m.Input("editBusinessAreaInput", { value: "{/businessArea}" }),
 
-                            new sap.m.Label({ text: "Functional Area" }),
-                            new sap.m.Input({ value: "{/functionalArea}" }),
+                            new sap.m.Label({ text: "Profit Center", required: true }),
+                            new sap.m.Input("editProfitCenterInput", { value: "{/profitCenter}" }),
 
-                            new sap.m.Label({ text: "Supplementary Text" }),
-                            new sap.m.Input({ value: "{/supplementaryText}" })
+                            new sap.m.Label({ text: "Functional Area", required: true }),
+                            new sap.m.Input("editFunctionalAreaInput", { value: "{/functionalArea}" }),
+
+                            new sap.m.Label({ text: "Supplementary Text", required: true }),
+                            new sap.m.Input("editSupplementaryTextInput", { value: "{/supplementaryText}" })
                         ]
                     }),
+
                     beginButton: new sap.m.Button({
                         text: "Save",
                         type: "Emphasized",
                         press: function () {
                             var oUpdatedData = this._oEditDialog.getModel().getData();
 
-                            // handle dates properly
+                            // 🧩 Validate required fields
+                            var aRequiredFields = [
+                                { id: "editProjectDescInput", name: "Description" },
+                                { id: "editCompanyCodeInput", name: "Company Code" },
+                                { id: "editCompanyCodeDescInput", name: "Company Code Description" },
+                                { id: "editValidFromInput", name: "Valid From" },
+                                { id: "editValidToInput", name: "Valid To" },
+                                { id: "editLocationInput", name: "Location" },
+                                { id: "editBusinessAreaInput", name: "businessArea" },
+                                { id: "editProfitCenterInput", name: "profitCenter" },
+                                { id: "editFunctionalAreaInput", name: "functionalArea" },
+                                { id: "editSupplementaryTextInput", name: "supplementaryText" }
+                            ];
+
+                            var bValid = true;
+                            aRequiredFields.forEach(function (field) {
+                                var oControl = sap.ui.getCore().byId(field.id);
+                                if (!oControl.getValue()) {
+                                    oControl.setValueState("Error");
+                                    oControl.setValueStateText(field.name + " is required");
+                                    bValid = false;
+                                } else {
+                                    oControl.setValueState("None");
+                                }
+                            });
+
+                            if (!bValid) {
+                                sap.m.MessageBox.warning("Please fill all required fields before saving.");
+                                return;
+                            }
+
+                            // 🧠 Date validation
+                            var oValidFrom = sap.ui.getCore().byId("editValidFromInput").getDateValue();
+                            var oValidTo = sap.ui.getCore().byId("editValidToInput").getDateValue();
+
+                            if (oValidFrom && oValidTo && oValidTo < oValidFrom) {
+                                sap.ui.getCore().byId("editValidToInput").setValueState("Error");
+                                sap.ui.getCore().byId("editValidToInput").setValueStateText("'Valid To' must be later than 'Valid From'");
+                                sap.m.MessageBox.error("'Valid To' date must be later than 'Valid From' date.");
+                                return;
+                            } else {
+                                sap.ui.getCore().byId("editValidToInput").setValueState("None");
+                            }
+
+                            // ✅ Convert dates for backend
                             if (oUpdatedData.validFrom) {
                                 oUpdatedData.validFrom = new Date(oUpdatedData.validFrom).toISOString().split("T")[0];
                             }
@@ -424,6 +555,7 @@ sap.ui.define([
                                 oUpdatedData.validTo = new Date(oUpdatedData.validTo).toISOString().split("T")[0];
                             }
 
+                            // 🟢 Proceed with PATCH request
                             fetch(`/odata/v4/real-estate/Projects(projectId='${oUpdatedData.projectId}')`, {
                                 method: "PATCH",
                                 headers: { "Content-Type": "application/json" },
@@ -441,6 +573,7 @@ sap.ui.define([
                                 .catch(err => sap.m.MessageBox.error("Error: " + err.message));
                         }.bind(this)
                     }),
+
                     endButton: new sap.m.Button({
                         text: "Cancel",
                         press: function () {
@@ -455,6 +588,8 @@ sap.ui.define([
             this._oEditDialog.setModel(oDialogModel);
             this._oEditDialog.open();
         },
+
+
         onAddBuilding: function (oEvent) {
             var oContext = oEvent.getSource().getBindingContext();
             if (!oContext) {
@@ -474,7 +609,10 @@ sap.ui.define([
                 companyCodeId: oProject.companyCodeId,
                 companyCodeDescription: oProject.companyCodeDescription,
                 projectId: oProject.projectId,
-                projectDescription: oProject.projectDescription
+                projectDescription: oProject.projectDescription,
+                businessArea: "",
+                profitCenter: "",
+                functionalArea: ""
             });
 
             if (!this._oAddBuildingDialog) {
@@ -484,20 +622,20 @@ sap.ui.define([
                     content: new sap.ui.layout.form.SimpleForm({
                         editable: true,
                         content: [
-                            new sap.m.Label({ text: "Building ID" }),
-                            new sap.m.Input({ value: "{/buildingId}" }),
+                            new sap.m.Label({ text: "Building ID", required: true }),
+                            new sap.m.Input("buildingIdInput", { value: "{/buildingId}" }),
 
-                            new sap.m.Label({ text: "Building Description" }),
-                            new sap.m.Input({ value: "{/buildingDescription}" }),
+                            new sap.m.Label({ text: "Building Description", required: true }),
+                            new sap.m.Input("buildingDescInput", { value: "{/buildingDescription}" }),
 
                             new sap.m.Label({ text: "Old Building Code" }),
                             new sap.m.Input({ value: "{/buildingOldCode}" }),
 
-                            new sap.m.Label({ text: "Location" }),
-                            new sap.m.Input({ value: "{/location}" }),
+                            new sap.m.Label({ text: "Location", required: true }),
+                            new sap.m.Input("buildingLocationInput", { value: "{/location}" }),
 
-                            new sap.m.Label({ text: "Valid From" }),
-                            new sap.m.DatePicker({
+                            new sap.m.Label({ text: "Valid From", required: true }),
+                            new sap.m.DatePicker("buildingValidFromInput", {
                                 value: "{/validFrom}",
                                 displayFormat: "long",
                                 valueFormat: "yyyy-MM-dd",
@@ -505,8 +643,8 @@ sap.ui.define([
                                 showClearIcon: true
                             }),
 
-                            new sap.m.Label({ text: "Valid To" }),
-                            new sap.m.DatePicker({
+                            new sap.m.Label({ text: "Valid To", required: true }),
+                            new sap.m.DatePicker("buildingValidToInput", {
                                 value: "{/validTo}",
                                 displayFormat: "long",
                                 valueFormat: "yyyy-MM-dd",
@@ -520,55 +658,82 @@ sap.ui.define([
                             new sap.m.Label({ text: "Project ID" }),
                             new sap.m.Text({ text: "{/projectId}" }),
 
-                            new sap.m.Label({ text: "Business Area" }),
-                            new sap.m.Input({ value: "{/businessArea}" }),
+                            new sap.m.Label({ text: "Business Area", required: true }),
+                            new sap.m.Input("businessAreaInput", { value: "{/businessArea}" }),
 
-                            new sap.m.Label({ text: "Profit Center" }),
-                            new sap.m.Input({ value: "{/profitCenter}" }),
+                            new sap.m.Label({ text: "Profit Center", required: true }),
+                            new sap.m.Input("profitCenterInput", { value: "{/profitCenter}" }),
 
-                            new sap.m.Label({ text: "Functional Area" }),
-                            new sap.m.Input({ value: "{/functionalArea}" })
+                            new sap.m.Label({ text: "Functional Area", required: true }),
+                            new sap.m.Input("functionalAreaInput", { value: "{/functionalArea}" }),
+
+                           
                         ]
                     }),
+
                     beginButton: new sap.m.Button({
                         text: "Save",
                         type: "Emphasized",
                         press: function () {
                             var oData = this._oAddBuildingDialog.getModel().getData();
 
-                            // 🔍 Validate that validFrom/validTo are within project dates
+                            // 🧩 Required field validation
+                            var aRequiredFields = [
+                                { id: "buildingIdInput", name: "Building ID" },
+                                { id: "buildingDescInput", name: "Building Description" },
+                                { id: "buildingLocationInput", name: "Location" },
+                                { id: "buildingValidFromInput", name: "Valid From" },
+                                { id: "buildingValidToInput", name: "Valid To" },
+                                { id: "businessAreaInput", name: "Business Area" },
+                                { id: "profitCenterInput", name: "Profit Center" },
+                                { id: "functionalAreaInput", name: "Functional Area" },
+                            ];
+
+                            var bValid = true;
+                            aRequiredFields.forEach(function (field) {
+                                var oControl = sap.ui.getCore().byId(field.id);
+                                if (!oControl.getValue()) {
+                                    oControl.setValueState("Error");
+                                    oControl.setValueStateText(field.name + " is required");
+                                    bValid = false;
+                                } else {
+                                    oControl.setValueState("None");
+                                }
+                            });
+
+                            if (!bValid) {
+                                sap.m.MessageBox.warning("Please fill all required fields before saving.");
+                                return;
+                            }
+
+                            // 🧠 Date validation
                             var projectFrom = new Date(oProject.validFrom);
                             var projectTo = new Date(oProject.validTo);
-                            var buildingFrom = new Date(oData.validFrom);
-                            var buildingTo = new Date(oData.validTo);
+                            var buildingFrom = sap.ui.getCore().byId("buildingValidFromInput").getDateValue();
+                            var buildingTo = sap.ui.getCore().byId("buildingValidToInput").getDateValue();
 
-                            if (!oData.validFrom || !oData.validTo) {
-                                sap.m.MessageBox.warning("Please select both Valid From and Valid To dates.");
+                            if (buildingFrom > buildingTo) {
+                                sap.ui.getCore().byId("buildingValidToInput").setValueState("Error");
+                                sap.ui.getCore().byId("buildingValidToInput").setValueStateText("'Valid To' must be later than 'Valid From'");
+                                sap.m.MessageBox.error("Building 'Valid From' cannot be after 'Valid To'.");
                                 return;
                             }
 
                             if (buildingFrom < projectFrom) {
                                 sap.m.MessageBox.error(
-                                    "Building 'Valid From' date must be after or equal to Project 'Valid From' (" +
-                                    oProject.validFrom + ")."
+                                    "Building 'Valid From' must be on or after the Project 'Valid From' (" + oProject.validFrom + ")."
                                 );
                                 return;
                             }
 
                             if (buildingTo > projectTo) {
                                 sap.m.MessageBox.error(
-                                    "Building 'Valid To' date must be before or equal to Project 'Valid To' (" +
-                                    oProject.validTo + ")."
+                                    "Building 'Valid To' must be on or before the Project 'Valid To' (" + oProject.validTo + ")."
                                 );
                                 return;
                             }
 
-                            if (buildingFrom > buildingTo) {
-                                sap.m.MessageBox.error("Building 'Valid From' cannot be after 'Valid To'.");
-                                return;
-                            }
-
-                            // ✅ If validation passes — save the building
+                            // ✅ Save to backend
                             fetch("/odata/v4/real-estate/Buildings", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
@@ -587,6 +752,7 @@ sap.ui.define([
                                 });
                         }.bind(this)
                     }),
+
                     endButton: new sap.m.Button({
                         text: "Cancel",
                         press: function () {
@@ -601,6 +767,7 @@ sap.ui.define([
             this._oAddBuildingDialog.setModel(oNewBuildingModel);
             this._oAddBuildingDialog.open();
         },
+
 
 
     });

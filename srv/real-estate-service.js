@@ -106,8 +106,8 @@ module.exports = cds.service.impl(async function () {
       );
     }
     catch (error) {
-      console.error('Error creating Buildings:', error);
-      req.error(500, 'Error creating Buildings');
+      console.error('Error creating Project:', error);
+      req.error(500, 'Error creating Project');
     }
   });
 
