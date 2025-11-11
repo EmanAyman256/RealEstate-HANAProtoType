@@ -137,10 +137,11 @@ entity PaymentPlanSchedules : managed {
 
         paymentPlan          : Association to PaymentPlans;
 
-        conditionType        : String(10);
-        basePrice            : Integer;
-        calculationMethod    : String(10);
-        frequency            : Integer;
+        conditionType        : Association to ConditionTypes;
+        basePrice            : Association to BasePrices;
+        calculationMethod    : Association to CalculationMethods;
+        frequency            : Association to Frequencies;
+
 
 
         percentage           : Decimal(5, 2);
@@ -153,6 +154,26 @@ entity PaymentPlanProjects : managed {
     key ID          : UUID;
         paymentPlan : Association to PaymentPlans;
         project     : Association to Projects;
+}
+
+entity ConditionTypes  {
+    key code        : String(4);
+        description : String(60);
+}
+
+entity BasePrices  {
+    key code        : String(4);
+        description : String(60);
+}
+
+entity CalculationMethods  {
+    key code        : String(4);
+        description : String(60);
+}
+
+entity Frequencies  {
+    key code        : String(4);
+        description : String(60);
 }
 
 
@@ -221,7 +242,7 @@ entity Reservations : managed {
         status             : String(1);
         customerType       : String(20);
         currency           : String(3);
-        afterSales       : String(20);
+        afterSales         : String(20);
 
         /* --- Unit Details --- */
         project            : Association to Projects;
@@ -299,4 +320,36 @@ entity ReservationPayments : managed {
         collectedAmount     : Decimal(15, 2);
         arValidated         : Boolean;
         rejectionReason     : String(100);
+}
+
+
+entity PaymentPlanSimulations : managed {
+    key simulationId       : UUID;
+        unitId             : String(8);
+        projectId          : String(8);
+        projectDescription : String(60);
+        buildingId         : String(8);
+        pricePlanYears     : Integer;
+        leadId             : String(36);
+        finalPrice         : Decimal(15, 2);
+        userId             : String(100);
+        createdOn          : Timestamp;
+        createdBy          : String(100);
+
+        unit               : Association to Units;
+        project            : Association to Projects;
+        building           : Association to Buildings;
+        paymentPlan        : Association to PaymentPlans;
+
+        schedule           : Composition of many PaymentPlanSimulationSchedules
+                                 on schedule.simulation = $self;
+}
+
+entity PaymentPlanSimulationSchedules : managed {
+    key ID            : UUID;
+        simulation    : Association to PaymentPlanSimulations;
+        conditionType : String(40);
+        dueDate       : Date;
+        amount        : Decimal(15, 2);
+        maintenance   : Decimal(15, 2);
 }

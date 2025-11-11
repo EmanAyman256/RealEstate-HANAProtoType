@@ -2,8 +2,10 @@ sap.ui.define([
     "sap/ui/core/mvc/Controller",
     "sap/m/MessageToast",
     "sap/m/MessageBox",
-    "sap/ui/model/json/JSONModel"
-], function (Controller, MessageToast, MessageBox, JSONModel) {
+    "sap/ui/model/json/JSONModel",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
+], function (Controller, MessageToast, MessageBox, JSONModel, Filter, FilterOperator) {
     "use strict";
 
     return Controller.extend("dboperations.controller.PaymentPlans", {
@@ -11,6 +13,64 @@ sap.ui.define([
         onInit: function () {
             this.oModel = this.getView().getModel();
             this._loadPlans();
+            this._loadDropdownData(); // 🔹 Load dropdown master data
+        },
+
+        // 🔹 Load dropdown master data for value help dialogs
+        _loadDropdownData: async function () {
+            try {
+                const urls = [
+                    "/odata/v4/real-estate/ConditionTypes",
+                    "/odata/v4/real-estate/BasePrices",
+                    "/odata/v4/real-estate/CalculationMethods",
+                    "/odata/v4/real-estate/Frequencies",
+                    "/odata/v4/real-estate/Projects"
+                ];
+
+                // Fetch all with individual error handling
+                const results = await Promise.allSettled(urls.map(async (u) => {
+                    try {
+                        const res = await fetch(u);
+                        if (!res.ok) throw new Error(`HTTP ${res.status} for ${u}`);
+                        return await res.json();
+                    } catch (err) {
+                        console.error(`❌ Failed to fetch ${u}:`, err);
+                        return { value: [] }; // Return empty array on failure
+                    }
+                }));
+
+                const [ct, bp, cm, fr, pr] = results.map(r => r.status === 'fulfilled' ? r.value : { value: [] });
+
+                const oDropdowns = new JSONModel({
+                    conditionTypes: (ct.value || []).map(i => ({
+                        code: i.conditionTypeId,
+                        description: i.description
+                    })),
+                    basePrices: (bp.value || []).map(i => ({
+                        code: i.basePriceId,
+                        description: i.description
+                    })),
+                    calculationMethods: (cm.value || []).map(i => ({
+                        code: i.calculationMethodId,
+                        description: i.description
+                    })),
+                    frequencies: (fr.value || []).map(i => ({
+                        code: i.frequencyId,
+                        description: i.description
+                    })),
+                    projects: (pr.value || []).map(i => ({
+                        code: i.projectId,
+                        description: i.projectDescription
+                    }))
+                });
+
+                this.getView().setModel(oDropdowns, "dropdowns");
+                console.log("✅ Dropdown data loaded", oDropdowns.getData());
+
+            } catch (err) {
+                console.error("❌ Overall error loading dropdown data:", err);
+                MessageBox.error("Failed to load dropdown data. Check console for details.");
+            }
         },
 
         // Load all payment plans
@@ -24,133 +84,128 @@ sap.ui.define([
         },
 
         // Show plan details dialog
-       onShowPlanDetails: async function (oEvent) {
-    const oCtx = oEvent.getSource().getBindingContext("plans");
-    if (!oCtx) return;
-    const sPlanId = oCtx.getProperty("paymentPlanId");
+        onShowPlanDetails: async function (oEvent) {
+            const oCtx = oEvent.getSource().getBindingContext("plans");
+            if (!oCtx) return;
+            const sPlanId = oCtx.getProperty("paymentPlanId");
 
-    try {
-        // Fetch the plan with schedules and assigned projects
-        const res = await fetch(
-            `/odata/v4/real-estate/PaymentPlans(paymentPlanId='${sPlanId}')?$expand=schedule,assignedProjects($expand=project)`
-        );
-        if (!res.ok) throw new Error("Failed to load plan details");
-        const oData = await res.json();
-        const oPlan = oData.value ? oData.value[0] : oData;
+            try {
+                const res = await fetch(
+                    `/odata/v4/real-estate/PaymentPlans(paymentPlanId='${sPlanId}')?$expand=schedule,assignedProjects($expand=project)`
+                );
+                if (!res.ok) throw new Error("Failed to load plan details");
+                const oData = await res.json();
+                const oPlan = oData.value ? oData.value[0] : oData;
+                const oDialogModel = new JSONModel(oPlan);
 
-        // Create JSONModel directly since fields are now strings
-        const oDialogModel = new sap.ui.model.json.JSONModel(oPlan);
-
-        // Create the dialog if it doesn't exist yet
-        if (!this._oDetailsDialog) {
-            this._oDetailsDialog = new sap.m.Dialog({
-                title: "Payment Plan Details",
-                contentWidth: "90%",
-                resizable: true,
-                draggable: true,
-                content: [
-                    new sap.m.IconTabBar({
-                        items: [
-                            new sap.m.IconTabFilter({
-                                text: "General Info",
-                                content: [
-                                    new sap.ui.layout.form.SimpleForm({
-                                        editable: false,
+                if (!this._oDetailsDialog) {
+                    this._oDetailsDialog = new sap.m.Dialog({
+                        title: "Payment Plan Details",
+                        contentWidth: "90%",
+                        resizable: true,
+                        draggable: true,
+                        content: [
+                            new sap.m.IconTabBar({
+                                items: [
+                                    new sap.m.IconTabFilter({
+                                        text: "General Info",
                                         content: [
-                                            new sap.m.Label({ text: "Payment Plan ID" }),
-                                            new sap.m.Text({ text: "{/paymentPlanId}" }),
-                                            new sap.m.Label({ text: "Description" }),
-                                            new sap.m.Text({ text: "{/description}" }),
-                                            new sap.m.Label({ text: "Company Code" }),
-                                            new sap.m.Text({ text: "{/companyCodeId}" }),
-                                            new sap.m.Label({ text: "Years" }),
-                                            new sap.m.Text({ text: "{/planYears}" }),
-                                            new sap.m.Label({ text: "Valid From" }),
-                                            new sap.m.Text({ text: "{/validFrom}" }),
-                                            new sap.m.Label({ text: "Valid To" }),
-                                            new sap.m.Text({ text: "{/validTo}" }),
-                                            new sap.m.Label({ text: "Status" }),
-                                            new sap.m.Text({ text: "{/planStatus}" })
+                                            new sap.ui.layout.form.SimpleForm({
+                                                editable: false,
+                                                content: [
+                                                    new sap.m.Label({ text: "Payment Plan ID" }),
+                                                    new sap.m.Text({ text: "{/paymentPlanId}" }),
+                                                    new sap.m.Label({ text: "Description" }),
+                                                    new sap.m.Text({ text: "{/description}" }),
+                                                    new sap.m.Label({ text: "Company Code" }),
+                                                    new sap.m.Text({ text: "{/companyCodeId}" }),
+                                                    new sap.m.Label({ text: "Years" }),
+                                                    new sap.m.Text({ text: "{/planYears}" }),
+                                                    new sap.m.Label({ text: "Valid From" }),
+                                                    new sap.m.Text({ text: "{/validFrom}" }),
+                                                    new sap.m.Label({ text: "Valid To" }),
+                                                    new sap.m.Text({ text: "{/validTo}" }),
+                                                    new sap.m.Label({ text: "Status" }),
+                                                    new sap.m.Text({ text: "{/planStatus}" })
+                                                ]
+                                            })
+                                        ]
+                                    }),
+                                    new sap.m.IconTabFilter({
+                                        text: "Schedules",
+                                        content: [
+                                            new sap.m.Table({
+                                                columns: [
+                                                    new sap.m.Column({ header: new sap.m.Label({ text: "Condition Type" }) }),
+                                                    new sap.m.Column({ header: new sap.m.Label({ text: "Base Price" }) }),
+                                                    new sap.m.Column({ header: new sap.m.Label({ text: "Calculation Method" }) }),
+                                                    new sap.m.Column({ header: new sap.m.Label({ text: "Frequency" }) }),
+                                                    new sap.m.Column({ header: new sap.m.Label({ text: "%" }) }),
+                                                    new sap.m.Column({ header: new sap.m.Label({ text: "Due (Months)" }) }),
+                                                    new sap.m.Column({ header: new sap.m.Label({ text: "Installments" }) }),
+                                                    new sap.m.Column({ header: new sap.m.Label({ text: "Years" }) })
+                                                ],
+                                                items: {
+                                                    path: "/schedule",
+                                                    template: new sap.m.ColumnListItem({
+                                                        cells: [
+                                                            new sap.m.Text({ text: "{conditionType/description}" }),
+                                                            new sap.m.Text({ text: "{basePrice/description}" }),
+                                                            new sap.m.Text({ text: "{calculationMethod/description}" }),
+                                                            new sap.m.Text({ text: "{frequency/description}" }),
+                                                            new sap.m.Text({ text: "{percentage}" }),
+                                                            new sap.m.Text({ text: "{dueInMonth}" }),
+                                                            new sap.m.Text({ text: "{numberOfInstallments}" }),
+                                                            new sap.m.Text({ text: "{numberOfYears}" })
+                                                        ]
+                                                    })
+                                                }
+                                            })
+                                        ]
+                                    }),
+                                    new sap.m.IconTabFilter({
+                                        text: "Assigned Projects",
+                                        content: [
+                                            new sap.m.Table({
+                                                columns: [
+                                                    new sap.m.Column({ header: new sap.m.Label({ text: "Project ID" }) }),
+                                                    new sap.m.Column({ header: new sap.m.Label({ text: "Description" }) })
+                                                ],
+                                                items: {
+                                                    path: "/assignedProjects",
+                                                    template: new sap.m.ColumnListItem({
+                                                        cells: [
+                                                            new sap.m.Text({ text: "{project/projectId}" }),
+                                                            new sap.m.Text({ text: "{project/projectDescription}" })
+                                                        ]
+                                                    })
+                                                }
+                                            })
                                         ]
                                     })
                                 ]
-                            }),
-                            new sap.m.IconTabFilter({
-                                text: "Schedules",
-                                content: [
-                                    new sap.m.Table({
-                                        columns: [
-                                            new sap.m.Column({ header: new sap.m.Label({ text: "Condition Type" }) }),
-                                            new sap.m.Column({ header: new sap.m.Label({ text: "Base Price" }) }),
-                                            new sap.m.Column({ header: new sap.m.Label({ text: "Calculation Method" }) }),
-                                            new sap.m.Column({ header: new sap.m.Label({ text: "Frequency" }) }),
-                                            new sap.m.Column({ header: new sap.m.Label({ text: "%" }) }),
-                                            new sap.m.Column({ header: new sap.m.Label({ text: "Due (Months)" }) }),
-                                            new sap.m.Column({ header: new sap.m.Label({ text: "Installments" }) }),
-                                            new sap.m.Column({ header: new sap.m.Label({ text: "Years" }) })
-                                        ],
-                                        items: {
-                                            path: "/schedule",
-                                            template: new sap.m.ColumnListItem({
-                                                cells: [
-                                                    new sap.m.Text({ text: "{conditionType}" }),
-                                                    new sap.m.Text({ text: "{basePrice}" }),
-                                                    new sap.m.Text({ text: "{calculationMethod}" }),
-                                                    new sap.m.Text({ text: "{frequency}" }),
-                                                    new sap.m.Text({ text: "{percentage}" }),
-                                                    new sap.m.Text({ text: "{dueInMonth}" }),
-                                                    new sap.m.Text({ text: "{numberOfInstallments}" }),
-                                                    new sap.m.Text({ text: "{numberOfYears}" })
-                                                ]
-                                            })
-                                        }
-                                    })
-                                ]
-                            }),
-                            new sap.m.IconTabFilter({
-                                text: "Assigned Projects",
-                                content: [
-                                    new sap.m.Table({
-                                        columns: [
-                                            new sap.m.Column({ header: new sap.m.Label({ text: "Project ID" }) }),
-                                            new sap.m.Column({ header: new sap.m.Label({ text: "Description" }) })
-                                        ],
-                                        items: {
-                                            path: "/assignedProjects",
-                                            template: new sap.m.ColumnListItem({
-                                                cells: [
-                                                    new sap.m.Text({ text: "{project/projectId}" }),
-                                                    new sap.m.Text({ text: "{project/projectDescription}" })
-                                                ]
-                                            })
-                                        }
-                                    })
-                                ]
                             })
-                        ]
-                    })
-                ],
-                endButton: new sap.m.Button({
-                    text: "Close",
-                    press: function () {
-                        this._oDetailsDialog.close();
-                    }.bind(this)
-                })
-            });
+                        ],
+                        endButton: new sap.m.Button({
+                            text: "Close",
+                            press: function () {
+                                this._oDetailsDialog.close();
+                            }.bind(this)
+                        })
+                    });
 
-            this.getView().addDependent(this._oDetailsDialog);
-        }
+                    this.getView().addDependent(this._oDetailsDialog);
+                }
 
-        this._oDetailsDialog.setModel(oDialogModel);
-        this._oDetailsDialog.open();
+                this._oDetailsDialog.setModel(oDialogModel);
+                this._oDetailsDialog.open();
 
-    } catch (err) {
-        sap.m.MessageBox.error("Error: " + err.message);
-    }
-},
+            } catch (err) {
+                MessageBox.error("Error: " + err.message);
+            }
+        },
 
-
-        // Open Add or Edit dialog
+        // Add / Edit
         onAddPlan: function () {
             this._openPlanDialog({});
         },
@@ -170,34 +225,32 @@ sap.ui.define([
             }
         },
 
-        // Open dialog using XML dialog
-    _openPlanDialog: function (oPlan) {
-    if (!this._oAddDialog) {
-        this._oAddDialog = this.getView().byId("planDialog"); // use XML dialog
-    }
+        // Dialog
+        _openPlanDialog: function (oPlan) {
+            if (!this._oAddDialog) {
+                this._oAddDialog = this.getView().byId("planDialog");
+            }
 
-    // Map the OData response arrays to dialog model arrays
-    const oModel = new JSONModel({
-        paymentPlanId: oPlan.paymentPlanId || "",
-        description: oPlan.description || "",
-        companyCodeId: oPlan.companyCodeId || "",
-        planYears: oPlan.planYears || 0,
-        validFrom: oPlan.validFrom || "",
-        validTo: oPlan.validTo || "",
-        planStatus: oPlan.planStatus || "",
-        schedules: oPlan.schedule || [],           
-        projects: (oPlan.assignedProjects || []).map(p => ({
-            projectId: p.project?.projectId || "",
-            projectDescription: p.project?.projectDescription || ""
-        }))                                        
-    });
+            const oModel = new JSONModel({
+                paymentPlanId: oPlan.paymentPlanId || "",
+                description: oPlan.description || "",
+                companyCodeId: oPlan.companyCodeId || "",
+                planYears: oPlan.planYears || 0,
+                validFrom: oPlan.validFrom || "",
+                validTo: oPlan.validTo || "",
+                planStatus: oPlan.planStatus || "",
+                schedules: oPlan.schedule || [],
+                projects: (oPlan.assignedProjects || []).map(p => ({
+                    projectId: p.project?.projectId || "",
+                    projectDescription: p.project?.projectDescription || ""
+                }))
+            });
 
-    this._oAddDialog.setModel(oModel, "local");
-    this._oAddDialog.open();
-},
+            this._oAddDialog.setModel(oModel, "local");
+            this._oAddDialog.open();
+        },
 
-
-        // Save Plan
+        // Save
         onSavePlan: async function () {
             const oDialog = this._oAddDialog;
             const oModel = oDialog.getModel("local");
@@ -213,7 +266,9 @@ sap.ui.define([
                     validTo: oData.validTo,
                     planStatus: oData.planStatus,
                     schedule: oData.schedules || [],
-                    assignedProjects: (oData.projects || []).map(p => ({ project: p.projectId ? { projectId: p.projectId } : null }))
+                    assignedProjects: (oData.projects || []).map(p => ({
+                        project: p.projectId ? { projectId: p.projectId } : null
+                    }))
                 };
 
                 const method = oData.paymentPlanId ? "PUT" : "POST";
@@ -230,7 +285,7 @@ sap.ui.define([
                 if (!res.ok) throw new Error("Failed to save payment plan");
                 MessageToast.show("Payment plan saved successfully!");
                 oDialog.close();
-                this._loadPlans(); // reload updated list
+                this._loadPlans();
 
             } catch (err) {
                 MessageBox.error("Error: " + err.message);
@@ -241,6 +296,7 @@ sap.ui.define([
             this._oAddDialog.close();
         },
 
+        // Add / delete rows
         onAddScheduleRow: function () {
             const oModel = this._oAddDialog.getModel("local");
             const aSchedules = oModel.getProperty("/schedules");
@@ -294,6 +350,102 @@ sap.ui.define([
                     }
                 }
             });
+        },
+
+        // 🔹 Generic reusable Value Help Dialog creator
+       // 🔹 Generic reusable Value Help Dialog creator
+_openValueHelpDialog: function (sTitle, sPath, sCodeField, sDescField, oEvent, fnSelectCallback) {
+    const oView = this.getView();
+    const oDropdownModel = oView.getModel("dropdowns");
+
+    // Check if dropdown data is loaded
+    if (!oDropdownModel || !oDropdownModel.getProperty(sPath.replace("dropdowns>/", "/"))) {
+        MessageBox.error("Dropdown data not loaded yet. Please try again.");
+        return;
+    }
+
+    const that = this;
+
+    const oDialog = new sap.m.SelectDialog({
+        title: sTitle,
+        items: {
+            path: sPath,
+            template: new sap.m.StandardListItem({
+                title: "{" + sDescField + "}",
+                description: "{" + sCodeField + "}"
+            })
+        },
+        confirm: function (oEvt) {
+            that._onValueHelpConfirm(oEvt, sCodeField, sDescField, fnSelectCallback);
+        },
+        cancel: function () { }
+    });
+
+    // 🔹 Explicitly set the "dropdowns" model on the dialog to ensure binding works
+    oDialog.setModel(oDropdownModel, "dropdowns");
+
+    oView.addDependent(oDialog);
+    oDialog.open();
+},
+
+        // 🔹 Handles selection confirmation in Value Help Dialog
+        _onValueHelpConfirm: function (oEvt, sCodeField, sDescField, fnSelectCallback) {
+            const oSelectedItem = oEvt.getParameter("selectedItem");
+            if (oSelectedItem) {
+                const oCtx = oSelectedItem.getBindingContext("dropdowns"); // Specify model name
+                if (oCtx) {
+                    const oSelected = oCtx.getObject();
+                    fnSelectCallback({
+                        code: oSelected[sCodeField],
+                        description: oSelected[sDescField]
+                    });
+                }
+            }
+        },
+
+        // 🔹 Field-specific VHD triggers
+        onOpenConditionTypeVHD: function (oEvent) {
+            this._openValueHelpDialog("Condition Type", "dropdowns>/conditionTypes", "code", "description", oEvent, (oSelected) => {
+                const oContext = oEvent.getSource().getBindingContext("local");
+                oContext.setProperty("conditionType", oSelected);
+            });
+        },
+
+        onOpenBasePriceVHD: function (oEvent) {
+            this._openValueHelpDialog("Base Price", "dropdowns>/basePrices", "code", "description", oEvent, (oSelected) => {
+                const oContext = oEvent.getSource().getBindingContext("local");
+                oContext.setProperty("basePrice", oSelected);
+            });
+        },
+
+        onOpenCalcMethodVHD: function (oEvent) {
+            this._openValueHelpDialog("Calculation Method", "dropdowns>/calculationMethods", "code", "description", oEvent, (oSelected) => {
+                const oContext = oEvent.getSource().getBindingContext("local");
+                oContext.setProperty("calculationMethod", oSelected);
+            });
+        },
+
+        onOpenFrequencyVHD: function (oEvent) {
+            this._openValueHelpDialog("Frequency", "dropdowns>/frequencies", "code", "description", oEvent, (oSelected) => {
+                const oContext = oEvent.getSource().getBindingContext("local");
+                oContext.setProperty("frequency", oSelected);
+            });
+        },
+
+        onOpenProjectVHD: function (oEvent) {
+            this._openValueHelpDialog(
+                "Project",
+                "dropdowns>/projects",
+                "code",      // field name in dropdown model
+                "description",    // field name in dropdown model
+                oEvent,
+                (oSelected) => {
+                    const oContext = oEvent.getSource().getBindingContext("local");
+                    oContext.setProperty("projectId", oSelected.code);             // set projectId
+                    oContext.setProperty("projectDescription", oSelected.description); // set description
+                }
+            );
         }
+
     });
 });

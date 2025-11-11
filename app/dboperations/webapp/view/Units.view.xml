@@ -2,9 +2,11 @@
     controllerName="dboperations.controller.Units"
     xmlns="sap.m"
     xmlns:mvc="sap.ui.core.mvc"
-    displayBlock="true"
 >
-    <Page id="unitsPage" title="Units">
+    <Page
+        id="unitsPage"
+        title="Units"
+    >
         <headerContent>
             <Button
                 id="btnAddUnit"
@@ -14,50 +16,127 @@
             />
         </headerContent>
 
-        <VBox class="sapUiSizeCompact sapUiSmallMargin">
-            <Table
-                id="unitsTable"
-                items="{ path: '/Units' }"
-                mode="SingleSelect"
-                selectionChange="onSelectUnit"
+        <content>
+            <ScrollContainer
+                horizontal="true"
+                vertical="false"
+                height="100%"
+                width="100%"
+                focusable="true"
             >
-                <columns>
-                    <Column><Text text="Company Code ID" /></Column>
-                    <Column><Text text="Company Code Description" /></Column>
-                    <Column><Text text="Project ID" /></Column>
-                    <Column><Text text="Project Description" /></Column>
-                    <Column><Text text="Building ID" /></Column>
-                    <Column><Text text="Unit ID" /></Column>
-                    <Column><Text text="Zone" /></Column>
-                    <Column><Text text="Sales Phase" /></Column>
-                    <Column><Text text="Delivery Date" /></Column>
-                    <Column><Text text="Profit Center" /></Column>
-                    <Column><Text text="Functional Area" /></Column>
-                    <Column><Text text="Actions" /></Column>
-                </columns>
-                <items>
-                    <ColumnListItem>
-                        <cells>
-                            <Text text="{companyCodeId}" />
-                            <Text text="{companyCodeDescription}" />
-                            <Text text="{projectId}" />
-                            <Text text="{projectDescription}" />
-                            <Text text="{buildingId}" />
-                            <Text text="{unitId}" />
-                            <Text text="{zone}" />
-                            <Text text="{salesPhase}" />
-                            <Text text="{unitDeliveryDate}" />
-                            <Text text="{profitCenter}" />
-                            <Text text="{functionalArea}" />
-                            <HBox>
-                                <Button icon="sap-icon://information" press="onDetails" />
-                                <Button icon="sap-icon://edit" press="onEditUnit" />
-                                <Button icon="sap-icon://delete" type="Reject" press="onDelete" />
-                            </HBox>
-                        </cells>
-                    </ColumnListItem>
-                </items>
-            </Table>
-        </VBox>
+                <Table
+                    id="unitsTable"
+                    items="{ path: '/Units' }"
+                    width="150%"
+                >
+                    <columns>
+                        <Column>
+                            <Text text="Company Code ID" />
+                        </Column>
+                        <Column>
+                            <Text text="Company Code Description" />
+                        </Column>
+                        <Column>
+                            <Text text="Project ID" />
+                        </Column>
+                        <Column>
+                            <Text text="Project Description" />
+                        </Column>
+                        <Column>
+                            <Text text="Building ID" />
+                        </Column>
+                        <Column>
+                            <Text text="Unit ID" />
+                        </Column>
+                        <Column>
+                            <Text text="Unit Description" />
+                        </Column>
+                        <Column>
+                            <Text text="Unit Type" />
+                        </Column>
+                        <Column>
+                            <Text text="Usage Type" />
+                        </Column>
+                        <Column>
+                            <Text text="Unit Status" />
+                        </Column>
+                        <Column>
+                            <Text text="Floor" />
+                        </Column>
+                        <Column>
+                            <Text text="Zone" />
+                        </Column>
+                        <Column>
+                            <Text text="Sales Phase" />
+                        </Column>
+                        <Column>
+                            <Text text="Finishing Spex" />
+                        </Column>
+                        <Column>
+                            <Text text="Unit Delivery Date" />
+                        </Column>
+                        <Column>
+                            <Text text="Profit Center" />
+                        </Column>
+                        <Column>
+                            <Text text="Functional Area" />
+                        </Column>
+                        <Column>
+                            <Text text="Supplementary Text" />
+                        </Column>
+                        <Column>
+                            <Text text="Built Up Area" />
+                        </Column>
+                        <Column>
+                            <Text text="Original Price" />
+                        </Column>
+                        <Column>
+                            <Text text="Actions" />
+                        </Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem>
+                            <cells>
+                                <Text text="{companyCodeId}" />
+                                <Text text="{companyCodeDescription}" />
+                                <Text text="{projectId}" />
+                                <Text text="{projectDescription}" />
+                                <Text text="{buildingId}" />
+                                <Text text="{unitId}" />
+                                <Text text="{unitDescription}" />
+                                <Text text="{unitTypeDescription}" />
+                                <Text text="{usageTypeDescription}" />
+                                <Text text="{unitStatusDescription}" />
+                                <Text text="{floorDescription}" />
+                                <Text text="{zone}" />
+                                <Text text="{salesPhase}" />
+                                <Text text="{finishingSpexDescription}" />
+                                <Text text="{unitDeliveryDate}" />
+                                <Text text="{profitCenter}" />
+                                <Text text="{functionalArea}" />
+                                <Text text="{supplementaryText}" />
+                                <Text text="{bua}" />
+                                <Text text="{originalPrice}" />
+                                <HBox>
+                                    <Button
+                                        icon="sap-icon://information"
+                                        press="onDetails"
+                                    />
+                                    <Button
+                                        icon="sap-icon://edit"
+                                        press="onEditUnit"
+                                    />
+                                    <Button
+                                        icon="sap-icon://delete"
+                                        type="Reject"
+                                        press="onDelete"
+                                    />
+                                </HBox>
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+            </ScrollContainer>
+        </content>
     </Page>
 </mvc:View>

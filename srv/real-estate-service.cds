@@ -9,13 +9,18 @@ service RealEstateService {
     entity PaymentPlans              as projection on my.PaymentPlans;
     entity PaymentPlanSchedules      as projection on my.PaymentPlanSchedules;
     entity PaymentPlanProjects       as projection on my.PaymentPlanProjects;
-    // entity ConditionTypes       as projection on my.ConditionTypes;
-    // entity Frequencies          as projection on my.Frequencies;
-    // entity CalculationMethods   as projection on my.CalculationMethods;
+    entity ConditionTypes       as projection on my.ConditionTypes;
+    entity Frequencies          as projection on my.Frequencies;
+    entity CalculationMethods   as projection on my.CalculationMethods;
+    entity BasePrices   as projection on my.BasePrices;
+
     entity EOI                       as projection on my.EOI;
     entity PaymentDetails            as projection on my.PaymentDetails;
     entity Reservations              as projection on my.Reservations;
     entity ReservationPartners       as projection on my.ReservationPartners;
     entity ReservationConditions     as projection on my.ReservationConditions;
     entity ReservationPayments       as projection on my.ReservationPayments;
+    entity PaymentPlanSimulations     as projection on my.PaymentPlanSimulations;
+    entity PaymentPlanSimulationSchedules as projection on my.PaymentPlanSimulationSchedules;
+
 }

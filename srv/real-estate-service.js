@@ -20,7 +20,14 @@ module.exports = cds.service.impl(async function () {
       ReservationPartners,
       ReservationConditions,
       ReservationPayments,
-      ReservationPaymentDetails
+      ReservationPaymentDetails,
+      PaymentPlanSimulations,
+      PaymentPlanSimulationSchedules,
+      Simulations,
+      ConditionTypes,
+      BasePrices,
+      CalculationMethods,
+      Frequencies
     } = this.entities;
 
 
@@ -338,21 +345,16 @@ module.exports = cds.service.impl(async function () {
     }
   });
 
-  /*-----------------------Payment Plans---------------------------*/
+   /* ------------------------------------------------------------------
+   * PAYMENT PLANS
+   * ------------------------------------------------------------------ */
 
-  // READ (with compositions expanded)
+  // READ
   this.on('READ', PaymentPlans, async (req, next) => {
     console.log('READ PaymentPlans called with expand:', req.query.$expand);
-
     try {
-      // Just let CAP handle expansions automatically
       const result = await next();
-
-      // Optional: if you want to log
-      if (Array.isArray(result)) {
-        console.log(`Returned ${result.length} payment plans`);
-      }
-
+      console.log(`Returned ${Array.isArray(result) ? result.length : 1} payment plans`);
       return result;
     } catch (error) {
       console.error('Error reading PaymentPlans:', error);
@@ -360,57 +362,65 @@ module.exports = cds.service.impl(async function () {
     }
   });
 
-
+  // CREATE
   this.on('CREATE', PaymentPlans, async (req) => {
     console.log('CREATE PaymentPlan called with data:', req.data);
     const db = cds.transaction(req);
 
     try {
       const { schedule, assignedProjects, ...planData } = req.data;
+      planData.paymentPlanId = planData.paymentPlanId || uuidv4();
 
-      // Insert main payment plan
-      const result = await db.run(INSERT.into(PaymentPlans).entries(planData));
-      const paymentPlanId = planData.paymentPlanId;
+      // Insert main Payment Plan
+      await db.run(INSERT.into(PaymentPlans).entries(planData));
 
-      // Insert schedule items
+      // Insert Schedules (if any)
       if (Array.isArray(schedule)) {
         for (const s of schedule) {
           await db.run(
             INSERT.into(PaymentPlanSchedules).entries({
-              ...s,
-              paymentPlan_paymentPlanId: paymentPlanId // or paymentPlan_ID
+              ID: s.ID || uuidv4(),
+              paymentPlan_paymentPlanId: planData.paymentPlanId,
+              conditionType_code: s.conditionType?.code,
+              basePrice_code: s.basePrice?.code,
+              calculationMethod_code: s.calculationMethod?.code,
+              frequency_code: s.frequency?.code,
+              percentage: s.percentage,
+              dueInMonth: s.dueInMonth,
+              numberOfInstallments: s.numberOfInstallments,
+              numberOfYears: s.numberOfYears
             })
           );
         }
       }
 
-      // Insert assigned projects
+      // Insert Assigned Projects (if any)
       if (Array.isArray(assignedProjects)) {
         for (const p of assignedProjects) {
           await db.run(
             INSERT.into(PaymentPlanProjects).entries({
-              ...p,
-              paymentPlan_paymentPlanId: paymentPlanId // or paymentPlan_ID
+              ID: p.ID || uuidv4(),
+              paymentPlan_paymentPlanId: planData.paymentPlanId,
+              project_projectId: p.project?.projectId
             })
           );
         }
       }
 
       await db.commit();
-      return result;
+      console.log('✅ PaymentPlan created successfully:', planData.paymentPlanId);
+      return planData;
 
     } catch (error) {
-      console.error('Error creating PaymentPlan:', error);
       await db.rollback();
+      console.error('❌ Error creating PaymentPlan:', error);
       req.error(500, 'Error creating PaymentPlan: ' + error.message);
     }
   });
 
-
   // UPDATE
   this.on('UPDATE', PaymentPlans, async (req) => {
-    console.log("UPDATE PaymentPlan called with:", req.data, "params:", req.params);
-
+    console.log("UPDATE PaymentPlan called with:", req.data);
     const { paymentPlanId } = req.params[0];
     const db = cds.transaction(req);
 
@@ -419,42 +429,52 @@ module.exports = cds.service.impl(async function () {
 
       // Update main record
       await db.run(
-        UPDATE(PaymentPlans)
-          .set(planData)
-          .where({ paymentPlanId })
+        UPDATE(PaymentPlans).set(planData).where({ paymentPlanId })
       );
 
-      // Delete old schedule items and reinsert new
+      // Refresh schedule items
       await db.run(DELETE.from(PaymentPlanSchedules).where({ paymentPlan_paymentPlanId: paymentPlanId }));
       if (Array.isArray(schedule)) {
-        for (const item of schedule) {
+        for (const s of schedule) {
           await db.run(
             INSERT.into(PaymentPlanSchedules).entries({
-              ...item,
-              paymentPlan_paymentPlanId: paymentPlanId
+              ID: s.ID || uuidv4(),
+              paymentPlan_paymentPlanId: paymentPlanId,
+              conditionType_code: s.conditionType?.code,
+              basePrice_code: s.basePrice?.code,
+              calculationMethod_code: s.calculationMethod?.code,
+              frequency_code: s.frequency?.code,
+              percentage: s.percentage,
+              dueInMonth: s.dueInMonth,
+              numberOfInstallments: s.numberOfInstallments,
+              numberOfYears: s.numberOfYears
             })
           );
         }
       }
 
-      // Delete old assigned projects and reinsert new
+      // Refresh assigned projects
       await db.run(DELETE.from(PaymentPlanProjects).where({ paymentPlan_paymentPlanId: paymentPlanId }));
       if (Array.isArray(assignedProjects)) {
-        for (const proj of assignedProjects) {
+        for (const p of assignedProjects) {
           await db.run(
             INSERT.into(PaymentPlanProjects).entries({
-              ...proj,
-              paymentPlan_paymentPlanId: paymentPlanId
+              ID: p.ID || uuidv4(),
+              paymentPlan_paymentPlanId: paymentPlanId,
+              project_projectId: p.project?.projectId
             })
           );
         }
       }
 
-      // Return updated record
       const updated = await db.run(SELECT.one.from(PaymentPlans).where({ paymentPlanId }));
+      await db.commit();
+      console.log("✅ PaymentPlan updated:", paymentPlanId);
       return updated;
+
     } catch (error) {
-      console.error("Error updating PaymentPlan:", error);
+      await db.rollback();
+      console.error("❌ Error updating PaymentPlan:", error);
       req.error(500, "Error updating PaymentPlan: " + error.message);
     }
   });
@@ -463,37 +483,74 @@ module.exports = cds.service.impl(async function () {
   this.on('DELETE', PaymentPlans, async (req) => {
     const { paymentPlanId } = req.data;
     console.log('DELETE PaymentPlan called for:', paymentPlanId);
-
     const db = cds.transaction(req);
+
     try {
-      // Delete child entities first due to composition
+      // Delete children first (composition)
       await db.run(DELETE.from(PaymentPlanSchedules).where({ paymentPlan_paymentPlanId: paymentPlanId }));
       await db.run(DELETE.from(PaymentPlanProjects).where({ paymentPlan_paymentPlanId: paymentPlanId }));
 
-      // Delete main entity
-      return await db.run(
-        DELETE.from(PaymentPlans).where({ paymentPlanId })
-      );
+      // Delete main plan
+      await db.run(DELETE.from(PaymentPlans).where({ paymentPlanId }));
+      await db.commit();
+
+      console.log('🗑️ PaymentPlan deleted:', paymentPlanId);
+      return { message: `PaymentPlan ${paymentPlanId} deleted.` };
+
     } catch (error) {
-      console.error("Error deleting PaymentPlan:", error);
+      await db.rollback();
+      console.error("❌ Error deleting PaymentPlan:", error);
       req.error(500, "Error deleting PaymentPlan: " + error.message);
     }
   });
 
-  /*-----------------------PaymentPlanSchedules---------------------------*/
+  /* ------------------------------------------------------------------
+   * VALUE HELP ENTITIES (for dropdowns)
+   * ---------------------------Config Screens--------------------------------------- */
+
+  this.on('READ', ConditionTypes, async req => cds.transaction(req).run(req.query));
+  this.on('READ', BasePrices, async req => cds.transaction(req).run(req.query));
+  this.on('READ', CalculationMethods, async req => cds.transaction(req).run(req.query));
+  this.on('READ', Frequencies, async req => cds.transaction(req).run(req.query));
+  // 🔹 Add DELETE handlers
+  this.on('DELETE', ConditionTypes, async req => {
+    const { code } = req.data;
+    return await cds.transaction(req).run(
+      DELETE.from(ConditionTypes).where({ code })
+    );
+  });
+  this.on('DELETE', BasePrices, async req => {
+    const { code } = req.data;
+    return await cds.transaction(req).run(
+      DELETE.from(BasePrices).where({ code })
+    );
+  });
+  this.on('DELETE', CalculationMethods, async req => {
+    const { code } = req.data;
+    return await cds.transaction(req).run(
+      DELETE.from(CalculationMethods).where({ code })
+    );
+  });
+  this.on('DELETE', Frequencies, async req => {
+    const { code } = req.data;
+    return await cds.transaction(req).run(
+      DELETE.from(Frequencies).where({ code })
+    );
+  });
+  /* ------------------------------------------------------------------
+   * DIRECT READ FOR CHILD ENTITIES
+   * ------------------------------------------------------------------ */
+
   this.on('READ', PaymentPlanSchedules, async (req) => {
     console.log('READ PaymentPlanSchedules called');
-    const db = cds.transaction(req);
-    return await db.run(req.query);
+    return cds.transaction(req).run(req.query);
   });
 
-  /*-----------------------PaymentPlanProjects---------------------------*/
   this.on('READ', PaymentPlanProjects, async (req) => {
     console.log('READ PaymentPlanProjects called');
-    const db = cds.transaction(req);
-    return await db.run(req.query);
+    return cds.transaction(req).run(req.query);
   });
-
+  
   /*----------------------- EOI ---------------------------*/
 
   // READ
@@ -623,64 +680,18 @@ module.exports = cds.service.impl(async function () {
 
   /*----------------------- Reservations ---------------------------*/
 
-  // 🔹 Helper: validate references
-  async function validateReferences(req, db) {
-    const data = req.data;
-    const errors = [];
 
-    // Check Project reference
-    if (data.project_projectId) {
-      const exists = await db.run(
-        SELECT.one.from(Projects).where({ projectId: data.project_projectId })
-      );
-      if (!exists) errors.push(`Project ID '${data.project_projectId}' does not exist.`);
-    }
 
-    // Check Building reference
-    if (data.building_buildingId) {
-      const exists = await db.run(
-        SELECT.one.from(Buildings).where({ buildingId: data.building_buildingId })
-      );
-      if (!exists) errors.push(`Building ID '${data.building_buildingId}' does not exist.`);
-    }
-
-    // Check Unit reference
-    if (data.unit_unitId) {
-      const exists = await db.run(
-        SELECT.one.from(Units).where({ unitId: data.unit_unitId })
-      );
-      if (!exists) errors.push(`Unit ID '${data.unit_unitId}' does not exist.`);
-    }
-
-    // Check Payment Plan reference
-    if (data.paymentPlan_paymentPlanId) {
-      const exists = await db.run(
-        SELECT.one.from(PaymentPlans).where({ paymentPlanId: data.paymentPlan_paymentPlanId })
-      );
-      if (!exists)
-        errors.push(`Payment Plan ID '${data.paymentPlan_paymentPlanId}' does not exist.`);
-    }
-
-    // Throw combined error if any references are invalid
-    if (errors.length > 0) {
-      req.error({
-        code: "REFERENCE_NOT_FOUND",
-        message: errors.join("\n"),
-        target: "Reservations"
-      });
-    }
-  }
-
-/** ----------------------------------------------------------------
-   *  READ Reservations
-   * ---------------------------------------------------------------- */
+  /** ----------------------------------------------------------------
+     *  READ Reservations
+     * ---------------------------------------------------------------- */
   this.on("READ", Reservations, async (req) => {
     console.log("READ Reservations called");
     const db = cds.transaction(req);
     return await db.run(req.query);
   });
 
- // 🔹 Reference Validation Function
+  // 🔹 Reference Validation Function
   async function validateReferencesForReservations(req, db) {
     const {
       project_projectId,
@@ -831,44 +842,6 @@ module.exports = cds.service.impl(async function () {
     }
   });
 
-  /** ----------------------------------------------------------------
-   *  HELPER: Reference Validation
-   * ---------------------------------------------------------------- */
-  // async function validateReferencesForReservations(req, db) {
-  //   const {
-  //     project_projectId,
-  //     building_buildingId,
-  //     unit_unitId,
-  //     paymentPlan_paymentPlanId
-  //   } = req.data;
+  /*---------------------Simulations-----------------------*/
 
-  //   // Helper to check if reference exists
-  //   const exists = async (entity, key, value) => {
-  //     if (!value) return true; // Skip empty reference
-  //     const result = await db.run(SELECT.one.from(entity).where({ [key]: value }));
-  //     return !!result;
-  //   };
-
-  //   // 🔸 Validate Project
-  //   if (project_projectId && !(await exists("Projects", "projectId", project_projectId))) {
-  //     req.error(400, `Project ID '${project_projectId}' not found`);
-  //   }
-
-  //   // 🔸 Validate Building
-  //   if (building_buildingId && !(await exists("Buildings", "buildingId", building_buildingId))) {
-  //     req.error(400, `Building ID '${building_buildingId}' not found`);
-  //   }
-
-  //   // 🔸 Validate Unit
-  //   if (unit_unitId && !(await exists("Units", "unitId", unit_unitId))) {
-  //     req.error(400, `Unit ID '${unit_unitId}' not found`);
-  //   }
-
-  //   // 🔸 Validate Payment Plan
-  //   if (paymentPlan_paymentPlanId && !(await exists("PaymentPlans", "paymentPlanId", paymentPlan_paymentPlanId))) {
-  //     req.error(400, `Payment Plan ID '${paymentPlan_paymentPlanId}' not found`);
-  //   }
-
-  //   return true;
-  // }
 });

@@ -128,6 +128,31 @@
           "pattern": "Reservations",
           "target": "Reservations"
         },
+         {
+          "name": "Simulations",
+          "pattern": "Simulations",
+          "target": "Simulations"
+        },
+         {
+          "name": "ConditionTypes",
+          "pattern": "ConditionTypes",
+          "target": "ConditionTypes"
+        },
+          {
+          "name": "CalculationMethods",
+          "pattern": "CalculationMethods",
+          "target": "CalculationMethods"
+        },
+          {
+          "name": "BasePrices",
+          "pattern": "BasePrices",
+          "target": "BasePrices"
+        },
+          {
+          "name": "Frequencies",
+          "pattern": "Frequencies",
+          "target": "Frequencies"
+        },
         {
           "name": "RouteDBOperations",
           "pattern": ":?query:",
@@ -154,6 +179,21 @@
         },
         "Reservations": {
           "viewName": "Reservations"
+        },
+          "Simulations": {
+          "viewName": "Simulations"
+        },
+        "ConditionTypes": {
+          "viewName": "ConditionTypes"
+        },
+          "CalculationMethods": {
+          "viewName": "CalculationMethods"
+        }, 
+         "BasePrices": {
+          "viewName": "BasePrices"
+        }, 
+         "Frequencies": {
+          "viewName": "Frequencies"
         },
         "TargetDBOperations": {
           "id": "DBOperations",

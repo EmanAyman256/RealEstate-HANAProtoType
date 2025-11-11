@@ -1,4 +1,3 @@
-
 <mvc:View
     controllerName="dboperations.controller.DBOperations"
     xmlns="sap.m"
@@ -17,109 +16,233 @@
 >
     <Page
         id="_IDGenPage3"
-        title="Real Estate App "
+        title="Real Estate App"
     >
         <content>
-            <HBox id="_IDGenHBox3">
-            <GenericTile
-                    id="_IDGenGenericTile3"
-                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
-                    header="Projects"
-                    press="onNavigateToProjects"
-                >
-                    <TileContent
-                        id="_IDGenTileContent2"
-                        footer="Projects CRUD OPs"
+            <!-- 🔹 Added IconTabBar to group tiles into sections -->
+            <IconTabBar
+                id="_IDGenIconTabBar1"
+                class="sapUiResponsiveContentPadding"
+            >
+                <!-- Tab for Main Operations -->
+                <items>
+                    <IconTabFilter
+                        id="_IDGenIconTabFilterMain"
+                        text="Main Operations"
+                        icon="sap-icon://business-objects-experience"
                     >
-                        <ImageContent
-                            id="_IDGenImageContent2"
-                            src="sap-icon://workflow-tasks"
-                        />
-                    </TileContent>
-                </GenericTile>
-                <GenericTile
-                    id="_IDGenGenericTile1"
-                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
-                    header="Buildings"
-                    press="onNavigateToBuildings"
-                >
-                    <TileContent
-                        id="_IDGenTileContent"
-                        footer="Buildings CRUD OPs"
+                        <ScrollContainer
+                            id="_IDGenScrollContainerMain"
+                            horizontal="true"
+                            vertical="false"
+                            width="100%"
+                            height="auto"
+                        >
+                            <HBox id="_IDGenHBoxMain">
+                                <GenericTile
+                                    id="_IDGenGenericTile3"
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+                                    header="Projects"
+                                    press="onNavigateToProjects"
+                                >
+                                    <TileContent
+                                        id="_IDGenTileContent2"
+                                        footer="Projects CRUD OPs"
+                                    >
+                                        <ImageContent
+                                            id="_IDGenImageContent2"
+                                            src="sap-icon://workflow-tasks"
+                                        />
+                                    </TileContent>
+                                </GenericTile>
+                                <GenericTile
+                                    id="_IDGenGenericTile1"
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+                                    header="Buildings"
+                                    press="onNavigateToBuildings"
+                                >
+                                    <TileContent
+                                        id="_IDGenTileContent"
+                                        footer="Buildings CRUD OPs"
+                                    >
+                                        <ImageContent
+                                            id="_IDGenImageContent"
+                                            src="sap-icon://building"
+                                        />
+                                    </TileContent>
+                                </GenericTile>
+                                
+                                <GenericTile
+                                    id="_IDGenGenericTile2"
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+                                    header="Units"
+                                    press="onNavigateToUnits"
+                                >
+                                    <TileContent
+                                        id="_IDGenTileContent1"
+                                        footer="Units CRUD OPs"
+                                    >
+                                        <ImageContent
+                                            id="_IDGenImageContent1"
+                                            src="sap-icon://home"
+                                        />
+                                    </TileContent>
+                                </GenericTile>
+                                <GenericTile
+                                    id="_IDGenGenericTile4"
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+                                    header="Payment Plans"
+                                    press="onNavigateToPaymentPlans"
+                                >
+                                    <TileContent
+                                        id="_IDGenTileContent4"
+                                        footer="Payment Plans CRUD OPs"
+                                    >
+                                        <ImageContent
+                                            id="_IDGenImageContent4"
+                                            src="sap-icon://money-bills"
+                                        />
+                                    </TileContent>
+                                </GenericTile>
+                                <GenericTile
+                                    id="_IDGenGenericTile5"
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+                                    header="EOI"
+                                    press="onNavigateToEOI"
+                                >
+                                    <TileContent
+                                        id="_IDGenTileContent5"
+                                        footer="EOI CRUD OPs"
+                                    >
+                                        <ImageContent
+                                            id="_IDGenImageContent5"
+                                            src="sap-icon://favorite-list"
+                                        />
+                                    </TileContent>
+                                </GenericTile>
+                                <GenericTile
+                                    id="_IDGenGenericTile6"
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+                                    header="Reservations"
+                                    press="onNavigateToReservations"
+                                >
+                                    <TileContent
+                                        id="_IDGenTileContent6"
+                                        footer="Reservations CRUD OPs"
+                                    >
+                                        <ImageContent
+                                            id="_IDGenImageContent6"
+                                            src="sap-icon://add-activity"
+                                        />
+                                    </TileContent>
+                                </GenericTile>
+                                
+                                <GenericTile
+                                    id="_IDGenGenericTile7"
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+                                    header="Simulations"
+                                    press="onNavigateToSimulations"
+                                >
+                                    <TileContent
+                                        id="_IDGenTileContent7"
+                                        footer="Simulations CRUD OPs"
+                                    >
+                                        <ImageContent
+                                            id="_IDGenImageContent7"
+                                            src="sap-icon://simulate"
+                                        />
+                                    </TileContent>
+                                </GenericTile>
+                            </HBox>
+                        </ScrollContainer>
+                    </IconTabFilter>
+
+                    <!-- Tab for Configurations -->
+                    <IconTabFilter
+                        id="_IDGenIconTabFilterConfig"
+                        text="Configurations"
+                        icon="sap-icon://settings"
                     >
-                        <ImageContent
-                            id="_IDGenImageContent"
-                            src="sap-icon://building"
-                        />
-                    </TileContent>
-                </GenericTile>
-                
-                <GenericTile
-                    id="_IDGenGenericTile2"
-                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
-                    header="Units"
-                    press="onNavigateToUnits"
-                >
-                    <TileContent
-                        id="_IDGenTileContent1"
-                        footer=" Units CRUD OPs"
-                    >
-                        <ImageContent
-                            id="_IDGenImageContent1"
-                            src="sap-icon://home"
-                        />
-                    </TileContent>
-                </GenericTile>
-                <GenericTile
-    id="_IDGenGenericTile4"
-    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
-    header="Payment Plans"
-    press="onNavigateToPaymentPlans"
->
-    <TileContent
-        id="_IDGenTileContent4"
-        footer="Payment Plans CRUD OPs"
-    >
-        <ImageContent
-            id="_IDGenImageContent4"
-            src="sap-icon://money-bills"
-        />
-    </TileContent>
-</GenericTile>
-<GenericTile
-    id="_IDGenGenericTile5"
-    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
-    header="EOI"
-    press="onNavigateToEOI"
->
-    <TileContent
-        id="_IDGenTileContent5"
-        footer="EOI CRUD OPs"
-    >
-        <ImageContent
-            id="_IDGenImageContent5"
-            src="sap-icon://favorite-list"
-        />
-    </TileContent>
-</GenericTile>
-      <GenericTile
-    id="_IDGenGenericTile6"
-    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
-    header="Reservations"
-    press="onNavigateToReservations"
->
-    <TileContent
-        id="_IDGenTileContent6"
-        footer="Reservations CRUD OPs"
-    >
-        <ImageContent
-            id="_IDGenImageContent6"
-            src="sap-icon://add-activity"
-        />
-    </TileContent>
-</GenericTile>
-      
-            </HBox>
+                        <ScrollContainer
+                            id="_IDGenScrollContainerConfig"
+                            horizontal="true"
+                            vertical="false"
+                            width="100%"
+                            height="auto"
+                        >
+                            <HBox id="_IDGenHBoxConfig">
+                                <GenericTile
+                                    id="_IDGenGenericTile8"
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+                                    header="ConditionTypes"
+                                    press="onNavigateToConditionTypes"
+                                >
+                                    <TileContent
+                                        id="_IDGenTileContent8"
+                                        footer="Condition Types CRUD OPs"
+                                    >
+                                        <ImageContent
+                                            id="_IDGenImageContent8"
+                                            src="sap-icon://fx"
+                                        />
+                                    </TileContent>
+                                </GenericTile>
+
+                                <GenericTile
+                                    id="_IDGenGenericTile9"
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+                                    header="CalculationMethods"
+                                    press="onNavigateToCalculationMethods"
+                                >
+                                    <TileContent
+                                        id="_IDGenTileContent9"
+                                        footer="Calculation Methods CRUD OPs"
+                                    >
+                                        <ImageContent
+                                            id="_IDGenImageContent9"
+                                            src="sap-icon://fx"
+                                        />
+                                    </TileContent>
+                                </GenericTile>
+
+                                <GenericTile
+                                    id="_IDGenGenericTile10"
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+                                    header="BasePrices"
+                                    press="onNavigateToBasePrices"
+                                >
+                                    <TileContent
+                                        id="_IDGenTileContent10"
+                                        footer="Base Prices CRUD OPs"
+                                    >
+                                        <ImageContent
+                                            id="_IDGenImageContent10"
+                                            src="sap-icon://fx"
+                                        />
+                                    </TileContent>
+                                </GenericTile>
+
+                                <GenericTile
+                                    id="_IDGenGenericTile11"
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+                                    header="Frequencies"
+                                    press="onNavigateToFrequencies"
+                                >
+                                    <TileContent
+                                        id="_IDGenTileContent11"
+                                        footer="Frequencies CRUD OPs"
+                                    >
+                                        <ImageContent
+                                            id="_IDGenImageContent11"
+                                            src="sap-icon://fx"
+                                        />
+                                    </TileContent>
+                                </GenericTile>
+                            </HBox>
+                        </ScrollContainer>
+                    </IconTabFilter>
+                </items>
+            </IconTabBar>
         </content>
     </Page>
 </mvc:View>

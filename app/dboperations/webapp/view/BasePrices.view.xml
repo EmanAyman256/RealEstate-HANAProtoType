@@ -1,0 +1,55 @@
+<mvc:View
+    controllerName="dboperations.controller.BasePrices"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    displayBlock="true"
+>
+    <Page id="_IDGenPageBP" title="Base Prices">
+        <headerContent>
+            <Button id="btnAddBP" icon="sap-icon://add" text="Add Base Price" press="onAddBasePrice"/>
+        </headerContent>
+
+        <content>
+            <Table id="basePricesTable" items="{basePrices>/}" width="100%">
+                <columns>
+                    <Column id="_IDGenColumnBP1"><Text id="_IDGenTextBP1" text="Code"/></Column>
+                    <Column id="_IDGenColumnBP2"><Text id="_IDGenTextBP2" text="Description"/></Column>
+                    <Column id="_IDGenColumnBP3"><Text id="_IDGenTextBP3" text="Actions"/></Column>
+                </columns>
+
+                <items>
+                    <ColumnListItem id="_IDGenColumnListItemBP1">
+                        <cells>
+                            <Text id="_IDGenTextBP4" text="{basePrices>code}"/>
+                            <Text id="_IDGenTextBP5" text="{basePrices>description}"/>
+                            <HBox id="_IDGenHBoxBP1">
+                                <Button id="_IDGenButtonBP1" icon="sap-icon://edit" press="onEditBasePrice"/>
+                                <Button id="_IDGenButtonBP2" icon="sap-icon://delete" type="Reject" press="onDeleteBasePrice"/>
+                            </HBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
+    </Page>
+
+    <!-- Add/Edit Dialog -->
+    <Dialog id="basePriceDialog" title="Add/Edit Base Price" stretchOnPhone="true">
+        <content>
+            <VBox id="_IDGenVBoxBP1" class="sapUiSmallMargin">
+                <Label id="_IDGenLabelBP1" text="Code"/>
+                <Input id="_IDGenInputBP1" value="{local>/code}" editable="{= !${local>/isEdit}}" placeholder="Enter Code (e.g., BP01)"/>
+
+                <Label id="_IDGenLabelBP2" text="Description"/>
+                <Input id="_IDGenInputBP2" value="{local>/description}" placeholder="Enter Description"/>
+            </VBox>
+        </content>
+
+        <beginButton>
+            <Button id="_IDGenButtonBP3" text="Save" press="onSaveBasePrice"/>
+        </beginButton>
+        <endButton>
+            <Button id="_IDGenButtonBP4" text="Cancel" press="onCancelBasePrice"/>
+        </endButton>
+    </Dialog>
+</mvc:View>

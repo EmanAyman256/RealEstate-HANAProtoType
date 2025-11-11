@@ -29,5 +29,20 @@ sap.ui.define([
             onNavigateToEOI() {
             this.getOwnerComponent().getRouter().navTo("EOI");
         },
+            onNavigateToSimulations() {
+            this.getOwnerComponent().getRouter().navTo("Simulations");
+        },
+            onNavigateToConditionTypes() {
+            this.getOwnerComponent().getRouter().navTo("ConditionTypes");
+        },
+           onNavigateToCalculationMethods() {
+            this.getOwnerComponent().getRouter().navTo("CalculationMethods");
+        },
+          onNavigateToFrequencies() {
+            this.getOwnerComponent().getRouter().navTo("Frequencies");
+        },
+          onNavigateToBasePrices() {
+            this.getOwnerComponent().getRouter().navTo("BasePrices");
+        },
     });
 });
