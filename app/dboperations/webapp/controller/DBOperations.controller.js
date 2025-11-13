@@ -29,8 +29,8 @@ sap.ui.define([
             onNavigateToEOI() {
             this.getOwnerComponent().getRouter().navTo("EOI");
         },
-            onNavigateToSimulations() {
-            this.getOwnerComponent().getRouter().navTo("Simulations");
+            onNavigateToPaymentPlanSimulations() {
+            this.getOwnerComponent().getRouter().navTo("PaymentPlanSimulations");
         },
             onNavigateToConditionTypes() {
             this.getOwnerComponent().getRouter().navTo("ConditionTypes");
@@ -40,6 +40,12 @@ sap.ui.define([
         },
           onNavigateToFrequencies() {
             this.getOwnerComponent().getRouter().navTo("Frequencies");
+        },
+          onNavigateToMeasurements() {
+            this.getOwnerComponent().getRouter().navTo("Measurements");
+        },
+          onNavigateToConditions() {
+            this.getOwnerComponent().getRouter().navTo("Conditions");
         },
           onNavigateToBasePrices() {
             this.getOwnerComponent().getRouter().navTo("BasePrices");

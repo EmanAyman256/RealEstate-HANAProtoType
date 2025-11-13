@@ -1,0 +1,51 @@
+<mvc:View
+    controllerName="dboperations.controller.Conditions"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    displayBlock="true"
+>
+    <Page title="Conditions">
+        <headerContent>
+            <Button icon="sap-icon://add" text="Add Condition" press="onAddCondition"/>
+        </headerContent>
+
+        <content>
+            <Table id="conditionsTable" items="{conditions>/}" width="100%">
+                <columns>
+                    <Column><Text text="Code"/></Column>
+                    <Column><Text text="Description"/></Column>
+                    <Column><Text text="Actions"/></Column>
+                </columns>
+
+                <items>
+                    <ColumnListItem>
+                        <cells>
+                            <Text text="{conditions>code}"/>
+                            <Text text="{conditions>description}"/>
+                            <HBox>
+                                <Button icon="sap-icon://edit" press="onEditCondition"/>
+                                <Button icon="sap-icon://delete" type="Reject" press="onDeleteCondition"/>
+                            </HBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
+
+        <Dialog id="conditionDialog" title="Add/Edit Condition" stretchOnPhone="true">
+            <VBox class="sapUiSmallMargin">
+                <Label text="Code"/>
+                <Input value="{local>/code}" editable="{= !${local>/isEdit}}" placeholder="Enter Code"/>
+                <Label text="Description"/>
+                <Input value="{local>/description}" placeholder="Enter Description"/>
+            </VBox>
+
+            <beginButton>
+                <Button text="Save" press="onSaveCondition"/>
+            </beginButton>
+            <endButton>
+                <Button text="Cancel" press="onCancelCondition"/>
+            </endButton>
+        </Dialog>
+    </Page>
+</mvc:View>

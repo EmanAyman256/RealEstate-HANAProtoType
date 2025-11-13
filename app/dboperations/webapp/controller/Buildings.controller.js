@@ -88,7 +88,26 @@ sap.ui.define([
                         MessageBox.error("Error loading Units: " + err.message);
                     });
             },
+            onStatusSelectionChange: function (oEvent) {
+                const aSelectedKeys = oEvent.getSource().getSelectedKeys();
+                const oTable = this.byId("unitsTable");
+                const oBinding = oTable.getBinding("items");
+
+                if (!aSelectedKeys.length) {
+                    oBinding.filter([]); // show all
+                    return;
+                }
+
+                const aFilters = aSelectedKeys.map(key =>
+                    new sap.ui.model.Filter("unitStatusDescription", sap.ui.model.FilterOperator.EQ, key)
+                );
+                console.log(aFilters);
+
+                oBinding.filter(new sap.ui.model.Filter({ filters: aFilters, and: false }));
+            }
+            ,
             onAddBuilding: function () {
+
                 // Destroy old dialog if it exists to avoid duplicates
                 if (this._oAddBuildingDialog) {
                     this._oAddBuildingDialog.destroy();
@@ -204,7 +223,7 @@ sap.ui.define([
                                 .catch(err => {
                                     sap.m.MessageBox.error("Error: " + err.message);
                                     console.log(err);
-                                    
+
                                 });
                         }
                     }),

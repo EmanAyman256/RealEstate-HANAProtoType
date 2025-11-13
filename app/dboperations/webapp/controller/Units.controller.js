@@ -16,10 +16,13 @@ sap.ui.define([
     "sap/m/Title",
     "sap/m/IconTabBar",
     "sap/m/IconTabFilter",
-    "sap/ui/layout/form/SimpleForm"
+    "sap/ui/layout/form/SimpleForm",
+    "sap/m/ComboBox",
+    "sap/ui/core/Item"
 ], function (
     Controller, MessageBox, Dialog, Input, Button, Label, Text, TextArea, VBox,
-    DatePicker, Table, Column, ColumnListItem, JSONModel, Title, IconTabBar, IconTabFilter, SimpleForm
+    DatePicker, Table, Column, ColumnListItem, JSONModel, Title, IconTabBar, IconTabFilter, SimpleForm,
+    ComboBox, Item
 ) {
     "use strict";
 
@@ -34,17 +37,17 @@ sap.ui.define([
             });
             this.getView().setModel(oModel, "view");
 
-            // Fetch data from CAP OData service
-            var oModel = new JSONModel();
-            fetch("/odata/v4/real-estate/Units?$expand=measurements,conditions")
-                .then(response => response.json())
-                .then(data => {
-                    oModel.setData({ Units: data.value });
-                    this.getView().byId("unitsTable").setModel(oModel);
-                })
-                .catch(err => {
-                    console.error("Error fetching units", err);
-                });
+            // Fetch units data
+            this._loadUnits();
+
+            // Fetch config lists for dropdowns
+            this._loadMeasurementsList();
+            this._loadConditionsList();
+
+            // New: Fetch lists for search helps
+            this._loadCompanyCodesList();
+            this._loadProjectsList();
+            this._loadBuildingsList();
         },
 
         _onRouteMatched: function () {
@@ -52,31 +55,96 @@ sap.ui.define([
         },
 
         _loadUnits: function () {
-    var oModel = new sap.ui.model.json.JSONModel();
-    fetch("/odata/v4/real-estate/Units?$expand=measurements,conditions")
-        .then(response => response.json())
-        .then(data => {
-            // 🔹 Post-process units to extract BUA & Original Price
-            const enrichedUnits = data.value.map(unit => {
-                // Extract BUA (from measurements where code = 'BUA')
-                let buaMeasurement = unit.measurements?.find(m => m.code?.toUpperCase() === "BUA");
-                let bua = buaMeasurement ? buaMeasurement.quantity : null;
+            var oModel = new sap.ui.model.json.JSONModel();
+            fetch("/odata/v4/real-estate/Units?$expand=measurements,conditions")
+                .then(response => response.json())
+                .then(data => {
+                    // 🔹 Post-process units to extract BUA & Original Price
+                    const enrichedUnits = data.value.map(unit => {
+                        // Extract BUA (from measurements where code = 'BUA')
+                        let buaMeasurement = unit.measurements?.find(m => m.code?.toUpperCase() === "BUA");
+                        let bua = buaMeasurement ? buaMeasurement.quantity : null;
 
-                // Extract Original Price (from first condition or based on some rule)
-                let firstCondition = unit.conditions?.[0];
-                let originalPrice = firstCondition ? firstCondition.amount : null;
+                        // Extract Original Price (from first condition or based on some rule)
+                        let firstCondition = unit.conditions?.[0];
+                        let originalPrice = firstCondition ? firstCondition.amount : null;
 
-                return { ...unit, bua, originalPrice };
-            });
+                        return { ...unit, bua, originalPrice };
+                    });
 
-            oModel.setData({ Units: enrichedUnits });
-            this.getView().byId("unitsTable").setModel(oModel);
-        })
-        .catch(err => {
-            console.error("Error fetching units", err);
-        });
-},
+                    oModel.setData({ Units: enrichedUnits });
+                    this.getView().byId("unitsTable").setModel(oModel);
+                })
+                .catch(err => {
+                    console.error("Error fetching units", err);
+                });
+        },
 
+        // Fetch measurements config for dropdown
+        _loadMeasurementsList: function () {
+            fetch("/odata/v4/real-estate/Measurements")
+                .then(res => res.json())
+                .then(data => {
+                    this.getView().setModel(new JSONModel(data.value || []), "measurementsList");
+                })
+                .catch(err => console.error("Failed to load Measurements list:", err));
+        },
+
+        // Fetch conditions config for dropdown
+        _loadConditionsList: function () {
+            fetch("/odata/v4/real-estate/Conditions")
+                .then(res => res.json())
+                .then(data => {
+                    this.getView().setModel(new JSONModel(data.value || []), "conditionsList");
+                })
+                .catch(err => console.error("Failed to load Conditions list:", err));
+        },
+
+        // New: Fetch unique company codes from Projects
+        _loadCompanyCodesList: function () {
+            fetch("/odata/v4/real-estate/Projects")
+                .then(res => res.json())
+                .then(data => {
+                    const uniqueCompanyCodes = data.value.reduce((acc, curr) => {
+                        if (!acc.find(c => c.companyCodeId === curr.companyCodeId)) {
+                            acc.push({
+                                companyCodeId: curr.companyCodeId,
+                                companyCodeDescription: curr.companyCodeDescription
+                            });
+                        }
+                        return acc;
+                    }, []);
+                    this.getView().setModel(new JSONModel(uniqueCompanyCodes), "companyCodesList");
+                })
+                .catch(err => console.error("Failed to load Company Codes list:", err));
+        },
+
+        // New: Fetch projects list
+        _loadProjectsList: function () {
+            fetch("/odata/v4/real-estate/Projects")
+                .then(res => res.json())
+                .then(data => {
+                    this.getView().setModel(new JSONModel(data.value || []), "projectsList");
+                })
+                .catch(err => console.error("Failed to load Projects list:", err));
+        },
+
+        // New: Fetch buildings list
+        _loadBuildingsList: function () {
+            fetch("/odata/v4/real-estate/Buildings")
+                .then(res => res.json())
+                .then(data => {
+                    this.getView().setModel(new JSONModel(data.value || []), "buildingsList");
+                })
+                .catch(err => console.error("Failed to load Buildings list:", err));
+        },
+
+        // New: Update filtered buildings based on projectId
+        _updateFilteredBuildings: function (sProjectId, oModel) {
+            const allBuildings = this.getView().getModel("buildingsList").getData();
+            const filtered = allBuildings.filter(b => b.projectId === sProjectId);
+            oModel.setProperty("/filteredBuildings", filtered);
+        },
 
         onNavigateToAddUnit: function () {
             // If dialog is not yet created, create it once
@@ -101,7 +169,8 @@ sap.ui.define([
                     unitDeliveryDate: "",
                     supplementaryText: "",
                     measurements: [],
-                    conditions: []
+                    conditions: [],
+                    filteredBuildings: []  // New: for filtered buildings
                 });
 
                 this._oAddDialog = new sap.m.Dialog({
@@ -121,8 +190,16 @@ sap.ui.define([
                             }),
 
                             new sap.m.Label({ text: "Company Code ID", required: true }),
-                            new sap.m.Input("companyCodeIdInput", {
-                                value: "{/companyCodeId}",
+                            new ComboBox("companyCodeIdInput", {
+                                selectedKey: "{/companyCodeId}",
+                                change: this.onCompanyCodeChange.bind(this),
+                                items: {
+                                    path: "companyCodesList>/",
+                                    template: new Item({
+                                        key: "{companyCodesList>companyCodeId}",
+                                        text: "{companyCodesList>companyCodeId} - {companyCodesList>companyCodeDescription}"
+                                    })
+                                },
                                 tooltip: "Must be 4 characters"
                             }),
 
@@ -133,8 +210,16 @@ sap.ui.define([
                             }),
 
                             new sap.m.Label({ text: "Project ID", required: true }),
-                            new sap.m.Input("projectIdInput", {
-                                value: "{/projectId}",
+                            new ComboBox("projectIdInput", {
+                                selectedKey: "{/projectId}",
+                                change: this.onProjectChange.bind(this),
+                                items: {
+                                    path: "projectsList>/",
+                                    template: new Item({
+                                        key: "{projectsList>projectId}",
+                                        text: "{projectsList>projectId} - {projectsList>projectDescription}"
+                                    })
+                                },
                                 tooltip: "Must be 8 characters"
                             }),
 
@@ -144,8 +229,17 @@ sap.ui.define([
                                 tooltip: "Up to 60 characters"
                             }),
 
-                            new sap.m.Label({ text: "Building ID", required: true }),
-                            new sap.m.Input("buildingIdInput", { value: "{/buildingId}" }),
+                            // new sap.m.Label({ text: "Building ID", required: true }),
+                            // new ComboBox("buildingIdInput", {
+                            //     selectedKey: "{/buildingId}",
+                            //     items: {
+                            //         path: "/filteredBuildings",
+                            //         template: new Item({
+                            //             key: "{buildingId}",
+                            //             text: "{buildingId} - {buildingDescription}"
+                            //         })
+                            //     }
+                            // }),
 
                             new sap.m.Label({ text: "Unit Type Description", required: true }),
                             new sap.m.Input("unitTypeDescInput", { value: "{/unitTypeDescription}" }),
@@ -187,6 +281,7 @@ sap.ui.define([
 
                             new sap.m.Title({ text: "Measurements", level: "H3" }),
                             new sap.m.Button({ text: "Add Measurement", press: this.onAddMeasurementRow.bind(this) }),
+                            new sap.m.Button({ text: "Delete Measurement", press: this.onDeleteMeasurementRow.bind(this) }),
                             new sap.m.Table({
                                 id: "addMeasurementsTable",
                                 items: "{/measurements}",
@@ -200,10 +295,20 @@ sap.ui.define([
                                     path: "/measurements",
                                     template: new sap.m.ColumnListItem({
                                         cells: [
-                                            new sap.m.Input({ value: "{code}" }),
-                                            new sap.m.Input({ value: "{description}" }),
-                                            new sap.m.Input({ value: "{quantity}", type: "Number" }),
-                                            new sap.m.Input({ value: "{uom}" })
+                                            new ComboBox({
+                                                selectedKey: "{code}",
+                                                change: this.onMeasurementCodeChange.bind(this),
+                                                items: {
+                                                    path: "measurementsList>/",
+                                                    template: new Item({
+                                                        key: "{measurementsList>code}",
+                                                        text: "{measurementsList>code} - {measurementsList>description}"
+                                                    })
+                                                }
+                                            }),
+                                            new Text({ text: "{description}" }),
+                                            new Input({ value: "{quantity}", type: "Number" }),
+                                            new Input({ value: "{uom}" })
                                         ]
                                     })
                                 }
@@ -211,6 +316,7 @@ sap.ui.define([
 
                             new sap.m.Title({ text: "Conditions", level: "H3" }),
                             new sap.m.Button({ text: "Add Condition", press: this.onAddConditionRow.bind(this) }),
+                            new sap.m.Button({ text: "Delete Condition", press: this.onDeleteConditionRow.bind(this) }),
                             new sap.m.Table({
                                 id: "addConditionsTable",
                                 items: "{/conditions}",
@@ -224,10 +330,20 @@ sap.ui.define([
                                     path: "/conditions",
                                     template: new sap.m.ColumnListItem({
                                         cells: [
-                                            new sap.m.Input({ value: "{code}" }),
-                                            new sap.m.Input({ value: "{description}" }),
-                                            new sap.m.Input({ value: "{amount}", type: "Number" }),
-                                            new sap.m.Input({ value: "{currency}" })
+                                            new ComboBox({
+                                                selectedKey: "{code}",
+                                                change: this.onConditionCodeChange.bind(this),
+                                                items: {
+                                                    path: "conditionsList>/",
+                                                    template: new Item({
+                                                        key: "{conditionsList>code}",
+                                                        text: "{conditionsList>code} - {conditionsList>description}"
+                                                    })
+                                                }
+                                            }),
+                                            new Text({ text: "{description}" }),
+                                            new Input({ value: "{amount}", type: "Number" }),
+                                            new Input({ value: "{currency}" })
                                         ]
                                     })
                                 }
@@ -249,7 +365,7 @@ sap.ui.define([
                                 { id: "companyCodeDescInput", name: "Company Code Description" },
                                 { id: "projectIdInput", name: "Project ID" },
                                 { id: "projectDescInput", name: "Project Description" },
-                                { id: "buildingIdInput", name: "Building ID" },
+                                // { id: "buildingIdInput", name: "Building ID" },
                                 { id: "unitTypeDescInput", name: "Unit Type Description" },
                                 { id: "usageTypeDescInput", name: "Usage Type Description" },
                                 { id: "unitStatusDescInput", name: "Unit Status Description" },
@@ -288,7 +404,7 @@ sap.ui.define([
                                 companyCodeDescription: oData.companyCodeDescription,
                                 projectId: oData.projectId,
                                 projectDescription: oData.projectDescription,
-                                buildingId: oData.buildingId,
+                                // buildingId: oData.buildingId,
                                 unitTypeDescription: oData.unitTypeDescription,
                                 usageTypeDescription: oData.usageTypeDescription,
                                 unitStatusDescription: oData.unitStatusDescription,
@@ -303,6 +419,14 @@ sap.ui.define([
                                 measurements: oData.measurements,
                                 conditions: oData.conditions
                             };
+
+                            // Fix for the error: Remove empty compositions from payload
+                            if (payload.measurements.length === 0) {
+                                delete payload.measurements;
+                            }
+                            if (payload.conditions.length === 0) {
+                                delete payload.conditions;
+                            }
 
                             // ✅ Proceed with POST request
                             fetch("/odata/v4/real-estate/Units", {
@@ -361,7 +485,7 @@ sap.ui.define([
                 companyCodeDescription: "",
                 projectId: "",
                 projectDescription: "",
-                buildingId: "",
+                // buildingId: "",
                 unitTypeDescription: "",
                 usageTypeDescription: "",
                 unitStatusDescription: "",
@@ -374,7 +498,8 @@ sap.ui.define([
                 unitDeliveryDate: "",
                 supplementaryText: "",
                 measurements: [],
-                conditions: []
+                conditions: [],
+                filteredBuildings: []
             });
 
             // Reset value states for validation
@@ -654,7 +779,10 @@ sap.ui.define([
             if (!oBindingContext) return;
 
             var oData = oBindingContext.getObject();
-            var oDialogModel = new sap.ui.model.json.JSONModel(Object.assign({}, oData));
+            var oDialogModel = new sap.ui.model.json.JSONModel(Object.assign({}, oData, { filteredBuildings: [] }));
+
+            // Pre-filter buildings for initial project
+            this._updateFilteredBuildings(oData.projectId, oDialogModel);
 
             if (!this._oEditDialog) {
                 this._oEditDialog = new sap.m.Dialog({
@@ -668,19 +796,48 @@ sap.ui.define([
                             new sap.m.Input("editUnitDescInput", { value: "{/unitDescription}" }),
 
                             new sap.m.Label({ text: "Company Code ID", required: true }),
-                            new sap.m.Input("editCompanyCodeIdInput", { value: "{/companyCodeId}" }),
+                            new ComboBox("editCompanyCodeIdInput", {
+                                selectedKey: "{/companyCodeId}",
+                                change: this.onCompanyCodeChange.bind(this),
+                                items: {
+                                    path: "companyCodesList>/",
+                                    template: new Item({
+                                        key: "{companyCodesList>companyCodeId}",
+                                        text: "{companyCodesList>companyCodeId} - {companyCodesList>companyCodeDescription}"
+                                    })
+                                }
+                            }),
 
                             new sap.m.Label({ text: "Company Code Description", required: true }),
                             new sap.m.Input("editCompanyCodeDescInput", { value: "{/companyCodeDescription}" }),
 
                             new sap.m.Label({ text: "Project ID", required: true }),
-                            new sap.m.Input("editProjectIdInput", { value: "{/projectId}" }),
+                            new ComboBox("editProjectIdInput", {
+                                selectedKey: "{/projectId}",
+                                change: this.onProjectChange.bind(this),
+                                items: {
+                                    path: "projectsList>/",
+                                    template: new Item({
+                                        key: "{projectsList>projectId}",
+                                        text: "{projectsList>projectId} - {projectsList>projectDescription}"
+                                    })
+                                }
+                            }),
 
                             new sap.m.Label({ text: "Project Description", required: true }),
                             new sap.m.Input("editProjectDescInput", { value: "{/projectDescription}" }),
 
-                            new sap.m.Label({ text: "Building ID", required: true }),
-                            new sap.m.Input("editBuildingIdInput", { value: "{/buildingId}" }),
+                            // new sap.m.Label({ text: "Building ID", required: true }),
+                            // new ComboBox("editBuildingIdInput", {
+                            //     selectedKey: "{/buildingId}",
+                            //     items: {
+                            //         path: "/filteredBuildings",
+                            //         template: new Item({
+                            //             key: "{buildingId}",
+                            //             text: "{buildingId} - {buildingDescription}"
+                            //         })
+                            //     }
+                            // }),
 
                             new sap.m.Label({ text: "Unit Type Description", required: true }),
                             new sap.m.Input("editUnitTypeDescInput", { value: "{/unitTypeDescription}" }),
@@ -722,6 +879,7 @@ sap.ui.define([
 
                             new sap.m.Title({ text: "Measurements", level: "H3" }),
                             new sap.m.Button({ text: "Add Measurement", press: this.onAddMeasurementRow.bind(this) }),
+                            new sap.m.Button({ text: "Delete Measurement", press: this.onDeleteMeasurementRow.bind(this) }),
                             new sap.m.Table({
                                 id: "editMeasurementsTable",
                                 items: "{/measurements}",
@@ -735,10 +893,20 @@ sap.ui.define([
                                     path: "/measurements",
                                     template: new sap.m.ColumnListItem({
                                         cells: [
-                                            new sap.m.Input({ value: "{code}" }),
-                                            new sap.m.Input({ value: "{description}" }),
-                                            new sap.m.Input({ value: "{quantity}", type: "Number" }),
-                                            new sap.m.Input({ value: "{uom}" })
+                                            new ComboBox({
+                                                selectedKey: "{code}",
+                                                change: this.onMeasurementCodeChange.bind(this),
+                                                items: {
+                                                    path: "measurementsList>/",
+                                                    template: new Item({
+                                                        key: "{measurementsList>code}",
+                                                        text: "{measurementsList>code} - {measurementsList>description}"
+                                                    })
+                                                }
+                                            }),
+                                            new Text({ text: "{description}" }),
+                                            new Input({ value: "{quantity}", type: "Number" }),
+                                            new Input({ value: "{uom}" })
                                         ]
                                     })
                                 }
@@ -746,6 +914,7 @@ sap.ui.define([
 
                             new sap.m.Title({ text: "Conditions", level: "H3" }),
                             new sap.m.Button({ text: "Add Condition", press: this.onAddConditionRow.bind(this) }),
+                            new sap.m.Button({ text: "Delete Condition", press: this.onDeleteConditionRow.bind(this) }),
                             new sap.m.Table({
                                 id: "editConditionsTable",
                                 items: "{/conditions}",
@@ -759,10 +928,20 @@ sap.ui.define([
                                     path: "/conditions",
                                     template: new sap.m.ColumnListItem({
                                         cells: [
-                                            new sap.m.Input({ value: "{code}" }),
-                                            new sap.m.Input({ value: "{description}" }),
-                                            new sap.m.Input({ value: "{amount}", type: "Number" }),
-                                            new sap.m.Input({ value: "{currency}" })
+                                            new ComboBox({
+                                                selectedKey: "{code}",
+                                                change: this.onConditionCodeChange.bind(this),
+                                                items: {
+                                                    path: "conditionsList>/",
+                                                    template: new Item({
+                                                        key: "{conditionsList>code}",
+                                                        text: "{conditionsList>code} - {conditionsList>description}"
+                                                    })
+                                                }
+                                            }),
+                                            new Text({ text: "{description}" }),
+                                            new Input({ value: "{amount}", type: "Number" }),
+                                            new Input({ value: "{currency}" })
                                         ]
                                     })
                                 }
@@ -783,7 +962,7 @@ sap.ui.define([
                                 { id: "editCompanyCodeDescInput", name: "Company Code Description" },
                                 { id: "editProjectIdInput", name: "Project ID" },
                                 { id: "editProjectDescInput", name: "Project Description" },
-                                { id: "editBuildingIdInput", name: "Building ID" },
+                                // { id: "editBuildingIdInput", name: "Building ID" },
                                 { id: "editUnitTypeDescInput", name: "Unit Type Description" },
                                 { id: "editUsageTypeDescInput", name: "Usage Type Description" },
                                 { id: "editUnitStatusDescInput", name: "Unit Status Description" },
@@ -822,7 +1001,7 @@ sap.ui.define([
                                 companyCodeDescription: oUpdatedData.companyCodeDescription,
                                 projectId: oUpdatedData.projectId,
                                 projectDescription: oUpdatedData.projectDescription,
-                                buildingId: oUpdatedData.buildingId,
+                                // buildingId: oUpdatedData.buildingId,
                                 unitTypeDescription: oUpdatedData.unitTypeDescription,
                                 usageTypeDescription: oUpdatedData.usageTypeDescription,
                                 unitStatusDescription: oUpdatedData.unitStatusDescription,
@@ -837,6 +1016,14 @@ sap.ui.define([
                                 measurements: oUpdatedData.measurements,
                                 conditions: oUpdatedData.conditions
                             };
+
+                            // Fix for the error: Remove empty compositions from payload
+                            if (payload.measurements.length === 0) {
+                                delete payload.measurements;
+                            }
+                            if (payload.conditions.length === 0) {
+                                delete payload.conditions;
+                            }
 
                             // 🟢 Proceed with PATCH request
                             fetch(`/odata/v4/real-estate/Units(unitId='${oUpdatedData.unitId}')`, {
@@ -872,16 +1059,85 @@ sap.ui.define([
             this._oEditDialog.open();
         },
 
-        onAddMeasurementRow: function () {
-            const oModel = this._oAddDialog ? this._oAddDialog.getModel() : this._oEditDialog.getModel();
+        onCompanyCodeChange: function (oEvent) {
+            var oComboBox = oEvent.getSource();
+            var sSelectedKey = oComboBox.getSelectedKey();
+            var oSelectedItem = oComboBox.getSelectedItem();
+            var sDescription = oSelectedItem ? oSelectedItem.getText().split(" - ")[1] || "" : "";
+            var oContext = oComboBox.getBindingContext();
+            if (oContext) {
+                oContext.getModel().setProperty(oContext.getPath() + "/companyCodeDescription", sDescription);
+            } else {
+                oComboBox.getModel().setProperty("/companyCodeDescription", sDescription);
+            }
+        },
+
+        onProjectChange: function (oEvent) {
+            var oComboBox = oEvent.getSource();
+            var sSelectedKey = oComboBox.getSelectedKey();
+            var oSelectedItem = oComboBox.getSelectedItem();
+            var sDescription = oSelectedItem ? oSelectedItem.getText().split(" - ")[1] || "" : "";
+            var oModel = oComboBox.getModel();
+            oModel.setProperty("/projectDescription", sDescription);
+
+            // Find selected project to get profit and functional
+            const projects = this.getView().getModel("projectsList").getData();
+            const selectedProject = projects.find(p => p.projectId === sSelectedKey);
+            if (selectedProject) {
+                oModel.setProperty("/profitCenter", selectedProject.profitCenter);
+                oModel.setProperty("/functionalArea", selectedProject.functionalArea);
+            }
+
+            // Update filtered buildings
+            this._updateFilteredBuildings(sSelectedKey, oModel);
+        },
+
+        onAddMeasurementRow: function (oEvent) {
+            const oModel = oEvent.getSource().getModel();
             oModel.getProperty("/measurements").push({ code: "", description: "", quantity: 0, uom: "" });
             oModel.refresh();
         },
 
-        onAddConditionRow: function () {
-            const oModel = this._oAddDialog ? this._oAddDialog.getModel() : this._oEditDialog.getModel();
+        onDeleteMeasurementRow: function (oEvent) {
+            const oModel = oEvent.getSource().getModel();
+            const aMeasurements = oModel.getProperty("/measurements");
+            aMeasurements.pop();
+            oModel.refresh();
+        },
+
+        onAddConditionRow: function (oEvent) {
+            const oModel = oEvent.getSource().getModel();
             oModel.getProperty("/conditions").push({ code: "", description: "", amount: 0, currency: "" });
             oModel.refresh();
+        },
+
+        onDeleteConditionRow: function (oEvent) {
+            const oModel = oEvent.getSource().getModel();
+            const aConditions = oModel.getProperty("/conditions");
+            aConditions.pop();
+            oModel.refresh();
+        },
+
+        onMeasurementCodeChange: function (oEvent) {
+            var oComboBox = oEvent.getSource();
+            var sSelectedKey = oComboBox.getSelectedKey();
+            var oSelectedItem = oComboBox.getSelectedItem();
+            var sDescription = oSelectedItem ? oSelectedItem.getText().split(" - ")[1] || "" : "";
+            var oContext = oComboBox.getBindingContext();
+            if (oContext) {
+                oContext.getModel().setProperty(oContext.getPath() + "/description", sDescription);
+            }
+        },
+
+        onConditionCodeChange: function (oEvent) {
+            var oComboBox = oEvent.getSource();
+            var sSelectedKey = oComboBox.getSelectedKey();
+            var oSelectedItem = oComboBox.getSelectedItem();
+            var sDescription = oSelectedItem ? oSelectedItem.getText().split(" - ")[1] || "" : "";
+            var oContext = oComboBox.getBindingContext();
+            if (oContext) {
+                oContext.getModel().setProperty(oContext.getPath() + "/description", sDescription);
+            }
         }
     });
 });

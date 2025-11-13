@@ -129,9 +129,9 @@
           "target": "Reservations"
         },
          {
-          "name": "Simulations",
-          "pattern": "Simulations",
-          "target": "Simulations"
+          "name": "PaymentPlanSimulations",
+          "pattern": "PaymentPlanSimulations",
+          "target": "PaymentPlanSimulations"
         },
          {
           "name": "ConditionTypes",
@@ -152,6 +152,16 @@
           "name": "Frequencies",
           "pattern": "Frequencies",
           "target": "Frequencies"
+        },
+          {
+          "name": "Measurements",
+          "pattern": "Measurements",
+          "target": "Measurements"
+        },
+          {
+          "name": "Conditions",
+          "pattern": "Conditions",
+          "target": "Conditions"
         },
         {
           "name": "RouteDBOperations",
@@ -180,8 +190,8 @@
         "Reservations": {
           "viewName": "Reservations"
         },
-          "Simulations": {
-          "viewName": "Simulations"
+          "PaymentPlanSimulations": {
+          "viewName": "PaymentPlanSimulations"
         },
         "ConditionTypes": {
           "viewName": "ConditionTypes"
@@ -194,6 +204,12 @@
         }, 
          "Frequencies": {
           "viewName": "Frequencies"
+        }, 
+         "Measurements": {
+          "viewName": "Measurements"
+        },
+         "Conditions": {
+          "viewName": "Conditions"
         },
         "TargetDBOperations": {
           "id": "DBOperations",

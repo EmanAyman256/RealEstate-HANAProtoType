@@ -43,29 +43,39 @@ sap.ui.define([
 
                 const oDropdowns = new JSONModel({
                     conditionTypes: (ct.value || []).map(i => ({
-                        code: i.conditionTypeId,
-                        description: i.description
+                        code: i.code || i.conditionTypeId || i.id,
+                        description: i.description || i.conditionTypeDescription
                     })),
+
                     basePrices: (bp.value || []).map(i => ({
-                        code: i.basePriceId,
-                        description: i.description
+                        code: i.code || i.basePriceId || i.id,
+                        description: i.description || i.basePriceDescription
                     })),
+
                     calculationMethods: (cm.value || []).map(i => ({
-                        code: i.calculationMethodId,
-                        description: i.description
+                        code: i.code || i.calculationMethodId || i.id,
+                        description: i.description || i.calculationMethodDescription
                     })),
+
                     frequencies: (fr.value || []).map(i => ({
-                        code: i.frequencyId,
-                        description: i.description
+                        code: i.code || i.frequencyId || i.id,
+                        description: i.description || i.frequencyDescription
                     })),
+
                     projects: (pr.value || []).map(i => ({
                         code: i.projectId,
                         description: i.projectDescription
                     }))
+
                 });
 
                 this.getView().setModel(oDropdowns, "dropdowns");
                 console.log("✅ Dropdown data loaded", oDropdowns.getData());
+                console.log("RAW ConditionTypes:", ct);
+                console.log("RAW BasePrices:", bp);
+                console.log("RAW CalcMethods:", cm);
+                console.log("RAW Frequencies:", fr);
+                console.log("RAW Projects:", pr);
 
             } catch (err) {
                 console.error("❌ Overall error loading dropdown data:", err);
@@ -75,7 +85,8 @@ sap.ui.define([
 
         // Load all payment plans
         _loadPlans: function () {
-            fetch("/odata/v4/real-estate/PaymentPlans?$expand=schedule,assignedProjects($expand=project)")
+            // 🔹 Fixed: Deep expand associations in schedule and assignedProjects
+            fetch("/odata/v4/real-estate/PaymentPlans?$expand=schedule($expand=conditionType,basePrice,calculationMethod,frequency),assignedProjects($expand=project)")
                 .then(res => res.json())
                 .then(data => {
                     this.getView().setModel(new JSONModel(data.value || []), "plans");
@@ -90,8 +101,9 @@ sap.ui.define([
             const sPlanId = oCtx.getProperty("paymentPlanId");
 
             try {
+                // 🔹 Fixed: Deep expand associations in schedule and assignedProjects
                 const res = await fetch(
-                    `/odata/v4/real-estate/PaymentPlans(paymentPlanId='${sPlanId}')?$expand=schedule,assignedProjects($expand=project)`
+                    `/odata/v4/real-estate/PaymentPlans(paymentPlanId='${sPlanId}')?$expand=schedule($expand=conditionType,basePrice,calculationMethod,frequency),assignedProjects($expand=project)`
                 );
                 if (!res.ok) throw new Error("Failed to load plan details");
                 const oData = await res.json();
@@ -138,7 +150,7 @@ sap.ui.define([
                                                 columns: [
                                                     new sap.m.Column({ header: new sap.m.Label({ text: "Condition Type" }) }),
                                                     new sap.m.Column({ header: new sap.m.Label({ text: "Base Price" }) }),
-                                                    new sap.m.Column({ header: new sap.m.Label({ text: "Calculation Method" }) }),
+                                                    // new sap.m.Column({ header: new sap.m.Label({ text: "Calculation Method" }) }),
                                                     new sap.m.Column({ header: new sap.m.Label({ text: "Frequency" }) }),
                                                     new sap.m.Column({ header: new sap.m.Label({ text: "%" }) }),
                                                     new sap.m.Column({ header: new sap.m.Label({ text: "Due (Months)" }) }),
@@ -151,7 +163,7 @@ sap.ui.define([
                                                         cells: [
                                                             new sap.m.Text({ text: "{conditionType/description}" }),
                                                             new sap.m.Text({ text: "{basePrice/description}" }),
-                                                            new sap.m.Text({ text: "{calculationMethod/description}" }),
+                                                            // new sap.m.Text({ text: "{calculationMethod/description}" }),
                                                             new sap.m.Text({ text: "{frequency/description}" }),
                                                             new sap.m.Text({ text: "{percentage}" }),
                                                             new sap.m.Text({ text: "{dueInMonth}" }),
@@ -215,7 +227,8 @@ sap.ui.define([
             const sPlanId = oCtx.getProperty("paymentPlanId");
 
             try {
-                const res = await fetch(`/odata/v4/real-estate/PaymentPlans(paymentPlanId='${sPlanId}')?$expand=schedule,assignedProjects($expand=project)`);
+                // 🔹 Fixed: Deep expand associations in schedule and assignedProjects
+                const res = await fetch(`/odata/v4/real-estate/PaymentPlans(paymentPlanId='${sPlanId}')?$expand=schedule($expand=conditionType,basePrice,calculationMethod,frequency),assignedProjects($expand=project)`);
                 if (!res.ok) throw new Error("Failed to load payment plan for edit");
                 const oData = await res.json();
                 const oPlan = oData.value ? oData.value[0] : oData;
@@ -231,6 +244,18 @@ sap.ui.define([
                 this._oAddDialog = this.getView().byId("planDialog");
             }
 
+            // 🔹 Fixed: Map schedules to include expanded associations as objects for binding
+            const schedules = (oPlan.schedule || []).map(item => ({
+                conditionType: item.conditionType ? { code: item.conditionType.code, description: item.conditionType.description } : {},
+                basePrice: item.basePrice ? { code: item.basePrice.code, description: item.basePrice.description } : {},
+                calculationMethod: item.calculationMethod ? { code: item.calculationMethod.code, description: item.calculationMethod.description } : {},
+                frequency: item.frequency ? { code: item.frequency.code, description: item.frequency.description } : {},
+                percentage: item.percentage || 0,
+                dueInMonth: item.dueInMonth || 0,
+                numberOfInstallments: item.numberOfInstallments || 0,
+                numberOfYears: item.numberOfYears || 0
+            }));
+
             const oModel = new JSONModel({
                 paymentPlanId: oPlan.paymentPlanId || "",
                 description: oPlan.description || "",
@@ -239,7 +264,7 @@ sap.ui.define([
                 validFrom: oPlan.validFrom || "",
                 validTo: oPlan.validTo || "",
                 planStatus: oPlan.planStatus || "",
-                schedules: oPlan.schedule || [],
+                schedules: schedules,
                 projects: (oPlan.assignedProjects || []).map(p => ({
                     projectId: p.project?.projectId || "",
                     projectDescription: p.project?.projectDescription || ""
@@ -257,6 +282,23 @@ sap.ui.define([
             const oData = oModel.getData();
 
             try {
+                // 🔹 Fixed: Map schedules to send foreign keys (not objects)
+                const schedules = (oData.schedules || []).map(item => ({
+                    conditionType_code: item.conditionType?.code || "",  // Send foreign key
+                    basePrice_code: item.basePrice?.code || "",
+                    calculationMethod_code: item.calculationMethod?.code || "",
+                    frequency_code: item.frequency?.code || "",
+                    percentage: item.percentage || 0,
+                    dueInMonth: item.dueInMonth || 0,
+                    numberOfInstallments: item.numberOfInstallments || 0,
+                    numberOfYears: item.numberOfYears || 0
+                }));
+
+                // 🔹 Fixed: Map projects to send foreign key
+                const assignedProjects = (oData.projects || []).map(p => ({
+                    project_projectId: p.projectId || ""  // Send foreign key
+                }));
+
                 const payload = {
                     paymentPlanId: oData.paymentPlanId || this._generateUUID(),
                     description: oData.description,
@@ -265,17 +307,23 @@ sap.ui.define([
                     validFrom: oData.validFrom,
                     validTo: oData.validTo,
                     planStatus: oData.planStatus,
-                    schedule: oData.schedules || [],
-                    assignedProjects: (oData.projects || []).map(p => ({
-                        project: p.projectId ? { projectId: p.projectId } : null
-                    }))
+                    schedule: schedules,
+                    assignedProjects: assignedProjects
                 };
 
                 const method = oData.paymentPlanId ? "PUT" : "POST";
                 const url = oData.paymentPlanId
                     ? `/odata/v4/real-estate/PaymentPlans(paymentPlanId='${oData.paymentPlanId}')`
                     : `/odata/v4/real-estate/PaymentPlans`;
-
+                // Inside onSavePlan, before the fetch:
+                console.log("Schedules payload:", schedules);
+                console.log("Assigned projects payload:", assignedProjects);
+                // In onSavePlan, before the fetch:
+                const totalPercentage = (oData.schedules || []).reduce((sum, s) => sum + (parseFloat(s.percentage) || 0), 0);
+                if (totalPercentage !== 100) {
+                    MessageBox.error(`Total percentage must be 100. Current: ${totalPercentage}`);
+                    return;  // Prevent save
+                }
                 const res = await fetch(url, {
                     method,
                     headers: { "Content-Type": "application/json" },
@@ -352,41 +400,8 @@ sap.ui.define([
             });
         },
 
-        // 🔹 Generic reusable Value Help Dialog creator
-       // 🔹 Generic reusable Value Help Dialog creator
-_openValueHelpDialog: function (sTitle, sPath, sCodeField, sDescField, oEvent, fnSelectCallback) {
-    const oView = this.getView();
-    const oDropdownModel = oView.getModel("dropdowns");
 
-    // Check if dropdown data is loaded
-    if (!oDropdownModel || !oDropdownModel.getProperty(sPath.replace("dropdowns>/", "/"))) {
-        MessageBox.error("Dropdown data not loaded yet. Please try again.");
-        return;
-    }
 
-    const that = this;
-
-    const oDialog = new sap.m.SelectDialog({
-        title: sTitle,
-        items: {
-            path: sPath,
-            template: new sap.m.StandardListItem({
-                title: "{" + sDescField + "}",
-                description: "{" + sCodeField + "}"
-            })
-        },
-        confirm: function (oEvt) {
-            that._onValueHelpConfirm(oEvt, sCodeField, sDescField, fnSelectCallback);
-        },
-        cancel: function () { }
-    });
-
-    // 🔹 Explicitly set the "dropdowns" model on the dialog to ensure binding works
-    oDialog.setModel(oDropdownModel, "dropdowns");
-
-    oView.addDependent(oDialog);
-    oDialog.open();
-},
 
         // 🔹 Handles selection confirmation in Value Help Dialog
         _onValueHelpConfirm: function (oEvt, sCodeField, sDescField, fnSelectCallback) {
@@ -403,48 +418,125 @@ _openValueHelpDialog: function (sTitle, sPath, sCodeField, sDescField, oEvent, f
             }
         },
 
-        // 🔹 Field-specific VHD triggers
+        // ----------------------------
+        // Condition Type
+        // ----------------------------
         onOpenConditionTypeVHD: function (oEvent) {
-            this._openValueHelpDialog("Condition Type", "dropdowns>/conditionTypes", "code", "description", oEvent, (oSelected) => {
-                const oContext = oEvent.getSource().getBindingContext("local");
-                oContext.setProperty("conditionType", oSelected);
-            });
-        },
-
-        onOpenBasePriceVHD: function (oEvent) {
-            this._openValueHelpDialog("Base Price", "dropdowns>/basePrices", "code", "description", oEvent, (oSelected) => {
-                const oContext = oEvent.getSource().getBindingContext("local");
-                oContext.setProperty("basePrice", oSelected);
-            });
-        },
-
-        onOpenCalcMethodVHD: function (oEvent) {
-            this._openValueHelpDialog("Calculation Method", "dropdowns>/calculationMethods", "code", "description", oEvent, (oSelected) => {
-                const oContext = oEvent.getSource().getBindingContext("local");
-                oContext.setProperty("calculationMethod", oSelected);
-            });
-        },
-
-        onOpenFrequencyVHD: function (oEvent) {
-            this._openValueHelpDialog("Frequency", "dropdowns>/frequencies", "code", "description", oEvent, (oSelected) => {
-                const oContext = oEvent.getSource().getBindingContext("local");
-                oContext.setProperty("frequency", oSelected);
-            });
-        },
-
-        onOpenProjectVHD: function (oEvent) {
+            var oInput = oEvent.getSource();
+            var oContext = oInput.getBindingContext("local"); // row context
             this._openValueHelpDialog(
-                "Project",
-                "dropdowns>/projects",
-                "code",      // field name in dropdown model
-                "description",    // field name in dropdown model
-                oEvent,
-                (oSelected) => {
-                    const oContext = oEvent.getSource().getBindingContext("local");
-                    oContext.setProperty("projectId", oSelected.code);             // set projectId
-                    oContext.setProperty("projectDescription", oSelected.description); // set description
-                }
+                "Condition Type",
+                "dropdowns>/conditionTypes",
+                oContext,
+                "conditionType"
             );
+        },
+
+        // ----------------------------
+        // Base Price
+        // ----------------------------
+        onOpenBasePriceVHD: function (oEvent) {
+            var oInput = oEvent.getSource();
+            var oContext = oInput.getBindingContext("local");
+            this._openValueHelpDialog(
+                "Base Price",
+                "dropdowns>/basePrices",
+                oContext,
+                "basePrice"
+            );
+        },
+
+        // ----------------------------
+        // Frequency
+        // ----------------------------
+        onOpenFrequencyVHD: function (oEvent) {
+            var oInput = oEvent.getSource();
+            var oContext = oInput.getBindingContext("local");
+            this._openValueHelpDialog(
+                "Frequency",
+                "dropdowns>/frequencies",
+                oContext,
+                "frequency"
+            );
+        },
+        // ----------------------------
+        // Project
+        // ----------------------------
+        onOpenProjectVHD: function (oEvent) {
+            var oInput = oEvent.getSource();
+            var oContext = oInput.getBindingContext("local"); // row context
+
+            var oDialog = new sap.m.SelectDialog({
+                title: "Select Project",
+                items: {
+                    path: "dropdowns>/projects",
+                    template: new sap.m.StandardListItem({
+                        title: "{dropdowns>description}",  // ✅ Fixed: Use 'description' (matches model)
+                        description: "{dropdowns>code}",   // ✅ Fixed: Use 'code' (matches model)
+                        type: "Active"
+                    })
+                },
+                liveChange: function (oEvent) {
+                    var sValue = oEvent.getParameter("value");
+                    oEvent.getParameter("itemsBinding").filter([
+                        new sap.ui.model.Filter("description", sap.ui.model.FilterOperator.Contains, sValue)  // ✅ Fixed: Use 'description'
+                    ]);
+                },
+                confirm: function (oEvent) {
+                    var oSelectedItem = oEvent.getParameter("selectedItem");
+                    if (oSelectedItem) {
+                        var data = oSelectedItem.getBindingContext("dropdowns").getObject();
+                        oContext.setProperty("projectId", data.code);              // ✅ Fixed: Use 'code'
+                        oContext.setProperty("projectDescription", data.description);  // ✅ Fixed: Use 'description'
+                    }
+                }
+            });
+
+            oDialog.setModel(this.getView().getModel("dropdowns"), "dropdowns");
+            oDialog.open();
+        },
+
+
+
+
+
+        // ----------------------------
+        // Generic Value Help Dialog
+        // ----------------------------
+        _openValueHelpDialog: function (title, path, oContext, field) {
+            var that = this;
+
+            var oDialog = new sap.m.SelectDialog({
+                title: title,
+                items: {
+                    path: path,
+                    template: new sap.m.StandardListItem({
+                        title: "{dropdowns>description}",
+                        description: "{dropdowns>code}",
+                        type: "Active"
+                    })
+                },
+                liveChange: function (oEvent) {
+                    var sValue = oEvent.getParameter("value");
+                    var oBinding = oEvent.getParameter("itemsBinding");
+                    oBinding.filter([
+                        new sap.ui.model.Filter("description", sap.ui.model.FilterOperator.Contains, sValue)
+                    ]);
+                },
+                confirm: function (oEvent) {
+                    var oSelectedItem = oEvent.getParameter("selectedItem");
+                    if (oSelectedItem) {
+                        var selectedContext = oSelectedItem.getBindingContext("dropdowns");
+                        var data = selectedContext.getObject();
+                        // set full object into the row
+                        oContext.setProperty(field, data);
+                    }
+                }
+            });
+
+            // set model for the dialog
+            oDialog.setModel(this.getView().getModel("dropdowns"), "dropdowns");
+            oDialog.open();
         }
 
     });

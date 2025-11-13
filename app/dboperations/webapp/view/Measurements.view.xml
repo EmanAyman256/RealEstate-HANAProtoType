@@ -1,0 +1,51 @@
+<mvc:View
+    controllerName="dboperations.controller.Measurements"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    displayBlock="true"
+>
+    <Page title="Measurements">
+        <headerContent>
+            <Button icon="sap-icon://add" text="Add Measurement" press="onAddMeasurement"/>
+        </headerContent>
+
+        <content>
+            <Table id="measurementsTable" items="{measurements>/}" width="100%">
+                <columns>
+                    <Column><Text text="Code"/></Column>
+                    <Column><Text text="Description"/></Column>
+                    <Column><Text text="Actions"/></Column>
+                </columns>
+
+                <items>
+                    <ColumnListItem>
+                        <cells>
+                            <Text text="{measurements>code}"/>
+                            <Text text="{measurements>description}"/>
+                            <HBox>
+                                <Button icon="sap-icon://edit" press="onEditMeasurement"/>
+                                <Button icon="sap-icon://delete" type="Reject" press="onDeleteMeasurement"/>
+                            </HBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
+
+        <Dialog id="measurementDialog" title="Add/Edit Measurement" stretchOnPhone="true">
+            <VBox class="sapUiSmallMargin">
+                <Label text="Code"/>
+                <Input value="{local>/code}" editable="{= !${local>/isEdit}}" placeholder="Enter Code"/>
+                <Label text="Description"/>
+                <Input value="{local>/description}" placeholder="Enter Description"/>
+            </VBox>
+
+            <beginButton>
+                <Button text="Save" press="onSaveMeasurement"/>
+            </beginButton>
+            <endButton>
+                <Button text="Cancel" press="onCancelMeasurement"/>
+            </endButton>
+        </Dialog>
+    </Page>
+</mvc:View>

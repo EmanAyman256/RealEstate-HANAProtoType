@@ -20,14 +20,12 @@ module.exports = cds.service.impl(async function () {
       ReservationPartners,
       ReservationConditions,
       ReservationPayments,
-      ReservationPaymentDetails,
-      PaymentPlanSimulations,
-      PaymentPlanSimulationSchedules,
-      Simulations,
       ConditionTypes,
       BasePrices,
       CalculationMethods,
-      Frequencies
+      Frequencies,
+      PaymentPlanSimulations,
+      PaymentPlanSimulationSchedules,
     } = this.entities;
 
 
@@ -161,30 +159,26 @@ module.exports = cds.service.impl(async function () {
     return await db.run(req.query);
   });
 
-  // CREATE
+  // CREATE for Units (fixed)
   this.on('CREATE', Units, async (req) => {
     console.log('CREATE Unit called with data:', req.data);
     const db = cds.transaction(req);
 
-    try {
-      // Insert main unit
-      const result = await db.run(INSERT.into(Units).entries(req.data));
+    await db.run(INSERT.into(Units).entries(req.data));
 
-      // Fetch the full record with associations (so UI sees it instantly)
-      const createdUnit = await db.run(
-        SELECT.one.from(Units)
-          .where({ unitId: req.data.unitId })
-          .columns(
-            '*', { from: 'measurements', expand: ['*'] }, { from: 'prices', expand: ['*'] }
-          )
-      );
+    // Fetch the full record with associations (fixed syntax)
+    const createdUnit = await db.run(
+      SELECT.one.from(Units)
+        .where({ unitId: req.data.unitId })
+        .columns(
+          '*',
+          { ref: ['measurements'], expand: ['*'] },
+          { ref: ['conditions'], expand: ['*'] }
+        )
+    );
 
-      console.log('Created Unit returned to UI:', createdUnit);
-      return createdUnit;
-    } catch (error) {
-      console.error('Error creating Unit:', error);
-      req.error(500, 'Error creating Unit: ' + error.message);
-    }
+    console.log('Created Unit returned to UI:', createdUnit);
+    return createdUnit;
   });
 
 
@@ -345,22 +339,23 @@ module.exports = cds.service.impl(async function () {
     }
   });
 
-   /* ------------------------------------------------------------------
-   * PAYMENT PLANS
-   * ------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------
+  * PAYMENT PLANS
+  * ------------------------------------------------------------------ */
 
   // READ
   this.on('READ', PaymentPlans, async (req, next) => {
     console.log('READ PaymentPlans called with expand:', req.query.$expand);
     try {
       const result = await next();
-      console.log(`Returned ${Array.isArray(result) ? result.length : 1} payment plans`);
       return result;
     } catch (error) {
       console.error('Error reading PaymentPlans:', error);
       req.error(500, 'Error reading PaymentPlans: ' + error.message);
     }
   });
+
+  // CREATE
 
   // CREATE
   this.on('CREATE', PaymentPlans, async (req) => {
@@ -370,6 +365,18 @@ module.exports = cds.service.impl(async function () {
     try {
       const { schedule, assignedProjects, ...planData } = req.data;
       planData.paymentPlanId = planData.paymentPlanId || uuidv4();
+
+      // ✅ NEW: Validate total percentage in schedule
+      if (Array.isArray(schedule)) {
+        const totalPercentage = schedule.reduce((sum, s) => sum + (parseFloat(s.percentage) || 0), 0);
+        if (totalPercentage !== 100) {
+          req.error(400, `Total percentage of schedule items must be exactly 100. Current total: ${totalPercentage}`);
+          return;  // Stop processing
+        }
+      } else if (!schedule || schedule.length === 0) {
+        req.error(400, 'At least one schedule item is required, and total percentage must be 100.');
+        return;
+      }
 
       // Insert main Payment Plan
       await db.run(INSERT.into(PaymentPlans).entries(planData));
@@ -381,10 +388,10 @@ module.exports = cds.service.impl(async function () {
             INSERT.into(PaymentPlanSchedules).entries({
               ID: s.ID || uuidv4(),
               paymentPlan_paymentPlanId: planData.paymentPlanId,
-              conditionType_code: s.conditionType?.code,
-              basePrice_code: s.basePrice?.code,
-              calculationMethod_code: s.calculationMethod?.code,
-              frequency_code: s.frequency?.code,
+              conditionType_code: s.conditionType_code,
+              basePrice_code: s.basePrice_code,
+              calculationMethod_code: s.calculationMethod_code,
+              frequency_code: s.frequency_code,
               percentage: s.percentage,
               dueInMonth: s.dueInMonth,
               numberOfInstallments: s.numberOfInstallments,
@@ -401,7 +408,7 @@ module.exports = cds.service.impl(async function () {
             INSERT.into(PaymentPlanProjects).entries({
               ID: p.ID || uuidv4(),
               paymentPlan_paymentPlanId: planData.paymentPlanId,
-              project_projectId: p.project?.projectId
+              project_projectId: p.project_projectId
             })
           );
         }
@@ -427,6 +434,18 @@ module.exports = cds.service.impl(async function () {
     try {
       const { schedule, assignedProjects, ...planData } = req.data;
 
+      // ✅ NEW: Validate total percentage in schedule
+      if (Array.isArray(schedule)) {
+        const totalPercentage = schedule.reduce((sum, s) => sum + (parseFloat(s.percentage) || 0), 0);
+        if (totalPercentage !== 100) {
+          req.error(400, `Total percentage of schedule items must be exactly 100. Current total: ${totalPercentage}`);
+          return;  // Stop processing
+        }
+      } else if (!schedule || schedule.length === 0) {
+        req.error(400, 'At least one schedule item is required, and total percentage must be 100.');
+        return;
+      }
+
       // Update main record
       await db.run(
         UPDATE(PaymentPlans).set(planData).where({ paymentPlanId })
@@ -440,10 +459,10 @@ module.exports = cds.service.impl(async function () {
             INSERT.into(PaymentPlanSchedules).entries({
               ID: s.ID || uuidv4(),
               paymentPlan_paymentPlanId: paymentPlanId,
-              conditionType_code: s.conditionType?.code,
-              basePrice_code: s.basePrice?.code,
-              calculationMethod_code: s.calculationMethod?.code,
-              frequency_code: s.frequency?.code,
+              conditionType_code: s.conditionType_code,
+              basePrice_code: s.basePrice_code,
+              calculationMethod_code: s.calculationMethod_code,
+              frequency_code: s.frequency_code,
               percentage: s.percentage,
               dueInMonth: s.dueInMonth,
               numberOfInstallments: s.numberOfInstallments,
@@ -461,7 +480,68 @@ module.exports = cds.service.impl(async function () {
             INSERT.into(PaymentPlanProjects).entries({
               ID: p.ID || uuidv4(),
               paymentPlan_paymentPlanId: paymentPlanId,
-              project_projectId: p.project?.projectId
+              project_projectId: p.project_projectId
+            })
+          );
+        }
+      }
+
+      const updated = await db.run(SELECT.one.from(PaymentPlans).where({ paymentPlanId }));
+      await db.commit();
+      console.log("✅ PaymentPlan updated:", paymentPlanId);
+      return updated;
+
+    } catch (error) {
+      await db.rollback();
+      console.error("❌ Error updating PaymentPlan:", error);
+      req.error(500, "Error updating PaymentPlan: " + error.message);
+    }
+  });
+
+  // UPDATE
+  this.on('UPDATE', PaymentPlans, async (req) => {
+    console.log("UPDATE PaymentPlan called with:", req.data);
+    const { paymentPlanId } = req.params[0];
+    const db = cds.transaction(req);
+
+    try {
+      const { schedule, assignedProjects, ...planData } = req.data;
+
+      // Update main record
+      await db.run(
+        UPDATE(PaymentPlans).set(planData).where({ paymentPlanId })
+      );
+
+      // Refresh schedule items
+      await db.run(DELETE.from(PaymentPlanSchedules).where({ paymentPlan_paymentPlanId: paymentPlanId }));
+      if (Array.isArray(schedule)) {
+        for (const s of schedule) {
+          await db.run(
+            INSERT.into(PaymentPlanSchedules).entries({
+              ID: s.ID || uuidv4(),
+              paymentPlan_paymentPlanId: paymentPlanId,
+              conditionType_code: s.conditionType_code,  // ✅ Fixed: Access flat key directly
+              basePrice_code: s.basePrice_code,          // ✅ Fixed
+              calculationMethod_code: s.calculationMethod_code,  // ✅ Fixed
+              frequency_code: s.frequency_code,          // ✅ Fixed
+              percentage: s.percentage,
+              dueInMonth: s.dueInMonth,
+              numberOfInstallments: s.numberOfInstallments,
+              numberOfYears: s.numberOfYears
+            })
+          );
+        }
+      }
+
+      // Refresh assigned projects - Already correct
+      await db.run(DELETE.from(PaymentPlanProjects).where({ paymentPlan_paymentPlanId: paymentPlanId }));
+      if (Array.isArray(assignedProjects)) {
+        for (const p of assignedProjects) {
+          await db.run(
+            INSERT.into(PaymentPlanProjects).entries({
+              ID: p.ID || uuidv4(),
+              paymentPlan_paymentPlanId: paymentPlanId,
+              project_projectId: p.project_projectId  // ✅ Already fixed
             })
           );
         }
@@ -550,7 +630,7 @@ module.exports = cds.service.impl(async function () {
     console.log('READ PaymentPlanProjects called');
     return cds.transaction(req).run(req.query);
   });
-  
+
   /*----------------------- EOI ---------------------------*/
 
   // READ
@@ -843,5 +923,21 @@ module.exports = cds.service.impl(async function () {
   });
 
   /*---------------------Simulations-----------------------*/
-
+  // 🔹 Add handlers for PaymentPlanSimulations
+  this.on('READ', PaymentPlanSimulations, async req => cds.transaction(req).run(req.query));
+  this.on('CREATE', PaymentPlanSimulations, async req => {
+    const data = req.data;
+    // Handle deep insert for schedule
+    if (data.schedule) {
+      data.schedule = data.schedule.map(s => ({
+        conditionType: s.conditionType,
+        dueDate: s.dueDate,
+        amount: s.amount,
+        maintenance: s.maintenance
+      }));
+    }
+    return await cds.transaction(req).run(
+      INSERT.into(PaymentPlanSimulations).entries(data)
+    );
+  });
 });

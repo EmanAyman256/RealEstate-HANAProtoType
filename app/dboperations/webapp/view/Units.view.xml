@@ -17,7 +17,7 @@
         </headerContent>
 
         <content>
-            <ScrollContainer
+            <ScrollContainer id="_IDGenScrollContainer4"
                 horizontal="true"
                 vertical="false"
                 height="100%"
@@ -30,103 +30,103 @@
                     width="150%"
                 >
                     <columns>
-                        <Column>
-                            <Text text="Company Code ID" />
+                        <Column id="_IDGenColumn44">
+                            <Text id="_IDGenText75" text="Company Code ID" />
                         </Column>
-                        <Column>
-                            <Text text="Company Code Description" />
+                        <Column id="_IDGenColumn45">
+                            <Text id="_IDGenText76" text="Company Code Description" />
                         </Column>
-                        <Column>
-                            <Text text="Project ID" />
+                        <Column id="_IDGenColumn46">
+                            <Text id="_IDGenText77" text="Project ID" />
                         </Column>
-                        <Column>
-                            <Text text="Project Description" />
+                        <Column id="_IDGenColumn47">
+                            <Text id="_IDGenText78" text="Project Description" />
                         </Column>
-                        <Column>
-                            <Text text="Building ID" />
+                        <Column id="_IDGenColumn48">
+                            <Text id="_IDGenText79" text="Building ID" />
                         </Column>
-                        <Column>
-                            <Text text="Unit ID" />
+                        <Column id="_IDGenColumn49">
+                            <Text id="_IDGenText80" text="Unit ID" />
                         </Column>
-                        <Column>
-                            <Text text="Unit Description" />
+                        <Column id="_IDGenColumn50">
+                            <Text id="_IDGenText81" text="Unit Description" />
                         </Column>
-                        <Column>
-                            <Text text="Unit Type" />
+                        <Column id="_IDGenColumn51">
+                            <Text id="_IDGenText82" text="Unit Type" />
                         </Column>
-                        <Column>
-                            <Text text="Usage Type" />
+                        <Column id="_IDGenColumn52">
+                            <Text id="_IDGenText83" text="Usage Type" />
                         </Column>
-                        <Column>
-                            <Text text="Unit Status" />
+                        <Column id="_IDGenColumn53">
+                            <Text id="_IDGenText84" text="Unit Status" />
                         </Column>
-                        <Column>
-                            <Text text="Floor" />
+                        <Column id="_IDGenColumn54">
+                            <Text id="_IDGenText85" text="Floor" />
                         </Column>
-                        <Column>
-                            <Text text="Zone" />
+                        <Column id="_IDGenColumn55">
+                            <Text id="_IDGenText86" text="Zone" />
                         </Column>
-                        <Column>
-                            <Text text="Sales Phase" />
+                        <Column id="_IDGenColumn56">
+                            <Text id="_IDGenText87" text="Sales Phase" />
                         </Column>
-                        <Column>
-                            <Text text="Finishing Spex" />
+                        <Column id="_IDGenColumn57">
+                            <Text id="_IDGenText88" text="Finishing Spex" />
                         </Column>
-                        <Column>
-                            <Text text="Unit Delivery Date" />
+                        <Column id="_IDGenColumn58">
+                            <Text id="_IDGenText89" text="Unit Delivery Date" />
                         </Column>
-                        <Column>
-                            <Text text="Profit Center" />
+                        <Column id="_IDGenColumn59">
+                            <Text id="_IDGenText90" text="Profit Center" />
                         </Column>
-                        <Column>
-                            <Text text="Functional Area" />
+                        <Column id="_IDGenColumn60">
+                            <Text id="_IDGenText91" text="Functional Area" />
                         </Column>
-                        <Column>
-                            <Text text="Supplementary Text" />
+                        <Column id="_IDGenColumn61">
+                            <Text id="_IDGenText92" text="Supplementary Text" />
                         </Column>
-                        <Column>
-                            <Text text="Built Up Area" />
+                        <Column id="_IDGenColumn62">
+                            <Text id="_IDGenText93" text="Built Up Area" />
                         </Column>
-                        <Column>
-                            <Text text="Original Price" />
+                        <Column id="_IDGenColumn63">
+                            <Text id="_IDGenText94" text="Original Price" />
                         </Column>
-                        <Column>
-                            <Text text="Actions" />
+                        <Column id="_IDGenColumn64">
+                            <Text id="_IDGenText95" text="Actions" />
                         </Column>
                     </columns>
                     <items>
-                        <ColumnListItem>
+                        <ColumnListItem id="_IDGenColumnListItem5">
                             <cells>
-                                <Text text="{companyCodeId}" />
-                                <Text text="{companyCodeDescription}" />
-                                <Text text="{projectId}" />
-                                <Text text="{projectDescription}" />
-                                <Text text="{buildingId}" />
-                                <Text text="{unitId}" />
-                                <Text text="{unitDescription}" />
-                                <Text text="{unitTypeDescription}" />
-                                <Text text="{usageTypeDescription}" />
-                                <Text text="{unitStatusDescription}" />
-                                <Text text="{floorDescription}" />
-                                <Text text="{zone}" />
-                                <Text text="{salesPhase}" />
-                                <Text text="{finishingSpexDescription}" />
-                                <Text text="{unitDeliveryDate}" />
-                                <Text text="{profitCenter}" />
-                                <Text text="{functionalArea}" />
-                                <Text text="{supplementaryText}" />
-                                <Text text="{bua}" />
-                                <Text text="{originalPrice}" />
-                                <HBox>
-                                    <Button
+                                <Text id="_IDGenText96" text="{companyCodeId}" />
+                                <Text id="_IDGenText97" text="{companyCodeDescription}" />
+                                <Text id="_IDGenText98" text="{projectId}" />
+                                <Text id="_IDGenText99" text="{projectDescription}" />
+                                <Text id="_IDGenText100" text="{buildingId}" />
+                                <Text id="_IDGenText101" text="{unitId}" />
+                                <Text id="_IDGenText102" text="{unitDescription}" />
+                                <Text id="_IDGenText103" text="{unitTypeDescription}" />
+                                <Text id="_IDGenText104" text="{usageTypeDescription}" />
+                                <Text id="_IDGenText105" text="{unitStatusDescription}" />
+                                <Text id="_IDGenText106" text="{floorDescription}" />
+                                <Text id="_IDGenText107" text="{zone}" />
+                                <Text id="_IDGenText108" text="{salesPhase}" />
+                                <Text id="_IDGenText109" text="{finishingSpexDescription}" />
+                                <Text id="_IDGenText110" text="{unitDeliveryDate}" />
+                                <Text id="_IDGenText111" text="{profitCenter}" />
+                                <Text id="_IDGenText112" text="{functionalArea}" />
+                                <Text id="_IDGenText113" text="{supplementaryText}" />
+                                <Text id="_IDGenText114" text="{bua}" />
+                                <Text id="_IDGenText115" text="{originalPrice}" />
+                                <HBox id="_IDGenHBox3">
+                                    <Button id="_IDGenButton17"
                                         icon="sap-icon://information"
                                         press="onDetails"
                                     />
-                                    <Button
+                                    <Button id="_IDGenButton18"
                                         icon="sap-icon://edit"
                                         press="onEditUnit"
                                     />
-                                    <Button
+                                    <Button id="_IDGenButton19"
                                         icon="sap-icon://delete"
                                         type="Reject"
                                         press="onDelete"

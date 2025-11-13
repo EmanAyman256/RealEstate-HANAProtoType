@@ -71,7 +71,7 @@
                                         />
                                     </TileContent>
                                 </GenericTile>
-                                
+
                                 <GenericTile
                                     id="_IDGenGenericTile2"
                                     class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
@@ -136,16 +136,16 @@
                                         />
                                     </TileContent>
                                 </GenericTile>
-                                
+
                                 <GenericTile
                                     id="_IDGenGenericTile7"
                                     class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
-                                    header="Simulations"
-                                    press="onNavigateToSimulations"
+                                    header="Payment Plan Simulations"
+                                    press="onNavigateToPaymentPlanSimulations"
                                 >
                                     <TileContent
                                         id="_IDGenTileContent7"
-                                        footer="Simulations CRUD OPs"
+                                        footer="PaymentPlanSimulations CRUD OPs"
                                     >
                                         <ImageContent
                                             id="_IDGenImageContent7"
@@ -174,7 +174,7 @@
                                 <GenericTile
                                     id="_IDGenGenericTile8"
                                     class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
-                                    header="ConditionTypes"
+                                    header="Condition Types"
                                     press="onNavigateToConditionTypes"
                                 >
                                     <TileContent
@@ -191,7 +191,7 @@
                                 <GenericTile
                                     id="_IDGenGenericTile9"
                                     class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
-                                    header="CalculationMethods"
+                                    header="Calculation Methods"
                                     press="onNavigateToCalculationMethods"
                                 >
                                     <TileContent
@@ -200,7 +200,7 @@
                                     >
                                         <ImageContent
                                             id="_IDGenImageContent9"
-                                            src="sap-icon://fx"
+                                            src="sap-icon://measurement-document"
                                         />
                                     </TileContent>
                                 </GenericTile>
@@ -208,7 +208,7 @@
                                 <GenericTile
                                     id="_IDGenGenericTile10"
                                     class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
-                                    header="BasePrices"
+                                    header="Base Prices"
                                     press="onNavigateToBasePrices"
                                 >
                                     <TileContent
@@ -217,7 +217,7 @@
                                     >
                                         <ImageContent
                                             id="_IDGenImageContent10"
-                                            src="sap-icon://fx"
+                                            src="sap-icon://database"
                                         />
                                     </TileContent>
                                 </GenericTile>
@@ -234,7 +234,40 @@
                                     >
                                         <ImageContent
                                             id="_IDGenImageContent11"
-                                            src="sap-icon://fx"
+                                            src="sap-icon://date-time"
+                                        />
+                                    </TileContent>
+                                </GenericTile>
+                                <GenericTile
+                                    id="_IDGenGenericTile12"
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+                                    header="Measurements"
+                                    press="onNavigateToMeasurements"
+                                >
+                                    <TileContent
+                                        id="_IDGenTileContent12"
+                                        footer="Measurements CRUD OPs"
+                                    >
+                                        <ImageContent
+                                            id="_IDGenImageContent12"
+                                            src="sap-icon://measure"
+                                        />
+                                    </TileContent>
+                                </GenericTile>
+
+                                <GenericTile
+                                    id="_IDGenGenericTile13"
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+                                    header="Conditions"
+                                    press="onNavigateToConditions"
+                                >
+                                    <TileContent
+                                        id="_IDGenTileContent13"
+                                        footer="Conditions CRUD OPs"
+                                    >
+                                        <ImageContent
+                                            id="_IDGenImageContent13"
+                                            src="sap-icon://decision"
                                         />
                                     </TileContent>
                                 </GenericTile>
