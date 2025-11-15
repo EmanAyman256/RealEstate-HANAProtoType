@@ -67,7 +67,7 @@ displayBlock="true"
             <DatePicker id="_IDGenDatePicker1" value="{local>/validTo}" displayFormat="yyyy-MM-dd" valueFormat="yyyy-MM-dd"/>
 
             <Label id="_IDGenLabel5" text="Plan Status"/>
-            <Input id="_IDGenInput3" value="{local>/planStatus}" placeholder="A / I"/>
+            <Input id="_IDGenInput3" value="{local>/planStatus}" showValueHelp="true" valueHelpRequest=".onOpenPlanStatusVHD" placeholder="Select Status"/>
 
             <Title id="_IDGenTitle" text="Schedules" level="H3"/>
             <Toolbar id="_IDGenToolbar">
@@ -96,13 +96,13 @@ displayBlock="true"
                                    valueHelpRequest=".onOpenBasePriceVHD" placeholder="Select Base Price"/>
                             <!-- <Input id="_IDGenInput6" value="{local>calculationMethod/description}" showValueHelp="true"
                                    valueHelpRequest=".onOpenCalcMethodVHD" placeholder="Select Method"/> -->
-                            <Input id="_IDGenInput7" value="{local>frequency/description}" showValueHelp="true"
-                                   valueHelpRequest=".onOpenFrequencyVHD" placeholder="Select Frequency"/>
-                            <Input id="_IDGenInput8" value="{local>percentage}" type="Number"/>
+                           <Input id="_IDGenInput7" value="{local>frequency/description}" showValueHelp="true"
+                       valueHelpRequest=".onOpenFrequencyVHD" placeholder="Select Frequency" change=".onFrequencyChange"/>
+                 <Input id="_IDGenInput8" value="{local>percentage}" type="Number"/>
                             <Input id="_IDGenInput9" value="{local>dueInMonth}" type="Number"/>
-                            <Input id="_IDGenInput10" value="{local>numberOfInstallments}" type="Number"/>
-                            <Input id="_IDGenInput11" value="{local>numberOfYears}" type="Number"/>
-                        </cells>
+                            <Input id="_IDGenInput10" value="{local>numberOfInstallments}" type="Number" editable="false"/> <!-- Read-only since auto-calculated -->
+                <Input id="_IDGenInput11" value="{local>numberOfYears}" type="Number" change=".onYearsChange"/>
+                   </cells>
                     </ColumnListItem>
                 </items>
             </Table>

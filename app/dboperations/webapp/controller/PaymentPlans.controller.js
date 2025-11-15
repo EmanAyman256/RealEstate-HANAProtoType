@@ -65,7 +65,12 @@ sap.ui.define([
                     projects: (pr.value || []).map(i => ({
                         code: i.projectId,
                         description: i.projectDescription
-                    }))
+                    })),
+
+                    planStatuses: [
+                        { code: "A", description: "Approved" },
+                        { code: "I", description: "Initial" }
+                    ]
 
                 });
 
@@ -400,9 +405,6 @@ sap.ui.define([
             });
         },
 
-
-
-
         // 🔹 Handles selection confirmation in Value Help Dialog
         _onValueHelpConfirm: function (oEvt, sCodeField, sDescField, fnSelectCallback) {
             const oSelectedItem = oEvt.getParameter("selectedItem");
@@ -416,6 +418,41 @@ sap.ui.define([
                     });
                 }
             }
+        },
+
+        // ----------------------------
+        // Plan Status
+        // ----------------------------
+        onOpenPlanStatusVHD: function (oEvent) {
+            var oDialog = new sap.m.SelectDialog({
+                title: "Select Plan Status",
+                items: {
+                    path: "dropdowns>/planStatuses",
+                    template: new sap.m.StandardListItem({
+                        title: "{dropdowns>description}",
+                        description: "{dropdowns>code}",
+                        type: "Active"
+                    })
+                },
+                liveChange: function (oEvent) {
+                    var sValue = oEvent.getParameter("value");
+                    oEvent.getParameter("itemsBinding").filter([
+                        new sap.ui.model.Filter("description", sap.ui.model.FilterOperator.Contains, sValue)
+                    ]);
+                },
+                confirm: function (oEvent) {
+                    var oSelectedItem = oEvent.getParameter("selectedItem");
+                    if (oSelectedItem) {
+                        var data = oSelectedItem.getBindingContext("dropdowns").getObject();
+                        // Set the code directly into the local model's planStatus
+                        var oLocalModel = this.getView().byId("planDialog").getModel("local");
+                        oLocalModel.setProperty("/planStatus", data.code);  // e.g., "A"
+                    }
+                }.bind(this)
+            });
+
+            oDialog.setModel(this.getView().getModel("dropdowns"), "dropdowns");
+            oDialog.open();
         },
 
         // ----------------------------
@@ -446,19 +483,54 @@ sap.ui.define([
             );
         },
 
+
+
         // ----------------------------
         // Frequency
+        // ----------------------------
+        // ----------------------------
+        // Frequency (Custom to trigger calculation on selection)
         // ----------------------------
         onOpenFrequencyVHD: function (oEvent) {
             var oInput = oEvent.getSource();
             var oContext = oInput.getBindingContext("local");
-            this._openValueHelpDialog(
-                "Frequency",
-                "dropdowns>/frequencies",
-                oContext,
-                "frequency"
-            );
+
+            var oDialog = new sap.m.SelectDialog({
+                title: "Select Frequency",
+                items: {
+                    path: "dropdowns>/frequencies",
+                    template: new sap.m.StandardListItem({
+                        title: "{dropdowns>description}",
+                        description: "{dropdowns>code}",
+                        type: "Active"
+                    })
+                },
+                liveChange: function (oEvent) {
+                    var sValue = oEvent.getParameter("value");
+                    oEvent.getParameter("itemsBinding").filter([
+                        new sap.ui.model.Filter("description", sap.ui.model.FilterOperator.Contains, sValue)
+                    ]);
+                },
+                confirm: function (oEvent) {
+                    var oSelectedItem = oEvent.getParameter("selectedItem");
+                    if (oSelectedItem) {
+                        var selectedContext = oSelectedItem.getBindingContext("dropdowns");
+                        var data = selectedContext.getObject();
+                        // Set the frequency object into the row
+                        oContext.setProperty("frequency", data);
+                        // Trigger calculation if years are entered
+                        var years = parseInt(oContext.getProperty("numberOfYears")) || 0;
+                        if (years > 0) {
+                            this._calculateInstallments(oContext);
+                        }
+                    }
+                }.bind(this)
+            });
+
+            oDialog.setModel(this.getView().getModel("dropdowns"), "dropdowns");
+            oDialog.open();
         },
+
         // ----------------------------
         // Project
         // ----------------------------
@@ -537,7 +609,58 @@ sap.ui.define([
             // set model for the dialog
             oDialog.setModel(this.getView().getModel("dropdowns"), "dropdowns");
             oDialog.open();
-        }
+        },
+        // 🔹 New: Calculate installments when frequency is selected/changed (via VHD or manual input)
+        onFrequencyChange: function (oEvent) {
+            var oContext = oEvent.getSource().getBindingContext("local");
+            var years = parseInt(oContext.getProperty("numberOfYears")) || 0;
+
+            // Only calculate if years are already entered
+            if (years > 0) {
+                this._calculateInstallments(oContext);
+            }
+        },
+
+        // 🔹 Updated: Calculate installments when years are entered (only if frequency is selected)
+        onYearsChange: function (oEvent) {
+            var oContext = oEvent.getSource().getBindingContext("local");
+            var frequencyDesc = oContext.getProperty("frequency/description") || "";
+
+            // Only calculate if a frequency is selected
+            if (frequencyDesc) {
+                this._calculateInstallments(oContext);
+            }
+        },
+
+        // 🔹 Helper to calculate numberOfInstallments based on frequency and years
+        _calculateInstallments: function (oContext) {
+            var frequencyDesc = oContext.getProperty("frequency/description") || "";
+            var years = parseInt(oContext.getProperty("numberOfYears")) || 0;
+            var installments = 0;
+
+            switch (frequencyDesc.toLowerCase()) {
+                case "one time":
+                    installments = 1;  // Always 1, regardless of years
+                    break;
+                case "monthly":
+                    installments = 12 * years;
+                    break;
+                case "quarterly":
+                    installments = 4 * years;
+                    break;
+                case "semi-annual":
+                    installments = 2 * years;
+                    break;
+                case "annual":
+                    installments = 1 * years;
+                    break;
+                default:
+                    installments = 0;  // Default if no match
+            }
+
+            oContext.setProperty("numberOfInstallments", installments);
+        },
+
 
     });
 });
