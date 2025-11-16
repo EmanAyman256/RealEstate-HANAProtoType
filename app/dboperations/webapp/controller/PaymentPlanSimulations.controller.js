@@ -16,6 +16,7 @@ sap.ui.define([
             // Load units and dropdowns
             this._loadUnits();
             this._loadDropdownData();
+            this._idCounter = parseInt(localStorage.getItem("simulationIdCounter")) || 0;
         },
 
         /* ----------------------------
@@ -200,8 +201,8 @@ sap.ui.define([
         },
 
         /* ----------------------------
-           Price plan change (unchanged)
-        ---------------------------- */
+    Price plan change (with clearing paymentPlanId if no match)
+ ---------------------------- */
         onPricePlanChange: function (oEvent) {
             const pricePlanYears = parseInt(oEvent.getParameter("value"));
             const projectId = this.getView().byId("projectIdInput").getValue();
@@ -216,11 +217,15 @@ sap.ui.define([
 
             if (oSelectedPlan) {
                 this.getView().byId("paymentPlanIdInput").setValue(oSelectedPlan.paymentPlanId);
+            } else {
+                // 🔹 New: Clear paymentPlanId if no matching plan found
+                this.getView().byId("paymentPlanIdInput").setValue("");
             }
         },
 
+
         /* ----------------------------
-           Simulate (restored full original logic)
+           Simulate (with reordered validation for price plan years)
         ---------------------------- */
         onSimulate: async function () {
             debugger;
@@ -236,8 +241,35 @@ sap.ui.define([
             const leadId = this.getView().byId("leadIdInput").getValue();
             const userId = "currentUser";
 
-            if (!unitId || !paymentPlanId || !finalPrice || isNaN(finalPrice)) {
-                MessageBox.error("Please fill all required fields (Unit, Payment Plan, Final Price).");
+            // Basic field check (unitId required)
+            if (!unitId) {
+                MessageBox.error("Please select a unit.");
+                return;
+            }
+
+            // 🔹 New: Validate if pricePlanYears exists for the selected project (first, since paymentPlanId depends on it)
+            const oPlansModel = this.getView().getModel("paymentPlans");
+            const aPlans = oPlansModel ? oPlansModel.getData() : [];
+            const matchingPlan = aPlans.find(p =>
+                p.planYears === pricePlanYears &&
+                Array.isArray(p.assignedProjects) &&
+                p.assignedProjects.some(ap => ap.project?.projectId === projectId)
+            );
+
+            if (!matchingPlan) {
+                MessageBox.error("No payment plan exists for the selected years and project. Please enter a valid number of years.");
+                return;
+            }
+
+            // Now check paymentPlanId (should be set via onPricePlanChange if years are valid)
+            if (!paymentPlanId) {
+                MessageBox.error("Payment Plan ID is not set. Please ensure the years are valid.");
+                return;
+            }
+
+            // Now check finalPrice (calculated via unit selection)
+            if (!finalPrice || isNaN(finalPrice)) {
+                MessageBox.error("Please fill all required fields (Final Price).");
                 return;
             }
 
@@ -261,19 +293,24 @@ sap.ui.define([
                     const condition = aConditions.find(c => c.code === basePriceCode);
                     const baseAmount = condition ? Number(condition.amount) : 0;
                     const amount = (baseAmount * schedule.percentage) / 100;
+                    const interval = this._getFrequencyInterval(schedule.frequency?.description);  // Get months per installment
 
+                    // 🔹 Updated: Maintenance now repeated like installments with correct due dates
                     if (schedule.conditionType?.description === "Maintenance") {
-                        // Maintenance as separate
-                        simulationSchedule.push({
-                            conditionType: schedule.conditionType.description,
-                            dueDate: new Date(today.getTime() + schedule.dueInMonth * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                            amount: 0,
-                            maintenance: amount
-                        });
-                    } else {
-                        // Installments
                         for (let i = 0; i < (schedule.numberOfInstallments || 1); i++) {
-                            const monthsToAdd = schedule.dueInMonth + i * (schedule.frequency?.code === "6" ? 6 : 12);
+                            const monthsToAdd = schedule.dueInMonth + i * interval;
+                            const dueDate = new Date(today.getTime() + monthsToAdd * 30 * 24 * 60 * 60 * 1000);
+                            simulationSchedule.push({
+                                conditionType: schedule.conditionType.description,
+                                dueDate: dueDate.toISOString().split('T')[0],
+                                amount: 0,
+                                maintenance: (amount / Math.max(1, schedule.numberOfInstallments))  // Divide amount across installments
+                            });
+                        }
+                    } else {
+                        // Installments (with corrected due dates)
+                        for (let i = 0; i < (schedule.numberOfInstallments || 1); i++) {
+                            const monthsToAdd = schedule.dueInMonth + i * interval;
                             const dueDate = new Date(today.getTime() + monthsToAdd * 30 * 24 * 60 * 60 * 1000);
                             simulationSchedule.push({
                                 conditionType: schedule.conditionType?.description || "Installment",
@@ -295,7 +332,7 @@ sap.ui.define([
                 }
 
                 // Auto-generate simulationId and set it to local input too
-                const simulationId = this._generateUUID();
+                const simulationId = this._generateId();
                 this.getView().byId("simulationIdInput").setValue(simulationId);
                 oLocal.setProperty("/simulationId", simulationId);
 
@@ -303,6 +340,26 @@ sap.ui.define([
                 MessageBox.error("Simulation failed: " + (err.message || err));
             }
         },
+
+
+        // 🔹 Helper: Map frequency description to months per installment
+        _getFrequencyInterval: function (frequencyDesc) {
+            if (!frequencyDesc) return 12;  // Default to annual
+            switch (frequencyDesc.toLowerCase()) {
+                case "monthly":
+                    return 1;
+                case "quarterly":
+                    return 3;
+                case "semi-annual":
+                    return 6;
+                case "annual":
+                    return 12;
+                default:
+                    return 12;  // Default
+            }
+        },
+
+
 
         /* ----------------------------
            Save simulation (reads unitId from local)
@@ -353,11 +410,11 @@ sap.ui.define([
             }
         },
 
-        _generateUUID: function () {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-                const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-        }
+        _generateId: function () {
+            this._idCounter += 1;
+            localStorage.setItem("simulationIdCounter", this._idCounter);
+            const paddedNumber = ("00000" + this._idCounter).slice(-5);  // Pad to 5 digits
+            return "PPS" + paddedNumber;
+        },
     });
 });

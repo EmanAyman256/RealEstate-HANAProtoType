@@ -35,6 +35,8 @@ sap.ui.define([
             var oModel = new sap.ui.model.json.JSONModel({
                 Units: [],
             });
+            oModel.setProperty("/selectedUnitStatus", "");
+            oModel.setProperty("/selectedUnitId", "");
             this.getView().setModel(oModel, "view");
 
             // Fetch units data
@@ -68,12 +70,36 @@ sap.ui.define([
                         // Extract Original Price (from first condition or based on some rule)
                         let firstCondition = unit.conditions?.[0];
                         let originalPrice = firstCondition ? firstCondition.amount : null;
+                        console.log("Units", data.value);
 
                         return { ...unit, bua, originalPrice };
                     });
 
                     oModel.setData({ Units: enrichedUnits });
-                    this.getView().byId("unitsTable").setModel(oModel);
+
+                    const uniqueStatuses = [];
+                    const unitId = []
+                    enrichedUnits.forEach(u => {
+                        if (u.unitStatusDescription && !uniqueStatuses.includes(u.unitStatusDescription)) {
+                            uniqueStatuses.push(u.unitStatusDescription);
+                        }
+                        if (u.unitId && !unitId.includes(u.unitId)) {
+                            unitId.push(u.unitId)
+                        }
+                    });
+                    console.log("united status", uniqueStatuses);
+                    console.log("unitIDS", unitId);
+
+
+                    oModel.setProperty("/UnitStatuses", uniqueStatuses.map(s => ({ status: s })));
+                    oModel.setProperty("/UnitId", unitId.map(s => ({ id: s })));
+
+
+
+                    this.getView().setModel(oModel, "view");
+
+
+                    this.getView().byId("unitsTable").setModel(oModel);[]
                 })
                 .catch(err => {
                     console.error("Error fetching units", err);
@@ -1071,7 +1097,6 @@ sap.ui.define([
                 oComboBox.getModel().setProperty("/companyCodeDescription", sDescription);
             }
         },
-
         onProjectChange: function (oEvent) {
             var oComboBox = oEvent.getSource();
             var sSelectedKey = oComboBox.getSelectedKey();
@@ -1091,33 +1116,28 @@ sap.ui.define([
             // Update filtered buildings
             this._updateFilteredBuildings(sSelectedKey, oModel);
         },
-
         onAddMeasurementRow: function (oEvent) {
             const oModel = oEvent.getSource().getModel();
             oModel.getProperty("/measurements").push({ code: "", description: "", quantity: 0, uom: "" });
             oModel.refresh();
         },
-
         onDeleteMeasurementRow: function (oEvent) {
             const oModel = oEvent.getSource().getModel();
             const aMeasurements = oModel.getProperty("/measurements");
             aMeasurements.pop();
             oModel.refresh();
         },
-
         onAddConditionRow: function (oEvent) {
             const oModel = oEvent.getSource().getModel();
             oModel.getProperty("/conditions").push({ code: "", description: "", amount: 0, currency: "" });
             oModel.refresh();
         },
-
         onDeleteConditionRow: function (oEvent) {
             const oModel = oEvent.getSource().getModel();
             const aConditions = oModel.getProperty("/conditions");
             aConditions.pop();
             oModel.refresh();
         },
-
         onMeasurementCodeChange: function (oEvent) {
             var oComboBox = oEvent.getSource();
             var sSelectedKey = oComboBox.getSelectedKey();
@@ -1128,7 +1148,6 @@ sap.ui.define([
                 oContext.getModel().setProperty(oContext.getPath() + "/description", sDescription);
             }
         },
-
         onConditionCodeChange: function (oEvent) {
             var oComboBox = oEvent.getSource();
             var sSelectedKey = oComboBox.getSelectedKey();
@@ -1138,6 +1157,54 @@ sap.ui.define([
             if (oContext) {
                 oContext.getModel().setProperty(oContext.getPath() + "/description", sDescription);
             }
-        }
+        },
+        onFilterUnits: function () {
+            var oTable = this.byId("unitsTable");
+            var oBinding = oTable.getBinding("items");
+
+            var sStatusKey = this.byId("unitStatusFilter").getSelectedKey();
+            var sUnitId = this.byId("unitIdFilter").getSelectedKey();
+
+            var aFilters = [];
+
+            if (sStatusKey) {
+                aFilters.push(
+                    new sap.ui.model.Filter("unitStatusDescription", sap.ui.model.FilterOperator.EQ, sStatusKey)
+                );
+            }
+
+            if (sUnitId) {
+                aFilters.push(
+                    new sap.ui.model.Filter("unitId", sap.ui.model.FilterOperator.EQ, sUnitId)
+                );
+            }
+
+            var oCombinedFilter = null;
+            if (aFilters.length > 1) {
+                oCombinedFilter = new sap.ui.model.Filter(aFilters, true); // true = AND
+            } else if (aFilters.length === 1) {
+                oCombinedFilter = aFilters[0];
+            }
+
+            oBinding.filter(oCombinedFilter ? [oCombinedFilter] : []);
+        },
+        onCreateReservation: function (oEvent) {
+            var oUnit = oEvent.getSource().getBindingContext().getObject();
+            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+            oRouter.navTo("Reservations", { unitId: oUnit.unitId });
+        },
+        
+        onClearFilter: function () {
+            var oModel = this.getView().getModel("view");
+
+            this.byId("unitStatusFilter").setSelectedKey("");
+            this.byId("unitIdFilter").setSelectedKey("");
+            oModel.setProperty("/selectedUnitStatus", "");
+            oModel.setProperty("/selectedUnitId", "");
+            var oTable = this.byId("unitsTable");
+            oTable.getBinding("items").filter([]);
+        },
+
+
     });
 });

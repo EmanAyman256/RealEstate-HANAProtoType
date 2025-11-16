@@ -14,6 +14,8 @@ sap.ui.define([
             this.oModel = this.getView().getModel();
             this._loadPlans();
             this._loadDropdownData(); // 🔹 Load dropdown master data
+                        this._idCounter = parseInt(localStorage.getItem("simulationIdCounter")) || 0;
+
         },
 
         // 🔹 Load dropdown master data for value help dialogs
@@ -305,7 +307,7 @@ sap.ui.define([
                 }));
 
                 const payload = {
-                    paymentPlanId: oData.paymentPlanId || this._generateUUID(),
+                    paymentPlanId: oData.paymentPlanId || this._generateId(),
                     description: oData.description,
                     companyCodeId: oData.companyCodeId,
                     planYears: oData.planYears,
@@ -378,11 +380,11 @@ sap.ui.define([
             oModel.refresh();
         },
 
-        _generateUUID: function () {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-                const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
+           _generateId: function () {
+            this._idCounter += 1;
+            localStorage.setItem("simulationIdCounter", this._idCounter);
+            const paddedNumber = ("00000" + this._idCounter).slice(-5);  // Pad to 5 digits
+            return "PP" + paddedNumber;
         },
 
         onDeletePlan: function (oEvent) {
