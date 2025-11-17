@@ -19,9 +19,9 @@ sap.ui.define([
     "sap/ui/layout/form/SimpleForm",
     "sap/m/ComboBox",
     "sap/ui/core/Item",
-     "sap/m/MessageToast",  
-    "sap/m/SelectDialog",  
-    "sap/m/StandardListItem"  
+    "sap/m/MessageToast",
+    "sap/m/SelectDialog",
+    "sap/m/StandardListItem"
 ], function (
     Controller, MessageBox, Dialog, Input, Button, Label, Text, TextArea, VBox,
     DatePicker, Table, Column, ColumnListItem, JSONModel, Title, IconTabBar, IconTabFilter, SimpleForm,
@@ -54,9 +54,9 @@ sap.ui.define([
             this._loadProjectsList();
             this._loadBuildingsList();
 
-                // For Payment Plan Simulations (PPS) - initialize counter
+            // For Payment Plan Simulations (PPS) - initialize counter
             this._idCounter = parseInt(localStorage.getItem("simulationIdCounter")) || 0;
-     
+
         },
 
         _onRouteMatched: function () {
@@ -85,7 +85,8 @@ sap.ui.define([
                     oModel.setData({ Units: enrichedUnits });
 
                     const uniqueStatuses = [];
-                    const unitId = []
+                    const unitId = [];
+                    const unitType = []
                     enrichedUnits.forEach(u => {
                         if (u.unitStatusDescription && !uniqueStatuses.includes(u.unitStatusDescription)) {
                             uniqueStatuses.push(u.unitStatusDescription);
@@ -93,13 +94,20 @@ sap.ui.define([
                         if (u.unitId && !unitId.includes(u.unitId)) {
                             unitId.push(u.unitId)
                         }
+                        if (u.unitTypeDescription && !unitType.includes(u.unitTypeDescription)) {
+                            unitType.push(u.unitTypeDescription)
+                        }
                     });
                     console.log("united status", uniqueStatuses);
                     console.log("unitIDS", unitId);
+                    console.log("UnitTypes", unitType);
+
 
 
                     oModel.setProperty("/UnitStatuses", uniqueStatuses.map(s => ({ status: s })));
                     oModel.setProperty("/UnitId", unitId.map(s => ({ id: s })));
+                    oModel.setProperty("/UnitType", unitType.map(s => ({ type: s })));
+
 
 
 
@@ -115,10 +123,30 @@ sap.ui.define([
 
         // Fetch measurements config for dropdown
         _loadMeasurementsList: function () {
+            /*const uniqueCompanyCodes = data.value.reduce((acc, curr) => {
+                       if (!acc.find(c => c.companyCodeId === curr.companyCodeId)) {
+                           acc.push({
+                               companyCodeId: curr.companyCodeId,
+                               companyCodeDescription: curr.companyCodeDescription
+                           });
+                       }
+                       return acc;
+                   }, []); */
             fetch("/odata/v4/real-estate/Measurements")
                 .then(res => res.json())
                 .then(data => {
-                    this.getView().setModel(new JSONModel(data.value || []), "measurementsList");
+                    const measurementsId = data.value.reduce((acc, curr) => {
+                        if (!acc.find(c => c.code === curr.description)) {
+                            acc.push({
+                                code: curr.code,
+                                description: curr.description
+                            });
+                        }
+                        return acc;
+                    }, []);
+                    this.getView().setModel(new JSONModel(measurementsId), "measurementsList");
+                    console.log("MeasList", data.value);
+
                 })
                 .catch(err => console.error("Failed to load Measurements list:", err));
         },
@@ -129,7 +157,10 @@ sap.ui.define([
                 .then(res => res.json())
                 .then(data => {
                     this.getView().setModel(new JSONModel(data.value || []), "conditionsList");
+                    console.log("CondList", data.value);
+
                 })
+
                 .catch(err => console.error("Failed to load Conditions list:", err));
         },
 
@@ -148,6 +179,8 @@ sap.ui.define([
                         return acc;
                     }, []);
                     this.getView().setModel(new JSONModel(uniqueCompanyCodes), "companyCodesList");
+                    console.log(uniqueCompanyCodes);
+
                 })
                 .catch(err => console.error("Failed to load Company Codes list:", err));
         },
@@ -155,10 +188,22 @@ sap.ui.define([
         // New: Fetch projects list
         _loadProjectsList: function () {
             fetch("/odata/v4/real-estate/Projects")
+
                 .then(res => res.json())
                 .then(data => {
-                    this.getView().setModel(new JSONModel(data.value || []), "projectsList");
+                    const projectIds = data.value.reduce((acc, curr) => {
+                        if (!acc.find(c => c.projectId === curr.projectId)) {
+                            acc.push({
+                                projectId: curr.projectId,
+                                projectDescription: curr.projectDescription
+                            });
+                        }
+                        return acc;
+                    }, []);
+                    this.getView().setModel(new JSONModel(projectIds), "projectsList");
+                    console.log(data.value);
                 })
+
                 .catch(err => console.error("Failed to load Projects list:", err));
         },
 
@@ -1168,454 +1213,506 @@ sap.ui.define([
         onFilterUnits: function () {
             var oTable = this.byId("unitsTable");
             var oBinding = oTable.getBinding("items");
-
-            var sStatusKey = this.byId("unitStatusFilter").getSelectedKey();
-            var sUnitId = this.byId("unitIdFilter").getSelectedKey();
-
             var aFilters = [];
 
-            if (sStatusKey) {
-                aFilters.push(
-                    new sap.ui.model.Filter("unitStatusDescription", sap.ui.model.FilterOperator.EQ, sStatusKey)
-                );
+            // Unit Type
+            var sUnitTypeFilter = this.byId("unitTypeFilter").getSelectedKey();
+            if (sUnitTypeFilter) {
+                aFilters.push(new sap.ui.model.Filter("unitTypeDescription", sap.ui.model.FilterOperator.EQ, sUnitTypeFilter));
             }
 
-            if (sUnitId) {
-                aFilters.push(
-                    new sap.ui.model.Filter("unitId", sap.ui.model.FilterOperator.EQ, sUnitId)
-                );
+            // Company Code
+            var sCompanyCodeFilter = this.byId("companyCodeFilter").getSelectedKey();
+            if (sCompanyCodeFilter) {
+                aFilters.push(new sap.ui.model.Filter("companyCodeId", sap.ui.model.FilterOperator.EQ, sCompanyCodeFilter));
             }
 
-            var oCombinedFilter = null;
-            if (aFilters.length > 1) {
-                oCombinedFilter = new sap.ui.model.Filter(aFilters, true); // true = AND
-            } else if (aFilters.length === 1) {
-                oCombinedFilter = aFilters[0];
+            // Project ID
+            var sProjectIdFilter = this.byId("projectIdFilter").getSelectedKey();
+            if (sProjectIdFilter) {
+                aFilters.push(new sap.ui.model.Filter("projectId", sap.ui.model.FilterOperator.EQ, sProjectIdFilter));
             }
+
+            // Lead ID
+            // var sLeadId = this.byId("_IDGenInput6").getValue();
+            // if (sLeadId) {
+            //     aFilters.push(new sap.ui.model.Filter("leadId", sap.ui.model.FilterOperator.Contains, sLeadId));
+            // }
+
+            // Floor Range
+            // var iFromFloor = this.byId("_IDGenInput17").getValue();
+            // var iToFloor = this.byId("_IDGenInput18").getValue();
+            // if (iFromFloor) {
+            //     aFilters.push(new sap.ui.model.Filter("floorDescription", sap.ui.model.FilterOperator.GE, iFromFloor));
+            // }
+            // if (iToFloor) {
+            //     aFilters.push(new sap.ui.model.Filter("floorDescription", sap.ui.model.FilterOperator.LE, iToFloor));
+            // }
+
+            // // Measurement Filter
+            // var sMeasurement = this.byId("measurementFilter").getSelectedKey();
+            // if (sMeasurement) {
+            //     aFilters.push(new sap.ui.model.Filter("measurementCode", sap.ui.model.FilterOperator.EQ, sMeasurement));
+            // }
+
+            // // Measurement Range
+            // var iMeasurementFrom = this.byId("_IDGenInput15").getValue();
+            // var iMeasurementTo = this.byId("_IDGenInput16").getValue();
+            // if (iMeasurementFrom) {
+            //     aFilters.push(new sap.ui.model.Filter("measurementValue", sap.ui.model.FilterOperator.GE, iMeasurementFrom));
+            // }
+            // if (iMeasurementTo) {
+            //     aFilters.push(new sap.ui.model.Filter("measurementValue", sap.ui.model.FilterOperator.LE, iMeasurementTo));
+            // }
+
+            // // UOM
+            // var sUOM = this.byId("_IDGenInput19").getValue();
+            // if (sUOM) {
+            //     aFilters.push(new sap.ui.model.Filter("uom", sap.ui.model.FilterOperator.Contains, sUOM));
+            // }
+
+            // // Price Plan
+            // var iPricePlanYear = this.byId("_IDGenInput20").getValue();
+            // if (iPricePlanYear) {
+            //     aFilters.push(new sap.ui.model.Filter("pricePlanYear", sap.ui.model.FilterOperator.EQ, iPricePlanYear));
+            // }
+
+            // var sCurrency = this.byId("_IDGenInput21").getValue();
+            // if (sCurrency) {
+            //     aFilters.push(new sap.ui.model.Filter("currency", sap.ui.model.FilterOperator.Contains, sCurrency));
+            // }
+
+            // Combine all filters with AND
+            var oCombinedFilter = aFilters.length > 0 ? new sap.ui.model.Filter(aFilters, true) : null;
 
             oBinding.filter(oCombinedFilter ? [oCombinedFilter] : []);
         },
+
         onCreateReservation: function (oEvent) {
             var oUnit = oEvent.getSource().getBindingContext().getObject();
             var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
             oRouter.navTo("Reservations", { unitId: oUnit.unitId });
         },
-        
+
         onClearFilter: function () {
             var oModel = this.getView().getModel("view");
 
-            this.byId("unitStatusFilter").setSelectedKey("");
-            this.byId("unitIdFilter").setSelectedKey("");
+            this.byId("unitTypeFilter").setSelectedKey("");
+            this.byId("companyCodeFilter").setSelectedKey("");
+            this.byId("projectIdFilter").setSelectedKey("");
+
             oModel.setProperty("/selectedUnitStatus", "");
             oModel.setProperty("/selectedUnitId", "");
+           oModel.setProperty("/selectedUnitId", "");
+
             var oTable = this.byId("unitsTable");
             oTable.getBinding("items").filter([]);
         },
 
-          // New: Open Payment Plan Simulation popup
-onOpenPaymentSimulation: function (oEvent) {
-    var unitId = oEvent.getSource().getBindingContext().getObject().unitId;
+        // New: Open Payment Plan Simulation popup
+        onOpenPaymentSimulation: function (oEvent) {
+            var unitId = oEvent.getSource().getBindingContext().getObject().unitId;
 
-    if (!this._oSimulationDialog) {
-        // Create VBox with form content (adapted from PaymentPlanSimulations view)
-        var oVBox = new sap.m.VBox({
-            items: [
-                new sap.m.Title({ text: "Simulation Details", level: "H3" }),
-                new sap.m.Label({ text: "Simulation ID" }),
-                new sap.m.Input({ id: "simIdInput", value: "{local>/simulationId}", editable: false, placeholder: "Auto-generated" }),
-                new sap.m.Label({ text: "Unit" }),
-                new sap.m.Input({
-                    id: "unitIdInputPPS",
-                    value: "{local>/unitDisplay}",
-                    showValueHelp: true,
-                    valueHelpRequest: this.onOpenUnitValueHelpPPS.bind(this),
-                    editable: false,  // Pre-filled, read-only
-                    placeholder: "Unit pre-selected"
-                }),
-                new sap.m.Label({ text: "Project ID" }),
-                new sap.m.Input({ id: "projectIdInputPPS", value: "{local>/projectId}", editable: false }),
-                new sap.m.Label({ text: "Project Description" }),
-                new sap.m.Input({ id: "projectDescriptionInputPPS", value: "{local>/projectDescription}", editable: false }),
-                new sap.m.Label({ text: "Price Plan (Years)" }),
-                new sap.m.Input({ id: "pricePlanInputPPS", type: "Number", change: this.onPricePlanChangePPS.bind(this), placeholder: "e.g., 5" }),
-                new sap.m.Label({ text: "Payment Plan ID" }),
-                new sap.m.Input({ id: "paymentPlanIdInputPPS", value: "{local>/paymentPlanId}", editable: false }),
-                new sap.m.Label({ text: "Lead ID" }),
-                new sap.m.Input({ id: "leadIdInputPPS", value: "{local>/leadId}", placeholder: "Enter code" }),
-                new sap.m.Label({ text: "Final Price" }),
-                new sap.m.Input({ id: "finalPriceInputPPS", value: "{local>/finalPrice}", editable: false }),
-                new sap.m.Label({ text: "User" }),
-                new sap.m.Input({ id: "userIdInputPPS", value: "currentUser", editable: false }),
-                new sap.m.HBox({
+            if (!this._oSimulationDialog) {
+                // Create VBox with form content (adapted from PaymentPlanSimulations view)
+                var oVBox = new sap.m.VBox({
                     items: [
-                        new sap.m.Button({ id: "simulateBtnPPS", text: "Simulate", press: this.onSimulatePPS.bind(this) }),
-                        new sap.m.Button({ id: "saveBtnPPS", text: "Save Simulation", press: this.onSaveSimulationPPS.bind(this) })
-                    ]
-                }),
-                new sap.m.Title({ text: "Payment Schedule", level: "H3" }),
-                new sap.m.Table({
-                    id: "simulationTablePPS",
-                    items: "{simulationOutput>/}",
-                    width: "100%",
-                    showSeparators: "All",
-                    columns: [
-                        new sap.m.Column({ header: new sap.m.Label({ text: "Condition Type" }) }),
-                        new sap.m.Column({ header: new sap.m.Label({ text: "Due Date" }) }),
-                        new sap.m.Column({ header: new sap.m.Label({ text: "Amount" }) }),
-                        new sap.m.Column({ header: new sap.m.Label({ text: "Maintenance" }) })
-                    ],
-                    items: {
-                        path: "simulationOutput>/",
-                        template: new sap.m.ColumnListItem({
-                            cells: [
-                                new sap.m.Text({ text: "{simulationOutput>conditionType}" }),
-                                new sap.m.Text({ text: "{simulationOutput>dueDate}" }),
-                                new sap.m.Text({ text: "{simulationOutput>amount}" }),
-                                new sap.m.Text({ text: "{simulationOutput>maintenance}" })
+                        new sap.m.Title({ text: "Simulation Details", level: "H3" }),
+                        new sap.m.Label({ text: "Simulation ID" }),
+                        new sap.m.Input({ id: "simIdInput", value: "{local>/simulationId}", editable: false, placeholder: "Auto-generated" }),
+                        new sap.m.Label({ text: "Unit" }),
+                        new sap.m.Input({
+                            id: "unitIdInputPPS",
+                            value: "{local>/unitDisplay}",
+                            showValueHelp: true,
+                            valueHelpRequest: this.onOpenUnitValueHelpPPS.bind(this),
+                            editable: false,  // Pre-filled, read-only
+                            placeholder: "Unit pre-selected"
+                        }),
+                        new sap.m.Label({ text: "Project ID" }),
+                        new sap.m.Input({ id: "projectIdInputPPS", value: "{local>/projectId}", editable: false }),
+                        new sap.m.Label({ text: "Project Description" }),
+                        new sap.m.Input({ id: "projectDescriptionInputPPS", value: "{local>/projectDescription}", editable: false }),
+                        new sap.m.Label({ text: "Price Plan (Years)" }),
+                        new sap.m.Input({ id: "pricePlanInputPPS", type: "Number", change: this.onPricePlanChangePPS.bind(this), placeholder: "e.g., 5" }),
+                        new sap.m.Label({ text: "Payment Plan ID" }),
+                        new sap.m.Input({ id: "paymentPlanIdInputPPS", value: "{local>/paymentPlanId}", editable: false }),
+                        new sap.m.Label({ text: "Lead ID" }),
+                        new sap.m.Input({ id: "leadIdInputPPS", value: "{local>/leadId}", placeholder: "Enter code" }),
+                        new sap.m.Label({ text: "Final Price" }),
+                        new sap.m.Input({ id: "finalPriceInputPPS", value: "{local>/finalPrice}", editable: false }),
+                        new sap.m.Label({ text: "User" }),
+                        new sap.m.Input({ id: "userIdInputPPS", value: "currentUser", editable: false }),
+                        new sap.m.HBox({
+                            items: [
+                                new sap.m.Button({ id: "simulateBtnPPS", text: "Simulate", press: this.onSimulatePPS.bind(this) }),
+                                new sap.m.Button({ id: "saveBtnPPS", text: "Save Simulation", press: this.onSaveSimulationPPS.bind(this) })
                             ]
+                        }),
+                        new sap.m.Title({ text: "Payment Schedule", level: "H3" }),
+                        new sap.m.Table({
+                            id: "simulationTablePPS",
+                            items: "{simulationOutput>/}",
+                            width: "100%",
+                            showSeparators: "All",
+                            columns: [
+                                new sap.m.Column({ header: new sap.m.Label({ text: "Condition Type" }) }),
+                                new sap.m.Column({ header: new sap.m.Label({ text: "Due Date" }) }),
+                                new sap.m.Column({ header: new sap.m.Label({ text: "Amount" }) }),
+                                new sap.m.Column({ header: new sap.m.Label({ text: "Maintenance" }) })
+                            ],
+                            items: {
+                                path: "simulationOutput>/",
+                                template: new sap.m.ColumnListItem({
+                                    cells: [
+                                        new sap.m.Text({ text: "{simulationOutput>conditionType}" }),
+                                        new sap.m.Text({ text: "{simulationOutput>dueDate}" }),
+                                        new sap.m.Text({ text: "{simulationOutput>amount}" }),
+                                        new sap.m.Text({ text: "{simulationOutput>maintenance}" })
+                                    ]
+                                })
+                            }
                         })
-                    }
+                    ]
+                });
+
+                this._oSimulationDialog = new sap.m.Dialog({
+                    title: "Payment Plan Simulation",
+                    contentWidth: "80%",
+                    resizable: true,
+                    content: oVBox,
+                    endButton: new sap.m.Button({
+                        text: "Close",
+                        press: function () {
+                            this._oSimulationDialog.close();
+                        }.bind(this)
+                    })
+                });
+
+                // Set models for the dialog
+                this._oSimulationDialog.setModel(new JSONModel({}), "local");
+                this._oSimulationDialog.setModel(new JSONModel([]), "simulationOutput");
+
+                // Load data for PPS
+                this._loadUnitsForSim();
+                this._loadDropdownDataForSim();
+
+                this.getView().addDependent(this._oSimulationDialog);
+            }
+
+            // Pre-fill unitId and related data
+            var oLocal = this._oSimulationDialog.getModel("local");
+            oLocal.setProperty("/unitId", unitId);
+
+            // Find unit and set project/final price (adapted from onUnitChange)
+            var units = this.getView().getModel("view").getProperty("/Units");
+            var unit = units.find(u => u.unitId === unitId);
+            if (unit) {
+                oLocal.setProperty("/projectId", unit.projectId);
+                oLocal.setProperty("/projectDescription", unit.projectDescription);
+                // Set the display value for the unit input (e.g., "Unit Description (Unit ID)")
+                sap.ui.getCore().byId("unitIdInputPPS").setValue(`${unit.unitDescription} (${unitId})`);
+                // Calculate final price
+                this._calculateFinalPricePPS(unitId, oLocal);
+            }
+
+            this._oSimulationDialog.open();
+        },
+
+        // Adapted from PaymentPlanSimulations: Load units for PPS
+        _loadUnitsForSim: function () {
+            fetch("/odata/v4/real-estate/Units?$expand=project")
+                .then(res => res.json())
+                .then(data => {
+                    this._oSimulationDialog.setModel(new JSONModel(data.value || []), "units");
                 })
-            ]
-        });
+                .catch(err => console.error("Failed to load units for PPS:", err));
+        },
 
-        this._oSimulationDialog = new sap.m.Dialog({
-            title: "Payment Plan Simulation",
-            contentWidth: "80%",
-            resizable: true,
-            content: oVBox,
-            endButton: new sap.m.Button({
-                text: "Close",
-                press: function () {
-                    this._oSimulationDialog.close();
-                }.bind(this)
-            })
-        });
+        // Adapted from PaymentPlanSimulations: Load dropdown data for PPS
+        _loadDropdownDataForSim: async function () {
+            try {
+                const [projectsRes, plansRes] = await Promise.all([
+                    fetch("/odata/v4/real-estate/Projects"),
+                    fetch("/odata/v4/real-estate/PaymentPlans?$expand=assignedProjects($expand=project)")
+                ]);
+                const projects = await projectsRes.json();
+                const plans = await plansRes.json();
 
-        // Set models for the dialog
-        this._oSimulationDialog.setModel(new JSONModel({}), "local");
-        this._oSimulationDialog.setModel(new JSONModel([]), "simulationOutput");
+                this._oSimulationDialog.setModel(new JSONModel(projects.value || []), "projects");
+                this._oSimulationDialog.setModel(new JSONModel(plans.value || []), "paymentPlans");
+            } catch (err) {
+                console.error("Failed to load dropdown data for PPS:", err);
+            }
+        },
 
-        // Load data for PPS
-        this._loadUnitsForSim();
-        this._loadDropdownDataForSim();
+        // Adapted from PaymentPlanSimulations: Value help for unit (simplified, since pre-filled)
+        onOpenUnitValueHelpPPS: function () {
+            const oView = this._oSimulationDialog;
 
-        this.getView().addDependent(this._oSimulationDialog);
-    }
+            if (!this._oUnitValueHelpPPS) {
+                this._oUnitValueHelpPPS = new SelectDialog({
+                    title: "Select Unit",
+                    items: {
+                        path: "units>/",
+                        template: new StandardListItem({
+                            title: "{units>unitDescription}",
+                            description: "{units>unitId}"
+                        })
+                    },
+                    search: function (oEvent) {
+                        const sValue = oEvent.getParameter("value") || "";
+                        const aFilters = [
+                            new sap.ui.model.Filter("unitDescription", sap.ui.model.FilterOperator.Contains, sValue),
+                            new sap.ui.model.Filter("unitId", sap.ui.model.FilterOperator.Contains, sValue)
+                        ];
+                        oEvent.getSource().getBinding("items").filter(new sap.ui.model.Filter(aFilters, false));
+                    },
+                    confirm: function (oEvent) {
+                        const oSelectedItem = oEvent.getParameter("selectedItem");
+                        if (oSelectedItem) {
+                            const oContext = oSelectedItem.getBindingContext("units");
+                            const oUnit = oContext.getObject();
+                            const unitId = oUnit.unitId;
+                            const desc = oUnit.unitDescription;
+                            const oLocalModel = oView.getModel("local");
+                            oLocalModel.setProperty("/unitId", unitId);
+                            sap.ui.getCore().byId("unitIdInputPPS").setValue(`${desc} (${unitId})`);
+                            this._onUnitSelectedPPS(unitId);
+                        }
+                    }.bind(this)
+                });
+                oView.addDependent(this._oUnitValueHelpPPS);
+            }
 
-    // Pre-fill unitId and related data
-    var oLocal = this._oSimulationDialog.getModel("local");
-    oLocal.setProperty("/unitId", unitId);
+            this._oUnitValueHelpPPS.open();
+        },
 
-    // Find unit and set project/final price (adapted from onUnitChange)
-    var units = this.getView().getModel("view").getProperty("/Units");
-    var unit = units.find(u => u.unitId === unitId);
-    if (unit) {
-        oLocal.setProperty("/projectId", unit.projectId);
-        oLocal.setProperty("/projectDescription", unit.projectDescription);
-         // Set the display value for the unit input (e.g., "Unit Description (Unit ID)")
-        sap.ui.getCore().byId("unitIdInputPPS").setValue(`${unit.unitDescription} (${unitId})`);
-        // Calculate final price
-        this._calculateFinalPricePPS(unitId, oLocal);
-    }
+        // Adapted: Handle unit selection
+        _onUnitSelectedPPS: function (selectedUnitId) {
+            this.onUnitChangePPS({ getParameter: () => ({ selectedItem: { getKey: () => selectedUnitId } }) });
+        },
 
-    this._oSimulationDialog.open();
-},
-
-// Adapted from PaymentPlanSimulations: Load units for PPS
-_loadUnitsForSim: function () {
-    fetch("/odata/v4/real-estate/Units?$expand=project")
-        .then(res => res.json())
-        .then(data => {
-            this._oSimulationDialog.setModel(new JSONModel(data.value || []), "units");
-        })
-        .catch(err => console.error("Failed to load units for PPS:", err));
-},
-
-// Adapted from PaymentPlanSimulations: Load dropdown data for PPS
-_loadDropdownDataForSim: async function () {
-    try {
-        const [projectsRes, plansRes] = await Promise.all([
-            fetch("/odata/v4/real-estate/Projects"),
-            fetch("/odata/v4/real-estate/PaymentPlans?$expand=assignedProjects($expand=project)")
-        ]);
-        const projects = await projectsRes.json();
-        const plans = await plansRes.json();
-
-        this._oSimulationDialog.setModel(new JSONModel(projects.value || []), "projects");
-        this._oSimulationDialog.setModel(new JSONModel(plans.value || []), "paymentPlans");
-    } catch (err) {
-        console.error("Failed to load dropdown data for PPS:", err);
-    }
-},
-
-// Adapted from PaymentPlanSimulations: Value help for unit (simplified, since pre-filled)
-onOpenUnitValueHelpPPS: function () {
-    const oView = this._oSimulationDialog;
-
-    if (!this._oUnitValueHelpPPS) {
-        this._oUnitValueHelpPPS = new SelectDialog({
-            title: "Select Unit",
-            items: {
-                path: "units>/",
-                template: new StandardListItem({
-                    title: "{units>unitDescription}",
-                    description: "{units>unitId}"
-                })
-            },
-            search: function (oEvent) {
-                const sValue = oEvent.getParameter("value") || "";
-                const aFilters = [
-                    new sap.ui.model.Filter("unitDescription", sap.ui.model.FilterOperator.Contains, sValue),
-                    new sap.ui.model.Filter("unitId", sap.ui.model.FilterOperator.Contains, sValue)
-                ];
-                oEvent.getSource().getBinding("items").filter(new sap.ui.model.Filter(aFilters, false));
-            },
-            confirm: function (oEvent) {
-                const oSelectedItem = oEvent.getParameter("selectedItem");
-                if (oSelectedItem) {
-                    const oContext = oSelectedItem.getBindingContext("units");
-                    const oUnit = oContext.getObject();
-                    const unitId = oUnit.unitId;
-                    const desc = oUnit.unitDescription;
-                    const oLocalModel = oView.getModel("local");
-                    oLocalModel.setProperty("/unitId", unitId);
-                    sap.ui.getCore().byId("unitIdInputPPS").setValue(`${desc} (${unitId})`);
-                    this._onUnitSelectedPPS(unitId);
-                }
-            }.bind(this)
-        });
-        oView.addDependent(this._oUnitValueHelpPPS);
-    }
-
-    this._oUnitValueHelpPPS.open();
-},
-
-// Adapted: Handle unit selection
-_onUnitSelectedPPS: function (selectedUnitId) {
-    this.onUnitChangePPS({ getParameter: () => ({ selectedItem: { getKey: () => selectedUnitId } }) });
-},
-
-// Adapted from PaymentPlanSimulations: Unit change logic
-onUnitChangePPS: async function (oEvent) {
-    let selectedUnitId = null;
-    if (oEvent && typeof oEvent.getParameter === "function") {
-        const oSelItem = oEvent.getParameter("selectedItem");
-        if (oSelItem && typeof oSelItem.getKey === "function") {
-            selectedUnitId = oSelItem.getKey();
-        }
-    }
-    if (!selectedUnitId) {
-        const oLocal = this._oSimulationDialog.getModel("local");
-        selectedUnitId = oLocal ? oLocal.getProperty("/unitId") : null;
-    }
-
-    if (!selectedUnitId) return;
-
-    const oUnitsModel = this._oSimulationDialog.getModel("units");
-    const aUnits = oUnitsModel ? oUnitsModel.getData() : [];
-    const oSelectedUnit = aUnits.find(u => u.unitId === selectedUnitId);
-
-    if (oSelectedUnit) {
-        const projectId = oSelectedUnit.project?.projectId || oSelectedUnit.projectId;
-        const projectDescription = oSelectedUnit.project?.projectDescription || oSelectedUnit.projectDescription;
-        const oLocalModel = this._oSimulationDialog.getModel("local");
-        oLocalModel.setProperty("/projectId", projectId);
-        oLocalModel.setProperty("/projectDescription", projectDescription);
-        this._calculateFinalPricePPS(selectedUnitId, oLocalModel);
-    }
-},
-
-// Helper: Calculate final price (adapted)
-_calculateFinalPricePPS: async function (unitId, oLocalModel) {
-    try {
-        const conditionsRes = await fetch(`/odata/v4/real-estate/Conditions?$filter=unit_unitId eq '${unitId}'`);
-        const conditions = await conditionsRes.json();
-        const aConditions = conditions.value || [];
-        const finalPrice = aConditions.reduce((sum, c) => sum + Number(c.amount || 0), 0);
-        oLocalModel.setProperty("/finalPrice", finalPrice);
-    } catch (err) {
-        console.error("Failed to calculate final price for PPS:", err);
-    }
-},
-
-// Adapted from PaymentPlanSimulations: Price plan change
-onPricePlanChangePPS: function (oEvent) {
-    const pricePlanYears = parseInt(oEvent.getParameter("value"));
-    const projectId = sap.ui.getCore().byId("projectIdInputPPS").getValue();
-    const oPlansModel = this._oSimulationDialog.getModel("paymentPlans");
-    const aPlans = oPlansModel ? oPlansModel.getData() : [];
-    const oSelectedPlan = aPlans.find(p =>
-        p.planYears === pricePlanYears &&
-        Array.isArray(p.assignedProjects) &&
-        p.assignedProjects.some(ap => ap.project?.projectId === projectId)
-    );
-    if (oSelectedPlan) {
-        sap.ui.getCore().byId("paymentPlanIdInputPPS").setValue(oSelectedPlan.paymentPlanId);
-    } else {
-        sap.ui.getCore().byId("paymentPlanIdInputPPS").setValue("");
-    }
-},
-
-// Adapted from PaymentPlanSimulations: Simulate
-onSimulatePPS: async function () {
-    const oLocal = this._oSimulationDialog.getModel("local");
-    const unitId = oLocal ? oLocal.getProperty("/unitId") : null;
-    const finalPrice = oLocal ? Number(oLocal.getProperty("/finalPrice")) : NaN;
-    const projectId = sap.ui.getCore().byId("projectIdInputPPS").getValue();
-    const paymentPlanId = sap.ui.getCore().byId("paymentPlanIdInputPPS").getValue();
-    const pricePlanYears = parseInt(sap.ui.getCore().byId("pricePlanInputPPS").getValue());
-    const leadId = sap.ui.getCore().byId("leadIdInputPPS").getValue();
-
-    if (!unitId) {
-        MessageBox.error("Please select a unit.");
-        return;
-    }
-
-    const oPlansModel = this._oSimulationDialog.getModel("paymentPlans");
-    const aPlans = oPlansModel ? oPlansModel.getData() : [];
-    const matchingPlan = aPlans.find(p =>
-        p.planYears === pricePlanYears &&
-        Array.isArray(p.assignedProjects) &&
-        p.assignedProjects.some(ap => ap.project?.projectId === projectId)
-    );
-
-    if (!matchingPlan) {
-        MessageBox.error("No payment plan exists for the selected years and project.");
-        return;
-    }
-
-    if (!paymentPlanId || !finalPrice || isNaN(finalPrice)) {
-        MessageBox.error("Please fill all required fields.");
-        return;
-    }
-
-    try {
-        const scheduleRes = await fetch(`/odata/v4/real-estate/PaymentPlanSchedules?$filter=paymentPlan_paymentPlanId eq '${paymentPlanId}'&$expand=conditionType,basePrice,frequency`);
-        const scheduleData = await scheduleRes.json();
-        const aSchedules = scheduleData.value || [];
-
-        const conditionsRes = await fetch(`/odata/v4/real-estate/Conditions?$filter=unit_unitId eq '${unitId}'`);
-        const conditions = await conditionsRes.json();
-        const aConditions = conditions.value || [];
-
-        const simulationSchedule = [];
-        const today = new Date();
-
-        aSchedules.forEach(schedule => {
-            const basePriceCode = schedule.basePrice?.code;
-            const condition = aConditions.find(c => c.code === basePriceCode);
-            const baseAmount = condition ? Number(condition.amount) : 0;
-            const amount = (baseAmount * schedule.percentage) / 100;
-            const interval = this._getFrequencyIntervalPPS(schedule.frequency?.description);
-
-            if (schedule.conditionType?.description === "Maintenance") {
-                for (let i = 0; i < (schedule.numberOfInstallments || 1); i++) {
-                    const monthsToAdd = schedule.dueInMonth + i * interval;
-                    const dueDate = new Date(today.getTime() + monthsToAdd * 30 * 24 * 60 * 60 * 1000);
-                    simulationSchedule.push({
-                        conditionType: schedule.conditionType.description,
-                        dueDate: dueDate.toISOString().split('T')[0],
-                        amount: 0,  // Maintenance has no amount
-                        maintenance: Math.round((amount / Math.max(1, schedule.numberOfInstallments)) * 100) / 100  // Round to 2 decimals
-                    });
-                }
-            } else {
-                for (let i = 0; i < (schedule.numberOfInstallments || 1); i++) {
-                    const monthsToAdd = schedule.dueInMonth + i * interval;
-                    const dueDate = new Date(today.getTime() + monthsToAdd * 30 * 24 * 60 * 60 * 1000);
-                    simulationSchedule.push({
-                        conditionType: schedule.conditionType?.description || "Installment",
-                        dueDate: dueDate.toISOString().split('T')[0],
-                        amount: Math.round((amount / Math.max(1, schedule.numberOfInstallments)) * 100) / 100,  // Round to 2 decimals
-                        maintenance: 0
-                    });
+        // Adapted from PaymentPlanSimulations: Unit change logic
+        onUnitChangePPS: async function (oEvent) {
+            let selectedUnitId = null;
+            if (oEvent && typeof oEvent.getParameter === "function") {
+                const oSelItem = oEvent.getParameter("selectedItem");
+                if (oSelItem && typeof oSelItem.getKey === "function") {
+                    selectedUnitId = oSelItem.getKey();
                 }
             }
-        });
+            if (!selectedUnitId) {
+                const oLocal = this._oSimulationDialog.getModel("local");
+                selectedUnitId = oLocal ? oLocal.getProperty("/unitId") : null;
+            }
 
-        this._oSimulationDialog.getModel("simulationOutput").setData(simulationSchedule);
-        const oTable = sap.ui.getCore().byId("simulationTablePPS");
-        if (oTable && oTable.getBinding("items")) {
-            oTable.getBinding("items").refresh();
-        }
+            if (!selectedUnitId) return;
 
-        const simulationId = this._generateIdPPS();
-        sap.ui.getCore().byId("simIdInput").setValue(simulationId);
-        oLocal.setProperty("/simulationId", simulationId);
+            const oUnitsModel = this._oSimulationDialog.getModel("units");
+            const aUnits = oUnitsModel ? oUnitsModel.getData() : [];
+            const oSelectedUnit = aUnits.find(u => u.unitId === selectedUnitId);
 
-    } catch (err) {
-        MessageBox.error("Simulation failed: " + (err.message || err));
-    }
-},
+            if (oSelectedUnit) {
+                const projectId = oSelectedUnit.project?.projectId || oSelectedUnit.projectId;
+                const projectDescription = oSelectedUnit.project?.projectDescription || oSelectedUnit.projectDescription;
+                const oLocalModel = this._oSimulationDialog.getModel("local");
+                oLocalModel.setProperty("/projectId", projectId);
+                oLocalModel.setProperty("/projectDescription", projectDescription);
+                this._calculateFinalPricePPS(selectedUnitId, oLocalModel);
+            }
+        },
+
+        // Helper: Calculate final price (adapted)
+        _calculateFinalPricePPS: async function (unitId, oLocalModel) {
+            try {
+                const conditionsRes = await fetch(`/odata/v4/real-estate/Conditions?$filter=unit_unitId eq '${unitId}'`);
+                const conditions = await conditionsRes.json();
+                const aConditions = conditions.value || [];
+                const finalPrice = aConditions.reduce((sum, c) => sum + Number(c.amount || 0), 0);
+                oLocalModel.setProperty("/finalPrice", finalPrice);
+            } catch (err) {
+                console.error("Failed to calculate final price for PPS:", err);
+            }
+        },
+
+        // Adapted from PaymentPlanSimulations: Price plan change
+        onPricePlanChangePPS: function (oEvent) {
+            const pricePlanYears = parseInt(oEvent.getParameter("value"));
+            const projectId = sap.ui.getCore().byId("projectIdInputPPS").getValue();
+            const oPlansModel = this._oSimulationDialog.getModel("paymentPlans");
+            const aPlans = oPlansModel ? oPlansModel.getData() : [];
+            const oSelectedPlan = aPlans.find(p =>
+                p.planYears === pricePlanYears &&
+                Array.isArray(p.assignedProjects) &&
+                p.assignedProjects.some(ap => ap.project?.projectId === projectId)
+            );
+            if (oSelectedPlan) {
+                sap.ui.getCore().byId("paymentPlanIdInputPPS").setValue(oSelectedPlan.paymentPlanId);
+            } else {
+                sap.ui.getCore().byId("paymentPlanIdInputPPS").setValue("");
+            }
+        },
+
+        // Adapted from PaymentPlanSimulations: Simulate
+        onSimulatePPS: async function () {
+            const oLocal = this._oSimulationDialog.getModel("local");
+            const unitId = oLocal ? oLocal.getProperty("/unitId") : null;
+            const finalPrice = oLocal ? Number(oLocal.getProperty("/finalPrice")) : NaN;
+            const projectId = sap.ui.getCore().byId("projectIdInputPPS").getValue();
+            const paymentPlanId = sap.ui.getCore().byId("paymentPlanIdInputPPS").getValue();
+            const pricePlanYears = parseInt(sap.ui.getCore().byId("pricePlanInputPPS").getValue());
+            const leadId = sap.ui.getCore().byId("leadIdInputPPS").getValue();
+
+            if (!unitId) {
+                MessageBox.error("Please select a unit.");
+                return;
+            }
+
+            const oPlansModel = this._oSimulationDialog.getModel("paymentPlans");
+            const aPlans = oPlansModel ? oPlansModel.getData() : [];
+            const matchingPlan = aPlans.find(p =>
+                p.planYears === pricePlanYears &&
+                Array.isArray(p.assignedProjects) &&
+                p.assignedProjects.some(ap => ap.project?.projectId === projectId)
+            );
+
+            if (!matchingPlan) {
+                MessageBox.error("No payment plan exists for the selected years and project.");
+                return;
+            }
+
+            if (!paymentPlanId || !finalPrice || isNaN(finalPrice)) {
+                MessageBox.error("Please fill all required fields.");
+                return;
+            }
+
+            try {
+                const scheduleRes = await fetch(`/odata/v4/real-estate/PaymentPlanSchedules?$filter=paymentPlan_paymentPlanId eq '${paymentPlanId}'&$expand=conditionType,basePrice,frequency`);
+                const scheduleData = await scheduleRes.json();
+                const aSchedules = scheduleData.value || [];
+
+                const conditionsRes = await fetch(`/odata/v4/real-estate/Conditions?$filter=unit_unitId eq '${unitId}'`);
+                const conditions = await conditionsRes.json();
+                const aConditions = conditions.value || [];
+
+                const simulationSchedule = [];
+                const today = new Date();
+
+                aSchedules.forEach(schedule => {
+                    const basePriceCode = schedule.basePrice?.code;
+                    const condition = aConditions.find(c => c.code === basePriceCode);
+                    const baseAmount = condition ? Number(condition.amount) : 0;
+                    const amount = (baseAmount * schedule.percentage) / 100;
+                    const interval = this._getFrequencyIntervalPPS(schedule.frequency?.description);
+
+                    if (schedule.conditionType?.description === "Maintenance") {
+                        for (let i = 0; i < (schedule.numberOfInstallments || 1); i++) {
+                            const monthsToAdd = schedule.dueInMonth + i * interval;
+                            const dueDate = new Date(today.getTime() + monthsToAdd * 30 * 24 * 60 * 60 * 1000);
+                            simulationSchedule.push({
+                                conditionType: schedule.conditionType.description,
+                                dueDate: dueDate.toISOString().split('T')[0],
+                                amount: 0,  // Maintenance has no amount
+                                maintenance: Math.round((amount / Math.max(1, schedule.numberOfInstallments)) * 100) / 100  // Round to 2 decimals
+                            });
+                        }
+                    } else {
+                        for (let i = 0; i < (schedule.numberOfInstallments || 1); i++) {
+                            const monthsToAdd = schedule.dueInMonth + i * interval;
+                            const dueDate = new Date(today.getTime() + monthsToAdd * 30 * 24 * 60 * 60 * 1000);
+                            simulationSchedule.push({
+                                conditionType: schedule.conditionType?.description || "Installment",
+                                dueDate: dueDate.toISOString().split('T')[0],
+                                amount: Math.round((amount / Math.max(1, schedule.numberOfInstallments)) * 100) / 100,  // Round to 2 decimals
+                                maintenance: 0
+                            });
+                        }
+                    }
+                });
+
+                this._oSimulationDialog.getModel("simulationOutput").setData(simulationSchedule);
+                const oTable = sap.ui.getCore().byId("simulationTablePPS");
+                if (oTable && oTable.getBinding("items")) {
+                    oTable.getBinding("items").refresh();
+                }
+
+                const simulationId = this._generateIdPPS();
+                sap.ui.getCore().byId("simIdInput").setValue(simulationId);
+                oLocal.setProperty("/simulationId", simulationId);
+
+            } catch (err) {
+                MessageBox.error("Simulation failed: " + (err.message || err));
+            }
+        },
 
 
-// Adapted from PaymentPlanSimulations: Save simulation
-onSaveSimulationPPS: async function () {
-    const simulationId = sap.ui.getCore().byId("simIdInput").getValue();
-    const oLocal = this._oSimulationDialog.getModel("local");
-    const unitId = oLocal ? oLocal.getProperty("/unitId") : null;
-    const projectId = sap.ui.getCore().byId("projectIdInputPPS").getValue();
-    const paymentPlanId = sap.ui.getCore().byId("paymentPlanIdInputPPS").getValue();
-    const pricePlanYears = parseInt(sap.ui.getCore().byId("pricePlanInputPPS").getValue());
-    const leadId = sap.ui.getCore().byId("leadIdInputPPS").getValue();
-    const finalPrice = Number(oLocal ? oLocal.getProperty("/finalPrice") : NaN);
-    const userId = "currentUser";
-    const schedule = this._oSimulationDialog.getModel("simulationOutput").getData();
+        // Adapted from PaymentPlanSimulations: Save simulation
+        onSaveSimulationPPS: async function () {
+            const simulationId = sap.ui.getCore().byId("simIdInput").getValue();
+            const oLocal = this._oSimulationDialog.getModel("local");
+            const unitId = oLocal ? oLocal.getProperty("/unitId") : null;
+            const projectId = sap.ui.getCore().byId("projectIdInputPPS").getValue();
+            const paymentPlanId = sap.ui.getCore().byId("paymentPlanIdInputPPS").getValue();
+            const pricePlanYears = parseInt(sap.ui.getCore().byId("pricePlanInputPPS").getValue());
+            const leadId = sap.ui.getCore().byId("leadIdInputPPS").getValue();
+            const finalPrice = Number(oLocal ? oLocal.getProperty("/finalPrice") : NaN);
+            const userId = "currentUser";
+            const schedule = this._oSimulationDialog.getModel("simulationOutput").getData();
 
-    try {
-        const payload = {
-            simulationId,
-            unitId,
-            projectId,
-            pricePlanYears,
-            leadId,
-            finalPrice,
-            userId,
-            schedule: (schedule || []).map(s => ({
-                conditionType: s.conditionType,
-                dueDate: s.dueDate,
-                amount: s.amount,
-                maintenance: s.maintenance
-            }))
-        };
+            try {
+                const payload = {
+                    simulationId,
+                    unitId,
+                    projectId,
+                    pricePlanYears,
+                    leadId,
+                    finalPrice,
+                    userId,
+                    schedule: (schedule || []).map(s => ({
+                        conditionType: s.conditionType,
+                        dueDate: s.dueDate,
+                        amount: s.amount,
+                        maintenance: s.maintenance
+                    }))
+                };
 
-        const res = await fetch("/odata/v4/real-estate/PaymentPlanSimulations", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
+                const res = await fetch("/odata/v4/real-estate/PaymentPlanSimulations", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
 
-        if (!res.ok) throw new Error("Failed to save simulation");
-        MessageToast.show("Simulation saved successfully!");
-    } catch (err) {
-        MessageBox.error("Error: " + (err.message || err));
-    }
-},
+                if (!res.ok) throw new Error("Failed to save simulation");
+                MessageToast.show("Simulation saved successfully!");
+            } catch (err) {
+                MessageBox.error("Error: " + (err.message || err));
+            }
+        },
 
-// Helper: Map frequency description to months per installment
-_getFrequencyIntervalPPS: function (frequencyDesc) {
-    if (!frequencyDesc) return 12;  // Default to annual
-    switch (frequencyDesc.toLowerCase()) {
-        case "monthly":
-            return 1;
-        case "quarterly":
-            return 3;
-        case "semi-annual":
-            return 6;
-        case "annual":
-            return 12;
-        default:
-            return 12;  // Default
-    }
-},
+        // Helper: Map frequency description to months per installment
+        _getFrequencyIntervalPPS: function (frequencyDesc) {
+            if (!frequencyDesc) return 12;  // Default to annual
+            switch (frequencyDesc.toLowerCase()) {
+                case "monthly":
+                    return 1;
+                case "quarterly":
+                    return 3;
+                case "semi-annual":
+                    return 6;
+                case "annual":
+                    return 12;
+                default:
+                    return 12;  // Default
+            }
+        },
 
-// Helper: Generate simulation ID
-_generateIdPPS: function () {
+        // Helper: Generate simulation ID
+        _generateIdPPS: function () {
             this._idCounter += 1;
             localStorage.setItem("simulationIdCounter", this._idCounter);
             const paddedNumber = ("00000" + this._idCounter).slice(-5);  // Pad to 5 digits
             return "PPS" + paddedNumber;
         },
-    });   
+    });
 });

@@ -3,6 +3,8 @@
     xmlns="sap.m"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns:core="sap.ui.core"
+    xmlns:l="sap.ui.layout"
+    xmlns:f="sap.f"
 >
     <Page
         id="unitsPage"
@@ -16,81 +18,242 @@
                 press="onNavigateToAddUnit"
             />
         </headerContent>
-
         <content>
-            <VBox
-                id="_IDGenVBox2"
+            <!-- FILTER AREA -->
+            <Panel
+                id="_IDGenPanel"
+                backgroundDesign="Transparent"
                 class="sapUiSmallMargin"
             >
-                <HBox
-                    id="_IDGenHBox5"
-                    justifyContent="Start"
-                    alignItems="Center"
+                <!-- Header Data -->
+                <Panel
+                    id="_IDGenPanel1"
+                    expandable="true"
+                    expanded="true"
+                    headerText="Header Data"
                 >
-                    <Label
-                        id="_IDGenLabel19"
-                        text="Unit Status:"
-                        class="sapUiSmallMarginEnd"
-                    />
-
-                    <Select
-                        id="unitStatusFilter"
-                        width="250px"
-                        items="{
-                path: 'view>/UnitStatuses',
-              
-                templateShareable: false
-            }"
+                    <l:Grid
+                        id="_IDGenGrid"
+                        class="sapUiSmallMarginTop sapUiSmallMarginBottom"
+                        vSpacing="1"
+                        hSpacing="1"
                     >
-                        <core:Item
-                            id="_IDGenItem"
-                            key="{view>status}"
-                            text="{view>status}"
+                        <Label
+                            id="_IDGenLabel19"
+                            text="Unit Type:"
+                            labelFor="unitTypeFilter"
                         />
-                    </Select>
+                        <Select
+                            id="unitTypeFilter"
+                            items="{
+                                path: 'view>/UnitType',
+                                templateShareable: false
+                            }"
+                        >
+                            <core:Item
+                                id="_IDGenItem"
+                                key="{view>type}"
+                                text="{view>type}"
+                            />
+                        </Select>
 
+                        <Label
+                            id="_IDGenLabel20"
+                            text="Company Code:"
+                            labelFor="companyCodeFilter"
+                        />
+                        <Select
+                            id="companyCodeFilter"
+                            items="{
+                                path: 'companyCodesList>/',
+                                templateShareable: false
+                            }"
+                            change="onCompanyCodeChange"
+                        >
+                            <core:Item
+                                id="_IDGenItem1"
+                                key="{companyCodesList>companyCodeId}"
+                                text="{companyCodesList>companyCodeId}"
+                            />
+                        </Select>
 
-                    <Label id="_IDGenLabel20"
-                        text="Unit ID:"
-                        class="sapUiMarginStart "
-                    />
+                        <Label
+                            id="_IDGenLabel21"
+                            text="Project ID:"
+                            labelFor="projectIdFilter"
+                        />
+                        <Select
+                            id="projectIdFilter"
+                            items="{
+                                path: 'projectsList>/',
+                                templateShareable: false
+                            }"
+                        >
+                            <core:Item
+                                id="_IDGenItem2"
+                                key="{projectsList>projectId}"
+                                text="{projectsList>projectId}"
+                            />
+                        </Select>
 
-                    <Select
-                        id="unitIdFilter"
-                        width="250px"
-                        items="{
-                path: 'view>/UnitId',
-              
-                templateShareable: false
-            }"
+                        <Label
+                            id="_IDGenLabel22"
+                            text="Lead ID:"
+                            labelFor="_IDGenInput6"
+                        />
+                        <Input
+                            id="_IDGenInput6"
+                            placeholder="e.g. L12345"
+                        />
+
+                        <Label
+                            id="_IDGenLabel23"
+                            text="From Floor:"
+                            labelFor="_IDGenInput17"
+                        />
+                        <Input
+                            id="_IDGenInput17"
+                            type="Number"
+                            placeholder="e.g. 1"
+                        />
+
+                        <Label
+                            id="_IDGenLabel24"
+                            text="To Floor:"
+                            labelFor="_IDGenInput18"
+                        />
+                        <Input
+                            id="_IDGenInput18"
+                            type="Number"
+                            placeholder="e.g. 10"
+                        />
+                    </l:Grid>
+                </Panel>
+
+                <!-- Measurement Criteria -->
+                <Panel
+                    id="_IDGenPanel2"
+                    expandable="true"
+                    expanded="false"
+                    headerText="Measurement Criteria"
+                >
+                    <l:Grid
+                        id="_IDGenGrid1"
+                        class="sapUiSmallMarginTop sapUiSmallMarginBottom"
+                        vSpacing="1"
+                        hSpacing="1"
                     >
-                        <core:Item id="_IDGenItem2" key="" text="Select Unit Status" />
-
-                        <core:Item id="_IDGenItem1"
-                            key="{view>id}"
-                            text="{view>id}"
+                        <Label
+                            id="_IDGenLabel25"
+                            text="Measurement ID:"
+                            labelFor="measurementFilter"
                         />
-                    </Select>
+                        <Select
+                            id="measurementFilter"
+                            items="{
+                                path: 'measurementsList>/',
+                                templateShareable: false
+                            }"
+                        >
+                            <core:Item
+                                id="_IDGenItem3"
+                                key="{measurementsList>code}"
+                                text="{measurementsList>code}"
+                            />
+                        </Select>
 
-                    <Button
-                        id="_IDGenButton21"
-                        text="Search"
-                        type="Emphasized"
-                        class="sapUiSmallMarginBegin"
-                        press="onFilterUnits"
-                    />
+                        <Label
+                            id="_IDGenLabel26"
+                            text="From:"
+                            labelFor="_IDGenInput15"
+                        />
+                        <Input
+                            id="_IDGenInput15"
+                            type="Number"
+                            placeholder="Min value"
+                        />
 
+                        <Label
+                            id="_IDGenLabel27"
+                            text="To:"
+                            labelFor="_IDGenInput16"
+                        />
+                        <Input
+                            id="_IDGenInput16"
+                            type="Number"
+                            placeholder="Max value"
+                        />
+
+                        <Label
+                            id="_IDGenLabel28"
+                            text="UOM:"
+                            labelFor="_IDGenInput19"
+                        />
+                        <Input
+                            id="_IDGenInput19"
+                            placeholder="e.g. m², ft²"
+                        />
+                    </l:Grid>
+                </Panel>
+
+                <!-- Price Plan -->
+                <Panel
+                    id="_IDGenPanel3"
+                    expandable="true"
+                    expanded="false"
+                    headerText="Price Plan"
+                >
+                    <l:Grid
+                        id="_IDGenGrid2"
+                        defaultSpan="L6 M12 S12"
+                        class="sapUiSmallMarginTop sapUiSmallMarginBottom"
+                        vSpacing="1"
+                        hSpacing="1"
+                    >
+                        <Label
+                            id="_IDGenLabel29"
+                            text="Price Plan Years:"
+                            labelFor="_IDGenInput20"
+                        />
+                        <Input
+                            id="_IDGenInput20"
+                            type="Number"
+                            placeholder="e.g. 2023"
+                        />
+
+                        <Label
+                            id="_IDGenLabel30"
+                            text="Currency:"
+                            labelFor="_IDGenInput21"
+                        />
+                        <Input
+                            id="_IDGenInput21"
+                            placeholder="e.g. USD, EUR"
+                        />
+                    </l:Grid>
+                </Panel>
+
+                <!-- Filter Actions -->
+                <Toolbar id="_IDGenToolbar2">
+                    <ToolbarSpacer id="_IDGenToolbarSpacer" />
                     <Button
-                        id="_IDGenButton22"
+                        id="_IDGenButton18"
                         text="Reset"
-                        class="sapUiSmallMarginBegin"
+                        type="Transparent"
                         press="onClearFilter"
                     />
-                </HBox>
-            </VBox>
+                    <Button
+                        id="_IDGenButton19"
+                        text="Search"
+                        type="Emphasized"
+                        press="onFilterUnits"
+                    />
+                </Toolbar>
+            </Panel>
 
+            <!-- RESULTS TABLE -->
             <ScrollContainer
-                id="_IDGenScrollContainer4"
+                id="_IDGenScrollContainer1"
                 horizontal="true"
                 vertical="false"
                 height="100%"
@@ -101,6 +264,7 @@
                     id="unitsTable"
                     items="{ path: '/Units' }"
                     width="150%"
+                    class="sapUiSmallMarginTop"
                 >
                     <columns>
                         <Column id="_IDGenColumn44">
@@ -112,7 +276,7 @@
                         <Column id="_IDGenColumn45">
                             <Text
                                 id="_IDGenText76"
-                                text="Company Code Description"
+                                text="Company Code Desc."
                             />
                         </Column>
                         <Column id="_IDGenColumn46">
@@ -124,7 +288,7 @@
                         <Column id="_IDGenColumn47">
                             <Text
                                 id="_IDGenText78"
-                                text="Project Description"
+                                text="Project Desc."
                             />
                         </Column>
                         <Column id="_IDGenColumn48">
@@ -142,7 +306,7 @@
                         <Column id="_IDGenColumn50">
                             <Text
                                 id="_IDGenText81"
-                                text="Unit Description"
+                                text="Unit Desc."
                             />
                         </Column>
                         <Column id="_IDGenColumn51">
@@ -190,7 +354,7 @@
                         <Column id="_IDGenColumn58">
                             <Text
                                 id="_IDGenText89"
-                                text="Unit Delivery Date"
+                                text="Delivery Date"
                             />
                         </Column>
                         <Column id="_IDGenColumn59">
@@ -208,7 +372,7 @@
                         <Column id="_IDGenColumn61">
                             <Text
                                 id="_IDGenText92"
-                                text="Supplementary Text"
+                                text="Suppl. Text"
                             />
                         </Column>
                         <Column id="_IDGenColumn62">
@@ -223,7 +387,6 @@
                                 text="Original Price"
                             />
                         </Column>
-
                         <Column id="_IDGenColumn64">
                             <Text
                                 id="_IDGenText95"
@@ -231,11 +394,11 @@
                             />
                         </Column>
                         <Column
-                            width="100px"
-                            id="_IDGenColumnReservation"
+                            id="_IDGenColumn68"
+                            width="120px"
                         >
                             <Text
-                                id="_IDGenText119"
+                                id="_IDGenText96"
                                 text="Reservation"
                             />
                         </Column>
@@ -244,118 +407,118 @@
                         <ColumnListItem id="_IDGenColumnListItem5">
                             <cells>
                                 <Text
-                                    id="_IDGenText96"
+                                    id="_IDGenText97"
                                     text="{companyCodeId}"
                                 />
                                 <Text
-                                    id="_IDGenText97"
+                                    id="_IDGenText98"
                                     text="{companyCodeDescription}"
                                 />
                                 <Text
-                                    id="_IDGenText98"
+                                    id="_IDGenText99"
                                     text="{projectId}"
                                 />
                                 <Text
-                                    id="_IDGenText99"
+                                    id="_IDGenText100"
                                     text="{projectDescription}"
                                 />
                                 <Text
-                                    id="_IDGenText100"
+                                    id="_IDGenText101"
                                     text="{buildingId}"
                                 />
                                 <Text
-                                    id="_IDGenText101"
+                                    id="_IDGenText102"
                                     text="{unitId}"
                                 />
                                 <Text
-                                    id="_IDGenText102"
+                                    id="_IDGenText103"
                                     text="{unitDescription}"
                                 />
                                 <Text
-                                    id="_IDGenText103"
+                                    id="_IDGenText104"
                                     text="{unitTypeDescription}"
                                 />
                                 <Text
-                                    id="_IDGenText104"
+                                    id="_IDGenText105"
                                     text="{usageTypeDescription}"
                                 />
                                 <Text
-                                    id="_IDGenText105"
+                                    id="_IDGenText106"
                                     text="{unitStatusDescription}"
                                 />
                                 <Text
-                                    id="_IDGenText106"
+                                    id="_IDGenText107"
                                     text="{floorDescription}"
                                 />
                                 <Text
-                                    id="_IDGenText107"
+                                    id="_IDGenText108"
                                     text="{zone}"
                                 />
                                 <Text
-                                    id="_IDGenText108"
+                                    id="_IDGenText109"
                                     text="{salesPhase}"
                                 />
                                 <Text
-                                    id="_IDGenText109"
+                                    id="_IDGenText110"
                                     text="{finishingSpexDescription}"
                                 />
                                 <Text
-                                    id="_IDGenText110"
+                                    id="_IDGenText111"
                                     text="{unitDeliveryDate}"
                                 />
                                 <Text
-                                    id="_IDGenText111"
+                                    id="_IDGenText112"
                                     text="{profitCenter}"
                                 />
                                 <Text
-                                    id="_IDGenText112"
+                                    id="_IDGenText113"
                                     text="{functionalArea}"
                                 />
                                 <Text
-                                    id="_IDGenText113"
+                                    id="_IDGenText114"
                                     text="{supplementaryText}"
                                 />
                                 <Text
-                                    id="_IDGenText114"
+                                    id="_IDGenText115"
                                     text="{bua}"
                                 />
                                 <Text
-                                    id="_IDGenText115"
+                                    id="_IDGenText119"
                                     text="{originalPrice}"
                                 />
-
-                                <HBox id="_IDGenHBox3">
-                                    <!-- New: Simulate Payment button -->
+                                <HBox
+                                    id="_IDGenHBox3"
+                                    wrap="Wrap"
+                                >
                                     <Button
-                                        id="simulatePaymentBtn"
+                                        id="_IDGenButton20"
                                         icon="sap-icon://simulate"
                                         press="onOpenPaymentSimulation"
-                                        tooltip="Open Payment Plan Simulation for this unit"
+                                        tooltip="Open Payment Plan Simulation"
+                                        visible="{= ${unitStatusDescription} === 'Available' }"
                                     />
                                     <Button
-                                        id="_IDGenButton17"
+                                        id="_IDGenButton21"
                                         icon="sap-icon://information"
                                         press="onDetails"
                                     />
                                     <Button
-                                        id="_IDGenButton18"
+                                        id="_IDGenButton22"
                                         icon="sap-icon://edit"
                                         press="onEditUnit"
                                     />
                                     <Button
-                                        id="_IDGenButton19"
+                                        id="_IDGenButton23"
                                         icon="sap-icon://delete"
                                         type="Reject"
                                         press="onDelete"
                                     />
-                                
                                 </HBox>
                                 <Button
-                                    id="_IDGenButton20"
+                                    id="_IDGenButton24"
                                     text="Create Reservation"
                                     icon="sap-icon://add-document"
                                     press="onCreateReservation"
-                                    width="100px"
                                     visible="{= ${unitStatusDescription} === 'Available' }"
                                 />
                             </cells>
