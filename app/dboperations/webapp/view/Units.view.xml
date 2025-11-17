@@ -325,6 +325,13 @@
                                 />
 
                                 <HBox id="_IDGenHBox3">
+                                    <!-- New: Simulate Payment button -->
+                                    <Button
+                                        id="simulatePaymentBtn"
+                                        icon="sap-icon://simulate"
+                                        press="onOpenPaymentSimulation"
+                                        tooltip="Open Payment Plan Simulation for this unit"
+                                    />
                                     <Button
                                         id="_IDGenButton17"
                                         icon="sap-icon://information"
@@ -341,14 +348,7 @@
                                         type="Reject"
                                         press="onDelete"
                                     />
-                                 
-                                    <!-- <Button
-                                        id="_IDGenButtonReservation"
-                                        text="Create Reservation"
-                                        icon="sap-icon://add-document"
-                                        press="onCreateReservation"
-                                        visible="{= ${unitStatusDescription} === 'Available' }"
-                                    /> -->
+                                
                                 </HBox>
                                 <Button
                                     id="_IDGenButton20"
