@@ -53,6 +53,7 @@ sap.ui.define([
             this._loadCompanyCodesList();
             this._loadProjectsList();
             this._loadBuildingsList();
+            this._loadPaymentPlansForFilter();
 
             // For Payment Plan Simulations (PPS) - initialize counter
             this._idCounter = parseInt(localStorage.getItem("simulationIdCounter")) || 0;
@@ -74,12 +75,24 @@ sap.ui.define([
                         let buaMeasurement = unit.measurements?.find(m => m.code?.toUpperCase() === "BUA");
                         let bua = buaMeasurement ? buaMeasurement.quantity : null;
 
+                        let uom = buaMeasurement ? buaMeasurement.uom : null;
+                        let measurementCode = buaMeasurement ? buaMeasurement.code : null;
+
+                        /* 
+                        
+                            let bua = buaMeasurement ? buaMeasurement.quantity : null;
+                            let uom = buaMeasurement ? buaMeasurement.uom : null;
+                            let measurementCode = buaMeasurement ? buaMeasurement.code : null;
+                        
+                            let firstCondition = unit.conditions?.[0];
+                            let originalPrice = firstCondition ? firstCondition.amount : null;*/
                         // Extract Original Price (from first condition or based on some rule)
                         let firstCondition = unit.conditions?.[0];
                         let originalPrice = firstCondition ? firstCondition.amount : null;
                         console.log("Units", data.value);
+                        console.log("BUA", bua);
 
-                        return { ...unit, bua, originalPrice };
+                        return { ...unit, bua, originalPrice, uom, measurementCode };
                     });
 
                     oModel.setData({ Units: enrichedUnits });
@@ -121,6 +134,15 @@ sap.ui.define([
                 });
         },
 
+        _loadPaymentPlansForFilter: function () {
+            fetch("/odata/v4/real-estate/PaymentPlans?$expand=assignedProjects($expand=project)")
+                .then(res => res.json())
+                .then(data => {
+                    this.getView().setModel(new JSONModel(data.value || []), "paymentPlansFilter");
+                    console.log("Payment Plans loaded for filtering:", data.value);
+                })
+                .catch(err => console.error("Failed to load Payment Plans for filter:", err));
+        },
         // Fetch measurements config for dropdown
         _loadMeasurementsList: function () {
             /*const uniqueCompanyCodes = data.value.reduce((acc, curr) => {
@@ -201,7 +223,7 @@ sap.ui.define([
                         return acc;
                     }, []);
                     this.getView().setModel(new JSONModel(projectIds), "projectsList");
-                    console.log(data.value);
+                    console.log("projectsList", data.value);
                 })
 
                 .catch(err => console.error("Failed to load Projects list:", err));
@@ -1215,78 +1237,99 @@ sap.ui.define([
             var oBinding = oTable.getBinding("items");
             var aFilters = [];
 
-            // Unit Type
+            // Existing filters (keep all your current ones)
             var sUnitTypeFilter = this.byId("unitTypeFilter").getSelectedKey();
             if (sUnitTypeFilter) {
                 aFilters.push(new sap.ui.model.Filter("unitTypeDescription", sap.ui.model.FilterOperator.EQ, sUnitTypeFilter));
             }
 
-            // Company Code
             var sCompanyCodeFilter = this.byId("companyCodeFilter").getSelectedKey();
             if (sCompanyCodeFilter) {
                 aFilters.push(new sap.ui.model.Filter("companyCodeId", sap.ui.model.FilterOperator.EQ, sCompanyCodeFilter));
             }
 
-            // Project ID
             var sProjectIdFilter = this.byId("projectIdFilter").getSelectedKey();
             if (sProjectIdFilter) {
                 aFilters.push(new sap.ui.model.Filter("projectId", sap.ui.model.FilterOperator.EQ, sProjectIdFilter));
             }
 
-            // Lead ID
-            // var sLeadId = this.byId("_IDGenInput6").getValue();
-            // if (sLeadId) {
-            //     aFilters.push(new sap.ui.model.Filter("leadId", sap.ui.model.FilterOperator.Contains, sLeadId));
-            // }
+            // Floor range
+            var sFloorFrom = this.byId("_IDGenInput17").getValue();
+            var sFloorTo = this.byId("_IDGenInput18").getValue();
+            if (sFloorFrom) aFilters.push(new sap.ui.model.Filter("floorDescription", sap.ui.model.FilterOperator.GE, sFloorFrom));
+            if (sFloorTo) aFilters.push(new sap.ui.model.Filter("floorDescription", sap.ui.model.FilterOperator.LE, sFloorTo));
 
-            // Floor Range
-            // var iFromFloor = this.byId("_IDGenInput17").getValue();
-            // var iToFloor = this.byId("_IDGenInput18").getValue();
-            // if (iFromFloor) {
-            //     aFilters.push(new sap.ui.model.Filter("floorDescription", sap.ui.model.FilterOperator.GE, iFromFloor));
-            // }
-            // if (iToFloor) {
-            //     aFilters.push(new sap.ui.model.Filter("floorDescription", sap.ui.model.FilterOperator.LE, iToFloor));
-            // }
+            // Measurement filter (existing)
+            var sMeasurementCode = this.byId("measurementFilter").getSelectedKey();
+            var minQty = this.byId("_IDGenInput15").getValue();
+            var maxQty = this.byId("_IDGenInput16").getValue();
+            var sUom = this.byId("_IDGenInput19").getValue();
+            if (sMeasurementCode || minQty || maxQty || sUom) {
+                aFilters.push(new sap.ui.model.Filter({
+                    path: "",
+                    test: function (unit) {
+                        var chosen = unit.measurements?.find(m => m.code?.toUpperCase() === sMeasurementCode?.toUpperCase());
+                        if (sMeasurementCode && !chosen) return false;
+                        if ((minQty || maxQty || sUom) && !chosen) return false;
+                        if (minQty && parseFloat(chosen.quantity) < parseFloat(minQty)) return false;
+                        if (maxQty && parseFloat(chosen.quantity) > parseFloat(maxQty)) return false;
+                        if (sUom && chosen.uom?.toUpperCase() !== sUom.toUpperCase()) return false;
+                        return true;
+                    }
+                }));
+            }
 
-            // // Measurement Filter
-            // var sMeasurement = this.byId("measurementFilter").getSelectedKey();
-            // if (sMeasurement) {
-            //     aFilters.push(new sap.ui.model.Filter("measurementCode", sap.ui.model.FilterOperator.EQ, sMeasurement));
-            // }
+            // NEW: Price Plan Years + Currency Filter
+            var sPricePlanYears = this.byId("_IDGenInput20").getValue(); // e.g., "5"
+            var sCurrency = this.byId("_IDGenInput21").getValue().trim().toUpperCase();
 
-            // // Measurement Range
-            // var iMeasurementFrom = this.byId("_IDGenInput15").getValue();
-            // var iMeasurementTo = this.byId("_IDGenInput16").getValue();
-            // if (iMeasurementFrom) {
-            //     aFilters.push(new sap.ui.model.Filter("measurementValue", sap.ui.model.FilterOperator.GE, iMeasurementFrom));
-            // }
-            // if (iMeasurementTo) {
-            //     aFilters.push(new sap.ui.model.Filter("measurementValue", sap.ui.model.FilterOperator.LE, iMeasurementTo));
-            // }
+            if (sPricePlanYears || sCurrency) {
+                var aValidProjectIds = [];
 
-            // // UOM
-            // var sUOM = this.byId("_IDGenInput19").getValue();
-            // if (sUOM) {
-            //     aFilters.push(new sap.ui.model.Filter("uom", sap.ui.model.FilterOperator.Contains, sUOM));
-            // }
+                var aPaymentPlans = this.getView().getModel("paymentPlansFilter").getData() || [];
 
-            // // Price Plan
-            // var iPricePlanYear = this.byId("_IDGenInput20").getValue();
-            // if (iPricePlanYear) {
-            //     aFilters.push(new sap.ui.model.Filter("pricePlanYear", sap.ui.model.FilterOperator.EQ, iPricePlanYear));
-            // }
+                aPaymentPlans.forEach(function (plan) {
+                    var matchesYears = !sPricePlanYears || plan.planYears === parseInt(sPricePlanYears);
+                    var matchesCurrency = !sCurrency || (plan.currency && plan.currency.toUpperCase() === sCurrency);
 
-            // var sCurrency = this.byId("_IDGenInput21").getValue();
-            // if (sCurrency) {
-            //     aFilters.push(new sap.ui.model.Filter("currency", sap.ui.model.FilterOperator.Contains, sCurrency));
-            // }
+                    if (matchesYears && matchesCurrency) {
+                        // Extract all projectIds this plan is assigned to
+                        if (Array.isArray(plan.assignedProjects)) {
+                            plan.assignedProjects.forEach(function (assignment) {
+                                if (assignment.project && assignment.project.projectId) {
+                                    var projId = assignment.project.projectId;
+                                    if (aValidProjectIds.indexOf(projId) === -1) {
+                                        aValidProjectIds.push(projId);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
 
-            // Combine all filters with AND
+                if (aValidProjectIds.length > 0) {
+                    var aProjectFilters = aValidProjectIds.map(function (projId) {
+                        return new sap.ui.model.Filter("projectId", sap.ui.model.FilterOperator.EQ, projId);
+                    });
+
+                    // OR combination → projectId = X or projectId = Y or ...
+                    aFilters.push(new sap.ui.model.Filter({
+                        aFilters: aProjectFilters,
+                        bAnd: false   // ← this means OR
+                    }));
+                } else {
+                    // No match → force empty result
+                    aFilters.push(new sap.ui.model.Filter("projectId", sap.ui.model.FilterOperator.EQ, null));
+                }
+                
+           
+        }
+
+            // Apply all filters
             var oCombinedFilter = aFilters.length > 0 ? new sap.ui.model.Filter(aFilters, true) : null;
+        oBinding.filter(oCombinedFilter ? [oCombinedFilter] : []);
+    },
 
-            oBinding.filter(oCombinedFilter ? [oCombinedFilter] : []);
-        },
 
         onCreateReservation: function (oEvent) {
             var oUnit = oEvent.getSource().getBindingContext().getObject();
@@ -1303,13 +1346,12 @@ sap.ui.define([
 
             oModel.setProperty("/selectedUnitStatus", "");
             oModel.setProperty("/selectedUnitId", "");
-           oModel.setProperty("/selectedUnitId", "");
+            oModel.setProperty("/selectedUnitId", "");
 
             var oTable = this.byId("unitsTable");
             oTable.getBinding("items").filter([]);
         },
 
-        // New: Open Payment Plan Simulation popup
         onOpenPaymentSimulation: function (oEvent) {
             var unitId = oEvent.getSource().getBindingContext().getObject().unitId;
 
@@ -1334,7 +1376,12 @@ sap.ui.define([
                         new sap.m.Label({ text: "Project Description" }),
                         new sap.m.Input({ id: "projectDescriptionInputPPS", value: "{local>/projectDescription}", editable: false }),
                         new sap.m.Label({ text: "Price Plan (Years)" }),
-                        new sap.m.Input({ id: "pricePlanInputPPS", type: "Number", change: this.onPricePlanChangePPS.bind(this), placeholder: "e.g., 5" }),
+                        new sap.m.Input({  // <-- Changed back to Input (ComboBox doesn't support showValueHelp/valueHelpRequest)
+                            id: "pricePlanInputPPS",
+                            showValueHelp: true,
+                            valueHelpRequest: this.onOpenPricePlanValueHelpPPS.bind(this),
+                            placeholder: "Select a payment plan year..."
+                        }),
                         new sap.m.Label({ text: "Payment Plan ID" }),
                         new sap.m.Input({ id: "paymentPlanIdInputPPS", value: "{local>/paymentPlanId}", editable: false }),
                         new sap.m.Label({ text: "Lead ID" }),
@@ -1417,6 +1464,107 @@ sap.ui.define([
             }
 
             this._oSimulationDialog.open();
+        },
+        // New: Value help for Price Plan (Years) - filtered by project
+        onOpenPricePlanValueHelpPPS: function () {
+            const oView = this._oSimulationDialog;
+            const projectId = sap.ui.getCore().byId("projectIdInputPPS").getValue();
+            console.log("Opening Price Plan Value Help for projectId:", projectId);  // Debug log
+
+            if (!this._oPricePlanValueHelpPPS) {
+                this._oPricePlanValueHelpPPS = new SelectDialog({
+                    title: "Select Payment Plan Year",
+                    items: {
+                        path: "filteredPlans>/",
+                        template: new StandardListItem({
+                            title: "{filteredPlans>planYears} Years",
+                            description: "{filteredPlans>description}"  // <-- Fixed field name from CDS
+                        })
+                    },
+                    search: function (oEvent) {
+                        const sValue = oEvent.getParameter("value") || "";
+                        const aFilters = [
+                            new sap.ui.model.Filter("planYears", sap.ui.model.FilterOperator.Contains, sValue),
+                            new sap.ui.model.Filter("description", sap.ui.model.FilterOperator.Contains, sValue)  // <-- Fixed field name
+                        ];
+                        oEvent.getSource().getBinding("items").filter(new sap.ui.model.Filter(aFilters, false));
+                    },
+                    confirm: function (oEvent) {
+                        const oSelectedItem = oEvent.getParameter("selectedItem");
+                        if (oSelectedItem) {
+                            const oContext = oSelectedItem.getBindingContext("filteredPlans");
+                            const oPlan = oContext.getObject();
+                            const planYears = oPlan.planYears;
+                            const paymentPlanId = oPlan.paymentPlanId;
+                            const description = oPlan.description || "";  // <-- Fixed field name
+
+                            console.log("Selected plan:", oPlan);  // Debug log
+
+                            // Set the Input display value (for Input, use setValue)
+                            sap.ui.getCore().byId("pricePlanInputPPS").setValue(`${planYears} Years`);
+
+                            // Set Payment Plan ID in the input
+                            sap.ui.getCore().byId("paymentPlanIdInputPPS").setValue(paymentPlanId);
+
+                            // Auto-run simulation after selection
+                            this.onSimulatePPS();
+                        }
+                    }.bind(this)
+                });
+                oView.addDependent(this._oPricePlanValueHelpPPS);
+            }
+
+            // Filter items by current project
+            const oPlansModel = this._oSimulationDialog.getModel("paymentPlans");
+            const aPlans = oPlansModel ? oPlansModel.getData() : [];
+            console.log("All payment plans:", aPlans);  // Debug log
+
+            const filteredPlans = aPlans.filter(p =>
+                Array.isArray(p.assignedProjects) &&
+                p.assignedProjects.some(ap => ap.project?.projectId === projectId)
+            );
+            console.log("Filtered plans for project:", filteredPlans);  // Debug log
+
+            if (filteredPlans.length === 0) {
+                sap.m.MessageBox.warning("No payment plans available for the selected project.");
+                return;  // Don't open if no data
+            }
+
+            // Set filtered data on the SelectDialog's model
+            this._oPricePlanValueHelpPPS.setModel(new JSONModel(filteredPlans), "filteredPlans");
+
+            // Refresh binding to ensure data is displayed
+            const oBinding = this._oPricePlanValueHelpPPS.getBinding("items");
+            if (oBinding) {
+                oBinding.refresh();
+            }
+
+            this._oPricePlanValueHelpPPS.open();
+        },
+
+
+        // Adapted from PaymentPlanSimulations: Price plan change (handles manual input of years)
+        onPricePlanChangePPS: function (oEvent) {
+            const pricePlanYears = parseInt(oEvent.getParameter("value"));
+            const projectId = sap.ui.getCore().byId("projectIdInputPPS").getValue();
+            const oPlansModel = this._oSimulationDialog.getModel("paymentPlans");
+            const aPlans = oPlansModel ? oPlansModel.getData() : [];
+
+            const oSelectedPlan = (aPlans || []).find(p =>
+                p.planYears === pricePlanYears &&
+                Array.isArray(p.assignedProjects) &&
+                p.assignedProjects.some(ap => ap.project?.projectId === projectId)
+            );
+
+            if (oSelectedPlan) {
+                sap.ui.getCore().byId("paymentPlanIdInputPPS").setValue(oSelectedPlan.paymentPlanId);
+                // Auto-run simulation after valid selection
+                this.onSimulatePPS();
+            } else {
+                // Clear paymentPlanId if no matching plan found
+                sap.ui.getCore().byId("paymentPlanIdInputPPS").setValue("");
+                MessageBox.warning("No payment plan found for the entered years and project. Please select from the value help.");
+            }
         },
 
         // Adapted from PaymentPlanSimulations: Load units for PPS

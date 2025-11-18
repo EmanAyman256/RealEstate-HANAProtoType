@@ -218,7 +218,7 @@
                         <Input
                             id="_IDGenInput20"
                             type="Number"
-                            placeholder="e.g. 2023"
+                            placeholder="e.g. 5yrs"
                         />
 
                         <Label
@@ -491,7 +491,7 @@
                                     wrap="Wrap"
                                 >
                                     <Button
-                                        id="_IDGenButton20"
+                                        id="_IDGenButton220"
                                         icon="sap-icon://simulate"
                                         press="onOpenPaymentSimulation"
                                         tooltip="Open Payment Plan Simulation"

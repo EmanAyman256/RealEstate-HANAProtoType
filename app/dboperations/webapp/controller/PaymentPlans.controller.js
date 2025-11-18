@@ -282,70 +282,112 @@ sap.ui.define([
             this._oAddDialog.open();
         },
 
-        // Save
-        onSavePlan: async function () {
-            const oDialog = this._oAddDialog;
-            const oModel = oDialog.getModel("local");
-            const oData = oModel.getData();
+   onSavePlan: async function () {
+    const oDialog = this._oAddDialog;
+    const oModel = oDialog.getModel("local");
+    const oData = oModel.getData();
 
-            try {
-                // 🔹 Fixed: Map schedules to send foreign keys (not objects)
-                const schedules = (oData.schedules || []).map(item => ({
-                    conditionType_code: item.conditionType?.code || "",  // Send foreign key
-                    basePrice_code: item.basePrice?.code || "",
-                    calculationMethod_code: item.calculationMethod?.code || "",
-                    frequency_code: item.frequency?.code || "",
-                    percentage: item.percentage || 0,
-                    dueInMonth: item.dueInMonth || 0,
-                    numberOfInstallments: item.numberOfInstallments || 0,
-                    numberOfYears: item.numberOfYears || 0
-                }));
+    // Validation: Required fields
+    if (!oData.validFrom) {
+        MessageBox.error("Valid From is required.");
+        return;
+    }
+    if (!oData.validTo) {
+        MessageBox.error("Valid To is required.");
+        return;
+    }
 
-                // 🔹 Fixed: Map projects to send foreign key
-                const assignedProjects = (oData.projects || []).map(p => ({
-                    project_projectId: p.projectId || ""  // Send foreign key
-                }));
+    // Validation: Date parsing and order
+    const validFromDate = new Date(oData.validFrom);
+    const validToDate = new Date(oData.validTo);
+    if (isNaN(validFromDate.getTime()) || isNaN(validToDate.getTime())) {
+        MessageBox.error("Valid From and Valid To must be valid dates.");
+        return;
+    }
+    if (validToDate < validFromDate) {
+        MessageBox.error("Valid To cannot be earlier than Valid From.");
+        return;
+    }
 
-                const payload = {
-                    paymentPlanId: oData.paymentPlanId || this._generateId(),
-                    description: oData.description,
-                    companyCodeId: oData.companyCodeId,
-                    planYears: oData.planYears,
-                    validFrom: oData.validFrom,
-                    validTo: oData.validTo,
-                    planStatus: oData.planStatus,
-                    schedule: schedules,
-                    assignedProjects: assignedProjects
-                };
+    // Validation: Date span must match plan years
+    const planYears = parseInt(oData.planYears) || 0;
+    const expectedValidTo = new Date(validFromDate);
+    expectedValidTo.setFullYear(expectedValidTo.getFullYear() + planYears);
+    if (validToDate < expectedValidTo) {
+        MessageBox.error(`Valid To must be at least ${planYears} years after Valid From. Expected: ${expectedValidTo.toISOString().split('T')[0]} or later.`);
+        return;
+    }
 
-                const method = oData.paymentPlanId ? "PUT" : "POST";
-                const url = oData.paymentPlanId
-                    ? `/odata/v4/real-estate/PaymentPlans(paymentPlanId='${oData.paymentPlanId}')`
-                    : `/odata/v4/real-estate/PaymentPlans`;
-                // Inside onSavePlan, before the fetch:
-                console.log("Schedules payload:", schedules);
-                console.log("Assigned projects payload:", assignedProjects);
-                // In onSavePlan, before the fetch:
-                const totalPercentage = (oData.schedules || []).reduce((sum, s) => sum + (parseFloat(s.percentage) || 0), 0);
-                if (totalPercentage !== 100) {
-                    MessageBox.error(`Total percentage must be 100. Current: ${totalPercentage}`);
-                    return;  // Prevent save
-                }
-                const res = await fetch(url, {
-                    method,
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
+    try {
+        // 🔹 Fixed: Map schedules to send foreign keys (not objects)
+        const schedules = (oData.schedules || []).map(item => ({
+            conditionType_code: item.conditionType?.code || "",  // Send foreign key
+            basePrice_code: item.basePrice?.code || "",
+            calculationMethod_code: item.calculationMethod?.code || "",
+            frequency_code: item.frequency?.code || "",
+            percentage: item.percentage || 0,
+            dueInMonth: item.dueInMonth || 0,
+            numberOfInstallments: item.numberOfInstallments || 0,
+            numberOfYears: item.numberOfYears || 0
+        }));
 
-                if (!res.ok) throw new Error("Failed to save payment plan");
-                MessageToast.show("Payment plan saved successfully!");
-                oDialog.close();
-                this._loadPlans();
+        // 🔹 Fixed: Map projects to send foreign key
+        const assignedProjects = (oData.projects || []).map(p => ({
+            project_projectId: p.projectId || ""  // Send foreign key
+        }));
 
-            } catch (err) {
-                MessageBox.error("Error: " + err.message);
-            }
-        },
+        const payload = {
+            paymentPlanId: oData.paymentPlanId || this._generateId(),
+            description: oData.description,
+            companyCodeId: oData.companyCodeId,
+            planYears: oData.planYears,
+            validFrom: oData.validFrom,
+            validTo: oData.validTo,
+            planStatus: oData.planStatus,
+            schedule: schedules,
+            assignedProjects: assignedProjects
+        };
+
+        const method = oData.paymentPlanId ? "PUT" : "POST";
+        const url = oData.paymentPlanId
+            ? `/odata/v4/real-estate/PaymentPlans(paymentPlanId='${oData.paymentPlanId}')`
+            : `/odata/v4/real-estate/PaymentPlans`;
+
+        // Debug logs
+        console.log("Schedules payload:", schedules);
+        console.log("Assigned projects payload:", assignedProjects);
+
+        // Validation: Total percentage must be 100
+        const totalPercentage = (oData.schedules || []).reduce((sum, s) => sum + (parseFloat(s.percentage) || 0), 0);
+        if (totalPercentage !== 100) {
+            MessageBox.error(`Total percentage must be 100. Current: ${totalPercentage}`);
+            return;  // Prevent save
+        }
+
+        // Validation: Total years in schedules must equal plan years
+        const totalYears = (oData.schedules || []).reduce((sum, s) => sum + (parseInt(s.numberOfYears) || 0), 0);
+        if (totalYears !== planYears) {
+            MessageBox.error(`Total years in schedules must equal plan years (${planYears}). Current: ${totalYears}`);
+            return;  // Prevent save
+        }
+
+        const res = await fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error("Failed to save payment plan");
+        MessageToast.show("Payment plan saved successfully!");
+        oDialog.close();
+        this._loadPlans();
+
+    } catch (err) {
+        MessageBox.error("Error: " + err.message);
+    }
+},
+
+
 
         onCancelPlan: function () {
             this._oAddDialog.close();
