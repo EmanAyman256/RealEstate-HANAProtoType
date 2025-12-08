@@ -9,15 +9,16 @@
     "@cap-js/hana": "^1",
     "@sap/cds": "^8",
     "@sap/xssec": "^4.6.0",
-    "express": "^4"
+    "express": "^4",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@cap-js/cds-types": "^0.9.0",
     "@cap-js/sqlite": "^1",
     "@sap/cds-dk": "^8",
+    "cds-plugin-ui5": "^0.13.0",
     "mbt": "^1.2.29",
-    "rimraf": "^5.0.5",
-    "cds-plugin-ui5": "^0.13.0"
+    "rimraf": "^5.0.5"
   },
   "scripts": {
     "start": "cds-serve",
@@ -32,7 +33,9 @@
       "native_hana_associations": false
     },
     "requires": {
-      "auth": "mocked",
+      "auth": {
+        "kind": "dummy"
+      },
       "destinations": true,
       "html5-runtime": true,
       "workzone": true,
@@ -43,7 +46,8 @@
           "plan": "hdi-shared",
           "name": "hdi-shared-realestate"
         }
-      }
+      },
+      "html5-repo": true
     },
     "hana": {
       "deploy-format": "hdbtable"

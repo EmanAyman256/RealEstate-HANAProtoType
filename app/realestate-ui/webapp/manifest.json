@@ -39,7 +39,7 @@
     },
     "dataSources": {
       "RealEstateService": {
-        "uri": "odata/v4/real-estate/",
+        "uri": "odata/v4/real-estate10/",
         "type": "OData",
         "settings": {
           "annotations": [],

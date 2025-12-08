@@ -1,18 +1,24 @@
 {
-  "welcomeFile": "/index.html",
-  "authenticationMethod": "route",
-  "routes": [
-    {
-     "source": "^/odata/v4/real-estate/(.*)$",
-      "destination": "RealEstate-srv-api",
-      "authenticationType": "xsuaa",
-      "csrfProtection": false
-    },
-    {
-      "source": "^(.*)$",
-      "target": "$1",
-      "service": "html5-apps-repo-rt",
-      "authenticationType": "xsuaa"
-    }
-  ]
+ "welcomeFile": "/index.html",
+ "authenticationMethod": "route",
+ "routes": [
+  {
+   "source": "^/odata/v4/real-estate/(.*)$",
+   "destination": "RealEstate-srv-api",
+   "authenticationType": "xsuaa",
+   "csrfProtection": false
+  },
+  {
+   "source": "^(.*)$",
+   "target": "$1",
+   "service": "html5-apps-repo-rt",
+   "authenticationType": "xsuaa"
+  },
+  {
+   "source": "^/?odata/(.*)$",
+   "target": "/odata/$1",
+   "destination": "srv-api",
+   "csrfProtection": true
+  }
+ ]
 }

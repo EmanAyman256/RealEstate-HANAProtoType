@@ -34,61 +34,73 @@ module.exports = cds.service.impl(async function () {
   this.on('READ', Buildings, async (req) => {
     console.log('READ Buildings called');
     const db = cds.transaction(req);
-    return await db.run(req.query);
+    return await db.run(req.query);  // execute the query as requested
   });
+
+
   // CREATE
   this.on('CREATE', Buildings, async (req) => {
-    console.log('CREATE Buildings called with data:', req.data);
+    console.log('CREATE Building called with data:', req.data);
+
     const db = cds.transaction(req);
-    return await db.run(
-      INSERT.into(Buildings).entries(req.data)
-    );
+
+    try {
+      await db.run(
+        INSERT.into(Buildings).entries(req.data)
+      );
+
+      return req.data;  // return the created data
+    }
+    catch (error) {
+      console.error('Error creating Building:', error);
+      req.error(500, 'Error creating Building');
+    }
   });
+
 
   // UPDATE
   this.on('UPDATE', Buildings, async (req) => {
+    console.log("UPDATE Building called with:", req.data);
+
+    const buildingId = req.data.buildingId; // ID comes from req.data
+    const db = cds.transaction(req);
+
     try {
-      const { buildingId } = req.data;
+      await db.run(
+        UPDATE(Buildings)
+          .set(req.data)
+          .where({ buildingId })
+      );
 
-      // Log the request
-      console.log(`Updating Building ID: ${buildingId}`);
-      console.log('Payload:', req.data);
+      // return updated entity
+      return await db.run(
+        SELECT.one.from(Buildings).where({ buildingId })
+      );
 
-      // Optional: validate data
-      if (!req.data.buildingDescription) {
-        return req.reject(400, 'Building description is required.');
-      }
-
-      // Perform the actual update
-      const result = await UPDATE(Buildings)
-        .set(req.data)
-        .where({ buildingId });
-
-      if (result === 0) {
-        return req.reject(404, `Building with ID ${buildingId} not found.`);
-      }
-
-      // Return updated record
-      const updatedRecord = await SELECT.one.from(Buildings).where({ buildingId });
-      return updatedRecord;
     } catch (error) {
-      console.error('Error in UPDATE handler:', error);
-      req.reject(500, error.message);
+      console.error("Error updating Building:", error);
+      req.error(500, "Error updating Building: " + error.message);
     }
   });
-  //DELETE
+
+
+  // DELETE
   this.on('DELETE', Buildings, async (req) => {
-    console.log('DELETE Building called for buildingId:', req.data.buildingId);
+    const { buildingId } = req.params[0];  // CAP DELETE passes keys here
+    console.log("DELETE Building:", buildingId);
+
     const db = cds.transaction(req);
+
     try {
       return await db.run(
-        DELETE.from(Buildings).where({ buildingId: req.data.buildingId })
+        DELETE.from(Buildings).where({ buildingId })
       );
     } catch (error) {
-      console.error('Error deleting Building :', error);
-      req.error(500, 'Error deleting Building: ' + error.message);
+      console.error("Error deleting Building:", error);
+      req.error(500, "Error deleting Building: " + error.message);
     }
   });
+
 
 
 
@@ -104,11 +116,15 @@ module.exports = cds.service.impl(async function () {
   // CREATE
   this.on('CREATE', Projects, async (req) => {
     console.log('CREATE Project called with data:', req.data);
+
     const db = cds.transaction(req);
+
     try {
-      return await db.run(
+      await db.run(
         INSERT.into(Projects).entries(req.data)
       );
+
+      return req.data;
     }
     catch (error) {
       console.error('Error creating Project:', error);
@@ -116,11 +132,12 @@ module.exports = cds.service.impl(async function () {
     }
   });
 
+
   // UPDATE
   this.on('UPDATE', Projects, async (req) => {
-    console.log("UPDATE Project called with:", req.data, "params:", req.params);
+    console.log("UPDATE Project called with:", req.data);
 
-    const { projectId } = req.params[0];   // <-- get key from URL
+    const projectId = req.data.projectId; // <-- Always reliable
     const db = cds.transaction(req);
 
     try {
@@ -130,9 +147,11 @@ module.exports = cds.service.impl(async function () {
           .where({ projectId })
       );
 
-      // Return the updated record
-      const updated = await db.run(SELECT.one.from(Projects).where({ projectId }));
-      return updated;
+      // return updated entity
+      return await db.run(
+        SELECT.one.from(Projects).where({ projectId })
+      );
+
     } catch (error) {
       console.error("Error updating Project:", error);
       req.error(500, "Error updating Project: " + error.message);
@@ -140,204 +159,130 @@ module.exports = cds.service.impl(async function () {
   });
 
 
+
   // DELETE
   this.on('DELETE', Projects, async (req) => {
-    console.log('DELETE Project called for projectId:', req.data.projectId);
+    const { projectId } = req.params[0]; // <-- the correct place
+    console.log("DELETE Project:", projectId);
+
     const db = cds.transaction(req);
+
     return await db.run(
-      DELETE.from(Projects).where({ projectId: req.data.projectId })
+      DELETE.from(Projects).where({ projectId })
     );
   });
 
 
+
   /*-----------------------Units---------------------------*/
 
-  // READ
-  this.on('READ', Units, async (req) => {
-    console.log('READ Units called');
-    const db = cds.transaction(req);
-    return await db.run(req.query);
-  });
+  // READ Units
+  this.on('READ', Units, req => cds.transaction(req).run(req.query));
 
-  // CREATE for Units (fixed)
+  // CREATE Units
   this.on('CREATE', Units, async (req) => {
-    console.log('CREATE Unit called with data:', req.data);
     const db = cds.transaction(req);
+    const data = req.data;
 
-    await db.run(INSERT.into(Units).entries(req.data));
+    await db.run(INSERT.into(Units).entries(data));
 
-    // Fetch the full record with associations (fixed syntax)
-    const createdUnit = await db.run(
+    // Return full entity with associations
+    return db.run(
       SELECT.one.from(Units)
-        .where({ unitId: req.data.unitId })
+        .where({ unitId: data.unitId })
         .columns(
           '*',
           { ref: ['measurements'], expand: ['*'] },
           { ref: ['conditions'], expand: ['*'] }
         )
     );
-
-    console.log('Created Unit returned to UI:', createdUnit);
-    return createdUnit;
   });
 
-
-  // UPDATE 
+  // UPDATE Units
   this.on('UPDATE', Units, async (req) => {
-    console.log('UPDATE Unit called with:', req.data, 'params:', req.params);
-
     const { unitId } = req.params[0];
     const db = cds.transaction(req);
 
-    try {
-      await db.run(
-        UPDATE(Units)
-          .set(req.data)
-          .where({ unitId })
-      );
-
-      const updated = await db.run(SELECT.one.from(Units).where({ unitId }));
-      return updated;
-    } catch (error) {
-      console.error('Error updating Unit:', error);
-      req.error(500, 'Error updating Unit: ' + error.message);
-    }
+    await db.run(UPDATE(Units).set(req.data).where({ unitId }));
+    return db.run(SELECT.one.from(Units).where({ unitId }));
   });
 
-  // DELETE  
-  this.on('DELETE', Units, async (req) => {
-    console.log('DELETE Unit called for unitId:', req.data.unitId);
-    const db = cds.transaction(req);
-    try {
-      return await db.run(
-        DELETE.from(Units).where({ unitId: req.data.unitId })
-      );
-    } catch (error) {
-      console.error('Error deleting Unit:', error);
-      req.error(500, 'Error deleting Unit: ' + error.message);
-    }
+  // DELETE Units
+  this.on('DELETE', Units, req => {
+    const { unitId } = req.data;
+    return cds.transaction(req).run(
+      DELETE.from(Units).where({ unitId })
+    );
   });
+
 
   /*----------------------- Measurements ---------------------------*/
 
-  // READ
-  this.on('READ', Measurements, async (req) => {
-    console.log('READ Measurements called');
-    const db = cds.transaction(req);
-    return await db.run(req.query);
-  });
+  this.on('READ', Measurements, req => cds.transaction(req).run(req.query));
 
-  // CREATE
   this.on('CREATE', Measurements, async (req) => {
-    console.log('CREATE Measurement called with data:', req.data);
     const db = cds.transaction(req);
-    try {
-      const data = req.data;
-      data.ID = cds.utils.uuid(); // ensure unique ID
+    const data = req.data;
 
-      // handle association to Unit (if frontend passes nested or flat)
-      if (req.data.unit_unitId) {
-        data.unit_unitId = req.data.unit_unitId;
-      } else if (req.data.unit) {
-        data.unit_unitId = req.data.unit.unitId || req.data.unit.ID;
-      }
+    data.ID = cds.utils.uuid();
 
-      return await db.run(INSERT.into(Measurements).entries(data));
-    } catch (error) {
-      console.error('Error creating Measurement:', error);
-      req.error(500, 'Error creating Measurement');
-    }
+    // Handle association
+    data.unit_unitId =
+      req.data.unit_unitId ||
+      req.data.unit?.unitId ||
+      req.data.unit?.ID;
+
+    return db.run(INSERT.into(Measurements).entries(data));
   });
 
-  // UPDATE
   this.on('UPDATE', Measurements, async (req) => {
-    console.log('UPDATE Measurement called with:', req.data, 'params:', req.params);
-
     const { ID } = req.params[0];
     const db = cds.transaction(req);
 
-    try {
-      await db.run(UPDATE(Measurements).set(req.data).where({ ID }));
-      const updated = await db.run(SELECT.one.from(Measurements).where({ ID }));
-      return updated;
-    } catch (error) {
-      console.error('Error updating Measurement:', error);
-      req.error(500, 'Error updating Measurement: ' + error.message);
-    }
+    await db.run(UPDATE(Measurements).set(req.data).where({ ID }));
+    return db.run(SELECT.one.from(Measurements).where({ ID }));
   });
 
-  // DELETE
-  this.on('DELETE', Measurements, async (req) => {
-    console.log('DELETE Measurement called for ID:', req.data.ID);
-    const db = cds.transaction(req);
-    try {
-      return await db.run(DELETE.from(Measurements).where({ ID: req.data.ID }));
-    } catch (error) {
-      console.error('Error deleting Measurement:', error);
-      req.error(500, 'Error deleting Measurement: ' + error.message);
-    }
+  this.on('DELETE', Measurements, req => {
+    return cds.transaction(req).run(
+      DELETE.from(Measurements).where({ ID: req.data.ID })
+    );
   });
+
 
 
   /*----------------------- Conditions ---------------------------*/
 
   // READ
-  this.on('READ', Conditions, async (req) => {
-    console.log('READ Conditions called');
-    const db = cds.transaction(req);
-    return await db.run(req.query);
-  });
+  this.on('READ', Conditions, req => cds.transaction(req).run(req.query));
 
-  // CREATE
   this.on('CREATE', Conditions, async (req) => {
-    console.log('CREATE Condition called with data:', req.data);
     const db = cds.transaction(req);
-    try {
-      const data = req.data;
-      data.ID = cds.utils.uuid(); // ensure unique ID
+    const data = req.data;
 
-      // handle association to Unit (if frontend passes nested or flat)
-      if (req.data.unit_unitId) {
-        data.unit_unitId = req.data.unit_unitId;
-      } else if (req.data.unit) {
-        data.unit_unitId = req.data.unit.unitId || req.data.unit.ID;
-      }
+    data.ID = cds.utils.uuid();
+    data.unit_unitId =
+      req.data.unit_unitId ||
+      req.data.unit?.unitId ||
+      req.data.unit?.ID;
 
-      return await db.run(INSERT.into(Conditions).entries(data));
-    } catch (error) {
-      console.error('Error creating Condition:', error);
-      req.error(500, 'Error creating Condition');
-    }
+    return db.run(INSERT.into(Conditions).entries(data));
   });
 
-  // UPDATE
   this.on('UPDATE', Conditions, async (req) => {
-    console.log('UPDATE Condition called with:', req.data, 'params:', req.params);
-
     const { ID } = req.params[0];
     const db = cds.transaction(req);
 
-    try {
-      await db.run(UPDATE(Conditions).set(req.data).where({ ID }));
-      const updated = await db.run(SELECT.one.from(Conditions).where({ ID }));
-      return updated;
-    } catch (error) {
-      console.error('Error updating Condition:', error);
-      req.error(500, 'Error updating Condition: ' + error.message);
-    }
+    await db.run(UPDATE(Conditions).set(req.data).where({ ID }));
+    return db.run(SELECT.one.from(Conditions).where({ ID }));
   });
 
-  // DELETE
-  this.on('DELETE', Conditions, async (req) => {
-    console.log('DELETE Condition called for ID:', req.data.ID);
-    const db = cds.transaction(req);
-    try {
-      return await db.run(DELETE.from(Conditions).where({ ID: req.data.ID }));
-    } catch (error) {
-      console.error('Error deleting Condition:', error);
-      req.error(500, 'Error deleting Condition: ' + error.message);
-    }
+  this.on('DELETE', Conditions, req => {
+    return cds.transaction(req).run(
+      DELETE.from(Conditions).where({ ID: req.data.ID })
+    );
   });
+
 
   /* ------------------------------------------------------------------
   * PAYMENT PLANS

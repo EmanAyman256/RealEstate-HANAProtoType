@@ -1,0 +1,55 @@
+<mvc:View
+    controllerName="dboperations.controller.Frequencies"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    displayBlock="true"
+>
+    <Page id="_IDGenPageFR" title="Frequencies">
+        <headerContent>
+            <Button id="btnAddFR" icon="sap-icon://add" text="Add Frequency" press="onAddFrequency"/>
+        </headerContent>
+
+        <content>
+            <Table id="frequenciesTable" items="{frequencies>/}" width="100%">
+                <columns>
+                    <Column id="_IDGenColumnFR1"><Text id="_IDGenTextFR1" text="Code"/></Column>
+                    <Column id="_IDGenColumnFR2"><Text id="_IDGenTextFR2" text="Description"/></Column>
+                    <Column id="_IDGenColumnFR3"><Text id="_IDGenTextFR3" text="Actions"/></Column>
+                </columns>
+
+                <items>
+                    <ColumnListItem id="_IDGenColumnListItemFR1">
+                        <cells>
+                            <Text id="_IDGenTextFR4" text="{frequencies>code}"/>
+                            <Text id="_IDGenTextFR5" text="{frequencies>description}"/>
+                            <HBox id="_IDGenHBoxFR1">
+                                <Button id="_IDGenButtonFR1" icon="sap-icon://edit" press="onEditFrequency"/>
+                                <Button id="_IDGenButtonFR2" icon="sap-icon://delete" type="Reject" press="onDeleteFrequency"/>
+                            </HBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
+    </Page>
+
+    <!-- Add/Edit Dialog -->
+    <Dialog id="frequencyDialog" title="Add/Edit Frequency" stretchOnPhone="true">
+        <content>
+            <VBox id="_IDGenVBoxFR1" class="sapUiSmallMargin">
+                <Label id="_IDGenLabelFR1" text="Code"/>
+                <Input id="_IDGenInputFR1" value="{local>/code}" editable="{= !${local>/isEdit}}" placeholder="Enter Code (e.g., FR01)"/>
+
+                <Label id="_IDGenLabelFR2" text="Description"/>
+                <Input id="_IDGenInputFR2" value="{local>/description}" placeholder="Enter Description"/>
+            </VBox>
+        </content>
+
+        <beginButton>
+            <Button id="_IDGenButtonFR3" text="Save" press="onSaveFrequency"/>
+        </beginButton>
+        <endButton>
+            <Button id="_IDGenButtonFR4" text="Cancel" press="onCancelFrequency"/>
+        </endButton>
+    </Dialog>
+</mvc:View>
